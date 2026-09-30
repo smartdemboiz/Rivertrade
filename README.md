@@ -27,7 +27,13 @@ Create a `.env.local` file from `.env.example` and populate it:
 ```bash
 NEXT_PUBLIC_APP_URL=https://your-domain.com
 NEXT_PUBLIC_API_URL=https://your-api-domain.com
+
+# Optional direct Across fallback (server-only; never use NEXT_PUBLIC_)
+ACROSS_API_KEY=your-across-api-key
+ACROSS_INTEGRATOR_ID=0xdead
 ```
+
+The direct Across quote fallback is used for supported EVM cross-chain pairs only when LI.FI returns no live route. Get the API key and integrator ID from Across and keep the key server-side.
 
 ## Production checks
 

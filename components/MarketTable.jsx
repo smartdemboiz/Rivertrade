@@ -19,7 +19,7 @@ const fallback = [
   rank: index + 1,
 }));
 
-export default function MarketTable() {
+export function MarketTable() {
   const [coins, setCoins] = useState(fallback);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("recent");
@@ -41,3 +41,5 @@ export default function MarketTable() {
     .sort((a, b) => filter === "roi" ? Math.abs(b.change) - Math.abs(a.change) : 0), [coins, query, filter]);
   return <div className="market-panel" id="markets"><div className="market-toolbar"><div className="tabs">{["recent", "gainers", "roi"].map((item) => <button key={item} className={filter === item ? "active" : ""} onClick={() => setFilter(item)}>{item}</button>)}</div><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search coin..." /></div><div className="table-scroll"><table><thead><tr><th>Name</th><th>Rank</th><th>Price</th><th>24h change</th><th>ROI</th><th>Market cap</th></tr></thead><tbody>{visible.map((coin) => <tr key={`${coin.symbol}-${coin.rank}`}><td><span className="coin-icon"><img src={coin.image} alt="" onError={(event) => { if (!event.currentTarget.src.includes("/market-icon/")) { event.currentTarget.src = `/market-icon/s_${coin.symbol.toLowerCase()}.webp`; } else { event.currentTarget.style.display = "none"; } }} />{coin.symbol.slice(0, 1)}</span><strong>{coin.name}</strong><small>{coin.symbol}</small></td><td>{coin.rank}</td><td>${coin.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}</td><td className={coin.change >= 0 ? "positive" : "negative"}>{coin.change >= 0 ? "+" : ""}{coin.change.toFixed(2)}%</td><td>{(1 + Math.abs(coin.change) / 10).toFixed(2)}x</td><td>${coin.marketcap}</td></tr>)}</tbody></table></div></div>;
 }
+
+export default MarketTable;

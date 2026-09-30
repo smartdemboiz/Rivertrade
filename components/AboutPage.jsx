@@ -156,6 +156,16 @@ export default function AboutPage() {
             </div>
       </section>
 
+      <section id="careers" className="community-cta">
+        <div>
+          <h2>Careers at Rivertrade</h2>
+          <p>Join a team building clearer, more accessible tools for modern investors.</p>
+        </div>
+        <div className="cta-actions">
+          <Link href="/contact" className="primary-btn">Get in touch</Link>
+        </div>
+      </section>
+
       <section className="about-testimonials">
             <h2>Trader Testimonials</h2>
             <p>Hear from the community.</p>
