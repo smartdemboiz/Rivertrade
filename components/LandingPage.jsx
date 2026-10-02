@@ -47,7 +47,7 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
         </section>
         <section id="markets" className="py-16">
           <div className="mb-5 flex items-end justify-between"><p className="text-xs font-black uppercase tracking-[2px] text-olive">{t("exploreMarkets")}</p><span className="text-sm font-black text-olive">{t("liveData")}</span></div>
-          {data.loading && !data.coins.length ? <p className="text-muted">{t("connectingMarkets")}</p> : <MarketTable coins={data.coins} />}
+          {data.loading && !data.coins.length ? <p className="text-muted">{t("connectingMarkets")}</p> : data.error && !data.coins.length ? <p className="text-muted" role="status">Live market data is temporarily unavailable.</p> : <MarketTable coins={data.coins} />}
         </section>
         <section className="pb-16">
           <p className="text-xs font-black uppercase tracking-[2px] text-olive">{t("liveAnalysis")}</p>

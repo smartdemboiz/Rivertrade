@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/crypto-swap/lib/server/redis.js";
 
 const getSupabaseAuthConfig = () => {
   const url = process.env.SUPABASE_URL;
@@ -11,19 +12,14 @@ const getSupabaseAuthConfig = () => {
   return { url, anonKey };
 };
 
-const buildDemoLoginResponse = (email) => ({
-  message: "Login successful",
-  token: `demo-token-${Math.random().toString(36).slice(2, 10)}`,
-  user: {
-    id: "demo-user-1",
-    email,
-    firstName: "Demo",
-    lastName: "User",
-  },
-});
-
 export async function POST(request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const limit = await rateLimit(`rate:login:${ip}`, 10, 60);
+    if (!limit.allowed) {
+      return Response.json({ error: "Too many login attempts. Try again later." }, { status: 429 });
+    }
+
     const body = await request.json();
     const { email, password } = body;
 

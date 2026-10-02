@@ -3,7 +3,9 @@
  * Simple in-memory rate limiter. For production, use Redis-based solution.
  */
 
-const DEFAULT_LIMIT = parseInt(process.env.NEXT_PUBLIC_API_RATE_LIMIT || '100', 10);
+import { getRedisClient } from './redis.js';
+
+const DEFAULT_LIMIT = parseInt(process.env.API_RATE_LIMIT || '100', 10);
 const DEFAULT_WINDOW_MS = parseInt(process.env.API_RATE_LIMIT_WINDOW_MS || '60000', 10);
 
 // In-memory store for rate limit tracking
@@ -15,16 +17,32 @@ const rateLimitStore = new Map();
 function getClientId(request) {
   const forwarded = request.headers.get('x-forwarded-for');
   const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-  return ip;
+  return `${new URL(request.url).pathname}:${ip}`;
 }
 
 /**
  * Check rate limit for a client
  * Returns object: { allowed: boolean, remaining: number, resetTime: number }
  */
-export function checkRateLimit(request, key = null, limit = DEFAULT_LIMIT, windowMs = DEFAULT_WINDOW_MS) {
+export async function checkRateLimit(request, key = null, limit = DEFAULT_LIMIT, windowMs = DEFAULT_WINDOW_MS) {
   const clientId = key || getClientId(request);
   const now = Date.now();
+  const redis = await getRedisClient();
+
+  if (redis) {
+    const redisKey = `rate-limit:${clientId}`;
+    const count = await redis.incr(redisKey);
+    if (count === 1) await redis.expire(redisKey, Math.ceil(windowMs / 1000));
+    return {
+      allowed: count <= limit,
+      remaining: Math.max(0, limit - count),
+      resetTime: now + windowMs,
+    };
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return { allowed: false, remaining: 0, resetTime: now + windowMs, unavailable: true };
+  }
   
   if (!rateLimitStore.has(clientId)) {
     rateLimitStore.set(clientId, {

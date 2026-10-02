@@ -1,4 +1,4 @@
-import { fallbackData, fetchSupabaseRecords } from "../admin/helpers";
+import { fetchSupabaseRecords } from "../admin/helpers";
 
 export async function GET() {
   const records = await fetchSupabaseRecords("paymentSettings");

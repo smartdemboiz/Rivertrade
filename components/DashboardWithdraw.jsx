@@ -41,11 +41,11 @@ export default function DashboardWithdraw() {
   const [bankName, setBankName] = useState("");
   const [paypalEmail, setPaypalEmail] = useState("");
   const [managedAccount, setManagedAccount] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
 
   const changeMethod = (event) => {
     setMethod(event.target.value);
-    setSubmitted(false);
+    setError("");
     setCurrency("");
     setWalletAddress("");
     setNetwork("");
@@ -59,7 +59,7 @@ export default function DashboardWithdraw() {
 
   const submitWithdrawal = (event) => {
     event.preventDefault();
-    setSubmitted(true);
+    setError("Withdrawal processing is not connected to a payout provider yet. No funds were moved.");
   };
 
   return (
@@ -116,7 +116,7 @@ export default function DashboardWithdraw() {
         </>}
 
         <button type="submit">Withdraw</button>
-        {submitted && <p className="dashboard-withdraw-success" role="status">Your withdrawal request has been submitted for review.</p>}
+        {error && <p className="dashboard-withdraw-error" role="alert">{error}</p>}
       </form>
     </section>
   );

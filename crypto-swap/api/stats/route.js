@@ -8,7 +8,7 @@ export async function OPTIONS(request) {
 export async function GET(request) {
   try {
     // Rate limit: 120 requests per minute per IP
-    const rateLimit = checkRateLimit(request, null, 120, 60000);
+    const rateLimit = await checkRateLimit(request, null, 120, 60000);
     if (!rateLimit.allowed) {
       return addCorsHeaders(rateLimitResponse(rateLimit.resetTime), request);
     }

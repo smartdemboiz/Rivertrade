@@ -16,18 +16,35 @@ export function getSupabaseClient() {
 
 export async function saveSwapHistory(entry) {
   const client = getSupabaseClient();
-  if (!client) return { error: 'Supabase not configured' };
+  if (!client) throw new Error('Supabase is not configured.');
 
   const { error } = await client.from('swap_history').insert([entry]);
-  return { error: error?.message || null };
+  if (error) throw new Error(error.message || 'Unable to save swap history.');
 }
 
 export async function saveAuditRecord(record) {
   const client = getSupabaseClient();
-  if (!client) return { error: 'Supabase not configured' };
+  if (!client) throw new Error('Supabase is not configured.');
 
-  const { error } = await client.from('audit_logs').insert([record]);
-  return { error: error?.message || null };
+  const {
+    request_id: requestId,
+    event_type: eventType,
+    source_ip: sourceIp,
+    source_wallet: sourceWallet,
+    destination,
+    data,
+    created_at: createdAt,
+  } = record;
+  const auditEntry = {
+    action: eventType,
+    section: 'swaps',
+    record_id: requestId,
+    metadata: { request_id: requestId, source_ip: sourceIp, source_wallet: sourceWallet, destination, data },
+    created_at: createdAt,
+  };
+
+  const { error } = await client.from('audit_logs').insert([auditEntry]);
+  if (error) throw new Error(error.message || 'Unable to save audit record.');
 }
 
 export async function checkDatabaseHealth() {

@@ -174,7 +174,22 @@ create table if not exists public.manage_schema (
   updated_at timestamptz default now()
 );
 
--- 16) Admin audit log
+-- 16) Swap request history
+create table if not exists public.swap_history (
+  id uuid primary key default gen_random_uuid(),
+  request_id text unique not null,
+  ip_address text,
+  from_token jsonb not null,
+  to_token jsonb not null,
+  send_amount numeric not null check (send_amount > 0),
+  destination text not null,
+  wallet_address text,
+  route_priority text,
+  result jsonb not null default '{}',
+  created_at timestamptz not null default now()
+);
+
+-- 17) Admin audit log
 create table if not exists public.audit_logs (
   id uuid primary key default gen_random_uuid(),
   actor_id uuid references public.profiles(id) on delete set null,
@@ -245,6 +260,7 @@ create index if not exists referrals_user_id_idx on public.referrals(user_id);
 create index if not exists support_tickets_user_id_idx on public.support_tickets(user_id);
 create index if not exists transactions_user_id_idx on public.transactions(user_id);
 create index if not exists manage_schema_key_idx on public.manage_schema(key);
+create index if not exists swap_history_created_at_idx on public.swap_history(created_at desc);
 create index if not exists audit_logs_actor_id_idx on public.audit_logs(actor_id);
 create index if not exists audit_logs_created_at_idx on public.audit_logs(created_at desc);
 create index if not exists payment_methods_enabled_idx on public.payment_methods(enabled);
@@ -350,6 +366,7 @@ alter table public.expert_traders enable row level security;
 alter table public.staff enable row level security;
 alter table public.transactions enable row level security;
 alter table public.manage_schema enable row level security;
+alter table public.swap_history enable row level security;
 alter table public.schedules enable row level security;
 alter table public.holidays enable row level security;
 alter table public.investment_plans enable row level security;

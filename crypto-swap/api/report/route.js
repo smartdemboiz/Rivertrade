@@ -45,7 +45,7 @@ export async function OPTIONS(request) {
 export async function POST(request) {
   try {
     // Check rate limit
-    const rateLimit = checkRateLimit(request, null, 50, 60000); // 50 req/min
+    const rateLimit = await checkRateLimit(request, null, 50, 60000); // 50 req/min
     if (!rateLimit.allowed) {
       return addCorsHeaders(rateLimitResponse(rateLimit.resetTime), request);
     }

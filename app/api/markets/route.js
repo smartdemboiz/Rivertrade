@@ -1,19 +1,3 @@
-const fallback = [
-  ["Bitcoin", "BTC", 104283.21, 2.84, "2.48T"],
-  ["Ethereum", "ETH", 3862.74, 1.92, "465.2B"],
-  ["Tether", "USDT", 1, 0.01, "140.8B"],
-  ["BNB", "BNB", 712.42, -0.63, "104.1B"],
-  ["Solana", "SOL", 238.18, 4.11, "115.3B"],
-  ["XRP", "XRP", 2.41, -1.18, "138.7B"],
-].map(([name, symbol, price, change, marketcap], index) => ({
-  name,
-  symbol,
-  price,
-  change,
-  marketcap,
-  rank: index + 1,
-}));
-
 function normalize(coins) {
   return coins.map((coin, index) => ({
     name: coin.name,
@@ -38,6 +22,6 @@ export async function GET() {
     if (!response.ok) throw new Error("Markets request failed");
     return Response.json(normalize(await response.json()));
   } catch {
-    return Response.json(fallback);
+    return Response.json({ error: "Market data is temporarily unavailable." }, { status: 502 });
   }
 }

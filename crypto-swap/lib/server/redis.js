@@ -2,24 +2,32 @@ import { createClient } from 'redis';
 
 const REDIS_URL = process.env.REDIS_URL;
 let client;
+let connection;
 
 async function connectRedis() {
-  if (client) return client;
+  if (client?.isOpen) return client;
+  if (connection) return connection;
   if (!REDIS_URL) return null;
 
-  client = createClient({ url: REDIS_URL });
-  client.on('error', (err) => {
-    // Keep the client around so we don't retry forever on bad config.
+  const nextClient = createClient({ url: REDIS_URL });
+  nextClient.on('error', (err) => {
     console.error('[Redis] connection error', err.message || err);
   });
 
-  try {
-    await client.connect();
-    return client;
-  } catch (error) {
-    console.error('[Redis] connection failed', error?.message || error);
-    return null;
-  }
+  connection = nextClient.connect()
+    .then(() => {
+      client = nextClient;
+      return client;
+    })
+    .catch((error) => {
+      console.error('[Redis] connection failed', error?.message || error);
+      nextClient.destroy();
+      return null;
+    })
+    .finally(() => {
+      connection = null;
+    });
+  return connection;
 }
 
 export async function getRedisClient() {
@@ -35,7 +43,12 @@ export async function getRedisClient() {
 
 export async function rateLimit(key, limit = 20, windowSeconds = 60) {
   const redis = await getRedisClient();
-  if (!redis) return { allowed: true, count: 0, remaining: limit, resetAt: null };
+  if (!redis) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Redis is required for production rate limiting.');
+    }
+    return { allowed: true, count: 0, remaining: limit, resetAt: null };
+  }
 
   const count = await redis.incr(key);
   if (count === 1) {

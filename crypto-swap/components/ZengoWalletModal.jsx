@@ -49,7 +49,7 @@ export default function ZengoWalletModal({ onClose, onConnect, onBack }) {
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <img src="/icons/zengo-icn.svg" alt="Zengo" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
-                  Connect using one of Zengo's supported recovery options. Choose Email, Recovery File, or 3D FaceLock to continue.
+                  Connect using one of Zengo&apos;s supported recovery options. Choose Email, Recovery File, or 3D FaceLock to continue.
                 </p>
               </div>
 
@@ -271,7 +271,7 @@ export default function ZengoWalletModal({ onClose, onConnect, onBack }) {
           ) : selectedMethod === 'faceLock' ? (
             <>
               <p style={{ textAlign: 'center', color: 'var(--text-dim)', marginBottom: 20, fontSize: 14 }}>
-                Use Zengo's 3D FaceLock to authenticate securely.
+                Use Zengo&apos;s 3D FaceLock to authenticate securely.
               </p>
               <button
                 onClick={handleFaceLockConnect}

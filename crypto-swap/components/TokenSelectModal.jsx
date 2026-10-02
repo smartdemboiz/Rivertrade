@@ -12,14 +12,11 @@ const TOKEN_BATCH_CONCURRENCY = 2;
 const TOKEN_PAGE_SIZE = 50;
 
 function TokenImage({ src, alt, className, label }) {
-  const [failed, setFailed] = useState(false);
-
-  useEffect(() => {
-    setFailed(false);
-  }, [src]);
+  const [failedSource, setFailedSource] = useState('');
+  const failed = failedSource === src;
 
   return src && !failed
-    ? <img className={className} src={src} alt={alt} referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+    ? <img className={className} src={src} alt={alt} referrerPolicy="no-referrer" onError={() => setFailedSource(src)} />
     : <span className={`${className} token-logo-fallback`} aria-label={alt}>{label?.slice(0, 1) || '?'}</span>;
 }
 
@@ -63,9 +60,9 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT) {
 }
 
 export default function TokenSelectModal({ field, defaultChainId, onClose, onSelect }) {
-  const [availableChains, setAvailableChains] = useState(chains); // Start with static data
-  const [liveChainIds, setLiveChainIds] = useState(null);
-  const chainsRefreshed = useRef(false);
+  const [availableChains, setAvailableChains] = useState(() => chainsCache || chains);
+  const [liveChainIds, setLiveChainIds] = useState(() => chainsCache?.map((chain) => Number(chain.id)) || null);
+  const chainsRefreshed = useRef(Boolean(chainsCache));
 
   // Load chains in background without blocking UI
   useEffect(() => {
@@ -73,13 +70,6 @@ export default function TokenSelectModal({ field, defaultChainId, onClose, onSel
     if (chainsRefreshed.current) return;
     chainsRefreshed.current = true;
     
-    // Use cached chains if available
-    if (chainsCache) {
-      setAvailableChains(chainsCache);
-      setLiveChainIds(chainsCache.map((chain) => chain.id));
-      return;
-    }
-
     // Fetch live chains asynchronously in background (non-blocking)
     fetchWithTimeout('/api/chains', {}, FETCH_TIMEOUT)
       .then(async (res) => {
@@ -120,16 +110,18 @@ export default function TokenSelectModal({ field, defaultChainId, onClose, onSel
       : tokens.filter((token) => supportedChainIds.has(Number(token.chainId ?? token.chain))).slice(0, 120);
     const cached = tokenCache.get(cacheKey);
 
-    // Set static data immediately (non-blocking)
-    setModalTokens(cached?.length ? cached : fallbackTokens);
-    if (cached?.length) {
-      setLoading(false);
-      return undefined;
-    }
-
     const loadingTimer = window.setTimeout(() => {
-      if (!cancelled) setLoading(true);
+      if (cancelled) return;
+      setModalTokens(cached?.length ? cached : fallbackTokens);
+      setLoading(targetChainIds.length > 0 && !cached?.length);
     }, 0);
+
+    if (cached?.length) {
+      return () => {
+        cancelled = true;
+        clearTimeout(loadingTimer);
+      };
+    }
 
     // Fetch live tokens asynchronously in background without blocking UI
     if (targetChainIds.length > 0 && !cached?.length) {
@@ -175,7 +167,7 @@ export default function TokenSelectModal({ field, defaultChainId, onClose, onSel
       cancelled = true;
       clearTimeout(loadingTimer);
     };
-  }, [chainId, liveChainIds]);
+  }, [chainId, liveChainIds, availableChains]);
 
   const pool = useMemo(
     () => (memeFilter ? tokens.filter((t) => t.tag === 'MEME') : modalTokens),

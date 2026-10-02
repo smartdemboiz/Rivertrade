@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/crypto-swap/lib/server/redis.js";
 
 const getSupabaseAuthConfig = () => {
   const url = process.env.SUPABASE_URL;
@@ -11,23 +12,14 @@ const getSupabaseAuthConfig = () => {
   return { url, anonKey };
 };
 
-const buildDemoRegisterResponse = ({ firstName, lastName, email, country, countryCode, phone, currency }) => ({
-  message: "Registration successful",
-  token: `demo-token-${Math.random().toString(36).slice(2, 10)}`,
-  user: {
-    id: "demo-user-1",
-    firstName,
-    lastName,
-    email,
-    country,
-    countryCode,
-    phone,
-    currency: currency || "USD",
-  },
-});
-
 export async function POST(request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const limit = await rateLimit(`rate:register:${ip}`, 5, 3600);
+    if (!limit.allowed) {
+      return Response.json({ error: "Too many registration attempts. Try again later." }, { status: 429 });
+    }
+
     const body = await request.json();
     const { firstName, lastName, email, password, country, countryCode, phone, currency } = body;
 

@@ -6,6 +6,8 @@ const languages = ["EN", "ES", "FR"];
 
 export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   const signup = mode === "signup";
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [country, setCountry] = useState("");
@@ -14,17 +16,39 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   const [currency, setCurrency] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("EN");
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    if (!email || !password || (signup && (!country || !phone || !currency || !accepted))) {
+    if (!email || !password || (signup && (!firstName || !lastName || !country || !phone || !currency || !accepted))) {
       setError(signup ? "Complete the required fields and accept the policies." : "Enter your email and password to continue.");
       return;
     }
     setError("");
-    onSuccess();
+    setNotice("");
+    setSubmitting(true);
+
+    try {
+      const response = await fetch(signup ? "/api/auth/register" : "/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email, password, country, countryCode, phone, currency }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Authentication failed.");
+      if (result.requiresEmailVerification || !result.token) {
+        setNotice(result.message || "Check your email to verify your account before signing in.");
+        return;
+      }
+      onSuccess({ token: result.token, user: result.user });
+    } catch (requestError) {
+      setError(requestError.message || "Authentication failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -45,7 +69,7 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
         <h1 className="text-4xl font-medium">{signup ? "Open your account" : "Welcome back"}</h1>
         <p className="mt-4 text-[#536367]">{signup ? "Start with the essentials. You can complete your profile later." : "Sign in to view your portfolio and market workspace."}</p>
         {signup && <>
-          <div className="grid gap-4 sm:grid-cols-2"><Field label="First name" required /><Field label="Last name" required /></div>
+          <div className="grid gap-4 sm:grid-cols-2"><Field label="First name" value={firstName} onChange={setFirstName} required /><Field label="Last name" value={lastName} onChange={setLastName} required /></div>
           <Field label="Country" placeholder="United States" value={country} onChange={setCountry} required />
           <div className="grid gap-4 sm:grid-cols-[1fr_2fr]"><Field label="Country code" value={countryCode} onChange={setCountryCode} required /><Field label="Phone number" type="tel" value={phone} onChange={setPhone} required /></div>
         </>}
@@ -56,7 +80,8 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
           <label className="mt-5 flex items-center gap-3 text-sm text-[#536367]"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="h-4 w-4 accent-[#6CF9D8]" />I accept the client and privacy policies.</label>
         </>}
         {error && <p className="mt-4 text-sm text-[#b42318]">{error}</p>}
-        <button className="mt-7 w-full rounded-lg bg-[#6CF9D8] py-4 font-black">{signup ? "Create account ↗" : "Sign in ↗"}</button>
+        {notice && <p className="mt-4 text-sm text-[#126e57]" role="status">{notice}</p>}
+        <button disabled={submitting} className="mt-7 w-full rounded-lg bg-[#6CF9D8] py-4 font-black disabled:cursor-wait disabled:opacity-60">{submitting ? "Please wait..." : signup ? "Create account ↗" : "Sign in ↗"}</button>
         <p className="mt-6 text-center text-sm text-[#536367]">{signup ? "Already have an account?" : "New to Rivertrade?"} <button type="button" onClick={onSwitchMode} className="font-black text-[#101b1d]">{signup ? "Sign in" : "Create an account"}</button></p>
       </form>
     </main>

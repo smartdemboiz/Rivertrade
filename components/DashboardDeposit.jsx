@@ -2,73 +2,55 @@
 
 import { useEffect, useState } from "react";
 
-const paymentMethods = ["Cryptocurrency", "Bank Transfer", "PayPal"];
-const cryptocurrencies = [
-  "Bitcoin (BTC)",
-  "Tether (USDT)",
-  "Ethereum (ETH)",
-  "Binance Coin (BNB)",
-  "Solana (SOL)",
-  "Polygon (MATIC)",
-  "Tron (TRX)",
-];
-const networks = [
-  "Bitcoin Network",
-  "Ethereum Network",
-  "BNB Smart Chain",
-  "Polygon Network",
-  "BEP20 (Binance Smart Chain)",
-  "ERC20 (Ethereum)",
-  "TRC20 (Tron)",
-  "Solana Network",
-];
-
 export default function DashboardDeposit() {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [cryptocurrency, setCryptocurrency] = useState("Bitcoin (BTC)");
+  const [cryptocurrency, setCryptocurrency] = useState("");
   const [network, setNetwork] = useState("");
   const [paypalReference, setPaypalReference] = useState("");
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
   const [paymentSettings, setPaymentSettings] = useState([]);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   useEffect(() => {
     fetch("/api/payment-settings")
       .then(response => response.ok ? response.json() : Promise.reject())
       .then(body => setPaymentSettings(body.data || []))
-      .catch(() => {});
+      .catch(() => setPaymentSettings([]))
+      .finally(() => setSettingsLoaded(true));
   }, []);
 
   const submitDeposit = (event) => {
     event.preventDefault();
-    setSubmitted(true);
+    setError("Deposit requests are not connected to a payment processor yet. No funds were moved.");
   };
 
   const configuredCrypto = paymentSettings.filter(item => item.method === "Cryptocurrency");
   const configuredMethods = [...new Set(paymentSettings.map(item => item.method))];
-  const visiblePaymentMethods = configuredMethods.length ? configuredMethods : paymentMethods;
-  const visibleCryptocurrencies = configuredCrypto.length ? [...new Set(configuredCrypto.map(item => item.asset).filter(Boolean))] : cryptocurrencies;
+  const visiblePaymentMethods = configuredMethods;
+  const visibleCryptocurrencies = [...new Set(configuredCrypto.map(item => item.asset).filter(Boolean))];
   const selectedCrypto = configuredCrypto.find(item => item.asset === cryptocurrency) || configuredCrypto[0];
-  const walletAddress = selectedCrypto?.value || (cryptocurrency === "Tether (USDT)" ? "TVgcd7agoat7W8EzGtqtU2CCZN6SHDA5tcD" : "1A1z7agoat7W8EzGtqtU2CCZN6SHDA5tcD");
-  const networkLabel = selectedCrypto?.network || network || (cryptocurrency === "Tether (USDT)" ? "TRC20" : "Bitcoin Network");
-  const visibleNetworks = configuredCrypto.length ? [...new Set(configuredCrypto.filter(item => item.asset === cryptocurrency).map(item => item.network).filter(Boolean))] : networks;
+  const walletAddress = selectedCrypto?.value || "";
+  const networkLabel = selectedCrypto?.network || network;
+  const visibleNetworks = [...new Set(configuredCrypto.filter(item => item.asset === cryptocurrency).map(item => item.network).filter(Boolean))];
   const bankSetting = paymentSettings.find(item => item.method === "Bank Transfer");
-  const bankDetails = bankSetting?.value ? bankSetting.value.split("\n").map(line => line.split(": ")) : [
-    ["Bank Name", "Rivertrade Bank"],
-    ["Account Number", "1234567890"],
-    ["SWIFT", "RTBKUS33"],
-    ["IBAN", "US00RTBK00000012345678"],
-  ];
+  const bankDetails = bankSetting?.value ? bankSetting.value.split("\n").map(line => line.split(": ")) : [];
   const bankDetailsText = bankDetails.map(([label, value]) => `${label}: ${value}`).join("\n");
   const paypalSetting = paymentSettings.find(item => item.method === "PayPal");
-  const paypalDetails = [
-    ...(paypalSetting?.value ? paypalSetting.value.split("\n").map(line => line.split(": ")) : [["PayPal Email", "payments@rivertrade.com"], ["Account Name", "RiverTrade Holdings"]]),
-    ["Payment Reference", paypalReference || "Use your RiverTrade email"],
-  ];
+  const paypalDetails = paypalSetting?.value ? paypalSetting.value.split("\n").map(line => line.split(": ")) : [];
   const paypalDetailsText = paypalDetails.map(([label, value]) => `${label}: ${value}`).join("\n");
   const selectedInstructions = selectedCrypto?.instructions || bankSetting?.instructions || paypalSetting?.instructions;
+
+  if (!settingsLoaded || paymentSettings.length === 0) {
+    return (
+      <section className="dashboard-deposit" aria-labelledby="deposit-title">
+        <h2 id="deposit-title">Deposit Funds</h2>
+        <p role="status">{settingsLoaded ? "No verified deposit methods are configured." : "Loading available deposit methods…"}</p>
+      </section>
+    );
+  }
 
   return (
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
@@ -78,14 +60,14 @@ export default function DashboardDeposit() {
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
 
         <label htmlFor="deposit-method">Payment Method</label>
-        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setSubmitted(false); }} required>
+        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setError(""); }} required>
           <option value="">-- Choose Payment Method --</option>
           {visiblePaymentMethods.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
 
         {paymentMethod === "Cryptocurrency" && <>
           <label htmlFor="deposit-cryptocurrency">Cryptocurrency</label>
-          <select id="deposit-cryptocurrency" value={cryptocurrency} onChange={(event) => { setCryptocurrency(event.target.value); setNetwork(""); setSubmitted(false); }} required>
+          <select id="deposit-cryptocurrency" value={cryptocurrency} onChange={(event) => { setCryptocurrency(event.target.value); setNetwork(""); setError(""); }} required>
             {visibleCryptocurrencies.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <div className="dashboard-deposit-details">
@@ -118,7 +100,7 @@ export default function DashboardDeposit() {
         </div>}
 
         <button type="submit">Deposit</button>
-        {submitted && <p className="dashboard-deposit-success" role="status">Your deposit request has been submitted.</p>}
+        {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
       </form>
     </section>
   );

@@ -37,6 +37,7 @@ import DashboardManagedAccount from "@/components/DashboardManagedAccount";
 import DashboardProfitHistory from "@/components/DashboardProfitHistory";
 import DashboardProfile from "@/components/DashboardProfile";
 import DashboardActivePositions from "@/components/DashboardActivePositions";
+import { clearAuthSession, useAuthSession } from "@/hooks/useAuthSession";
 
 const nav = [
   [LayoutDashboard, "Overview"],
@@ -206,14 +207,7 @@ function TradingViewMarketBoard({ theme }) {
 export default function DashboardPage() {
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
-  const [user] = useState(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return JSON.parse(localStorage.getItem("user")) || null;
-    } catch {
-      return null;
-    }
-  });
+  const { authenticated, user } = useAuthSession();
   const [visible, setVisible] = useState(true);
   const [sidebar, setSidebar] = useState(false);
   const [activeSection, setActiveSection] = useState("Overview");
@@ -231,6 +225,10 @@ export default function DashboardPage() {
     localStorage.setItem("rivertrade-dashboard-theme", theme);
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    if (!authenticated) router.replace("/");
+  }, [authenticated, router]);
 
   useEffect(() => {
     const updateDate = () => {
@@ -267,7 +265,7 @@ export default function DashboardPage() {
   }, [sidebar]);
 
   const logout = () => {
-    localStorage.clear();
+    clearAuthSession();
     router.push("/");
   };
 
@@ -284,6 +282,8 @@ export default function DashboardPage() {
     }
     setSidebar(true);
   };
+
+  if (!authenticated) return null;
 
   return (
     <div className={`dashboard ${theme === "dark" ? "theme-dark" : "theme-light"}`}>

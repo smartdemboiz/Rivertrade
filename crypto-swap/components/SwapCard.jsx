@@ -237,7 +237,7 @@ export default function SwapCard({
 
       <div className="actions-single">
         <button className="main-action-btn" onClick={onActionClick}>
-          {connectedLabel ? 'Execute Swap' : 'Connect wallet'}
+          {connectedLabel ? 'Execution unavailable' : 'Connect wallet'}
         </button>
       </div>
     </div>

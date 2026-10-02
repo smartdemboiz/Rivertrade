@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 
 const translations = {
   en: { dashboard: "Dashboard", customers: "Customers", kyc: "KYC management", transactions: "Transactions", investments: "Investments", userFunds: "Manage User Funds", expertTraders: "Manage Expert Traders", swaps: "Swap activity", managedAccounts: "Managed accounts", deposits: "Deposits", withdrawals: "Withdrawals", investmentPlans: "Investment plans", profitHistory: "Profit history", profiles: "Profiles", referrals: "Referrals", support: "Support", paymentSettings: "Payment details", manageSchema: "Manage Schema", schedule: "Schedule", holiday: "Holiday", editInvestmentPlans: "Edit Investment Plans", staff: "Staff management", settings: "Settings", welcome: "Welcome back. Here is what is happening with your platform today.", home: "Home", about: "About", contact: "Contact", login: "Login", signUp: "Sign Up", aboutUs: "About Us", contactUs: "Contact Us", companyInfo: "Company Info", language: "Language", contactEyebrow: "We're Here For You", getIn: "Get In", touch: "Touch", contactLead: "Have questions or need assistance? Our team is available 24/7 to help you." },
@@ -43,18 +43,33 @@ const landingSectionTranslations = {
 };
 
 const LanguageContext = createContext({ language: "en", setLanguage: () => {}, t: key => translations.en[key] || key });
+
+function subscribeToLanguage(onChange) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener("rivertrade-language-change", onChange);
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener("rivertrade-language-change", onChange);
+  };
+}
+
+function getLanguageSnapshot() {
+  const savedLanguage = localStorage.getItem("rivertrade-language");
+  return savedLanguage && translations[savedLanguage] ? savedLanguage : "en";
+}
+
+function getServerLanguageSnapshot() {
+  return "en";
+}
+
 export function LanguageProvider({ children }) {
-  const [language, setLanguage] = useState("en");
+  const language = useSyncExternalStore(subscribeToLanguage, getLanguageSnapshot, getServerLanguageSnapshot);
   const changeLanguage = value => {
     if (!translations[value]) return;
-    setLanguage(value);
-    if (typeof window !== "undefined") localStorage.setItem("rivertrade-language", value);
+    localStorage.setItem("rivertrade-language", value);
+    window.dispatchEvent(new Event("rivertrade-language-change"));
   };
   const t = key => translations[language]?.[key] || interfaceTranslations[language]?.[key] || landingTranslations[language]?.[key] || landingSectionTranslations[language]?.[key] || translations.en[key] || interfaceTranslations.en[key] || landingTranslations.en[key] || landingSectionTranslations.en[key] || key;
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("rivertrade-language");
-    if (savedLanguage && translations[savedLanguage]) setLanguage(savedLanguage);
-  }, []);
   useEffect(() => { document.documentElement.lang = language; }, [language]);
   return <LanguageContext.Provider value={{ language, setLanguage: changeLanguage, t }}>{children}</LanguageContext.Provider>;
 }

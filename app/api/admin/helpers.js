@@ -90,12 +90,7 @@ export const fallbackData = {
     { id: 2, key: "min_withdrawal", value: "$50", category: "finance" },
     { id: 3, key: "kyc_required", value: "true", category: "compliance" },
   ],
-  paymentSettings: [
-    { id: 1, method: "Cryptocurrency", asset: "Bitcoin (BTC)", network: "Bitcoin Network", label: "Wallet address", value: "1A1z7agoat7W7X8EzGtqtU2CCZN6SHDA5tcD", instructions: "Send only BTC on the selected network.", enabled: true },
-    { id: 2, method: "Cryptocurrency", asset: "Tether (USDT)", network: "TRC20", label: "Wallet address", value: "TVgcd7agoat7W7A8EzGtqtU2CCZN6SHDA5tcD", instructions: "Send only USDT on TRC20.", enabled: true },
-    { id: 3, method: "Bank Transfer", asset: "", network: "", label: "Bank details", value: "Bank Name: Rivertrade Bank\nAccount Number: 1234567890\nSWIFT: RTBKUS33\nIBAN: US00RTBK00000012345678", instructions: "Include the user's RiverTrade email as the payment reference.", enabled: true },
-    { id: 4, method: "PayPal", asset: "", network: "", label: "PayPal details", value: "PayPal Email: payments@rivertrade.com\nAccount Name: RiverTrade Holdings", instructions: "Include the user's RiverTrade email in the payment reference.", enabled: true },
-  ],
+  paymentSettings: [],
   transactions: fallbackTransactions,
 };
 

@@ -19,6 +19,7 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
   const [selectedPercentage, setSelectedPercentage] = useState(null);
   const [destinationWallet, setDestinationWallet] = useState("");
   const [walletLabel, setWalletLabel] = useState("");
+  const [connectedWalletAddress, setConnectedWalletAddress] = useState("");
   const [modal, setModal] = useState(null);
   const [quickView, setQuickView] = useState(null);
   const [showRoute, setShowRoute] = useState(true);
@@ -50,16 +51,11 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
     fromToken,
     toToken,
     sendAmount,
+    walletAddress: connectedWalletAddress,
     toAddress: destinationWallet,
     routePriority: settings.routePriority,
     settings,
   });
-
-  useEffect(() => {
-    if (routes && routes.length > 0) {
-      setShowRoute(true);
-    }
-  }, [routes]);
 
   const switchDirection = () => {
     setFromToken(toToken);
@@ -73,37 +69,13 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
       setModal("wallet");
       return;
     }
-    if (!destinationWallet) {
-      setModal("destination");
-      return;
-    }
-
-    setExecutionState("Submitting swap...");
-    try {
-      const response = await fetch("/api/swap/execute", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          fromToken,
-          toToken,
-          sendAmount,
-          destination: destinationWallet,
-          walletAddress: destinationWallet,
-          routePriority: settings.routePriority,
-          settings,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Swap could not be submitted.");
-      setExecutionState(`Swap submitted: ${result.requestId}`);
-    } catch (error) {
-      setExecutionState(error.message);
-    }
+    setExecutionState("Swap execution is not available yet. No transaction was sent.");
   };
 
-  const handleWalletConnect = (label) => {
+  const handleWalletConnect = (label, address) => {
     const wallet = String(label || "Unknown wallet").slice(0, 100);
     setWalletLabel(wallet);
+    setConnectedWalletAddress(typeof address === "string" ? address : "");
     setModal(null);
 
     fetch("/api/report", {

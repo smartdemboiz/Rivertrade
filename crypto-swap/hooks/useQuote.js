@@ -4,27 +4,33 @@ import { useEffect, useRef, useState } from 'react';
 
 // Debounced quote hook now routes requests through the server-side quote API.
 export function useQuote({ fromToken, toToken, sendAmount, walletAddress, toAddress, routePriority, settings }) {
-  const [routes, setRoutes] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [quoteResult, setQuoteResult] = useState({ key: '', routes: [] });
+  const [loadingKey, setLoadingKey] = useState('');
   const requestId = useRef(0);
   const timerRef = useRef(null);
+  const requestKey = JSON.stringify([
+    fromToken?.address, fromToken?.chain, toToken?.address, toToken?.chain,
+    sendAmount, walletAddress, toAddress, routePriority,
+    settings.bridgesEnabled, settings.exchangesEnabled,
+  ]);
+  const canQuote = Boolean(fromToken?.address && toToken?.address && parseFloat(sendAmount) > 0);
+  const routes = quoteResult.key === requestKey ? quoteResult.routes : [];
+  const loading = canQuote && loadingKey === requestKey;
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
     requestId.current += 1;
-    setRoutes([]);
 
-    const canQuote = fromToken?.address && toToken?.address && parseFloat(sendAmount) > 0;
     if (!canQuote) {
-      setLoading(false);
       return undefined;
     }
 
     const myRequestId = requestId.current;
-    setLoading(true);
     const controller = new AbortController();
 
     timerRef.current = setTimeout(async () => {
+      setQuoteResult({ key: requestKey, routes: [] });
+      setLoadingKey(requestKey);
       try {
         const response = await fetch('/api/quotes', {
           method: 'POST',
@@ -45,14 +51,13 @@ export function useQuote({ fromToken, toToken, sendAmount, walletAddress, toAddr
         }
         const data = await response.json();
         if (myRequestId !== requestId.current) return;
-        setRoutes(data.routes || []);
+        setQuoteResult({ key: requestKey, routes: data.routes || [] });
       } catch (err) {
         if (controller.signal.aborted || myRequestId !== requestId.current || err?.name === 'AbortError') return;
         console.error('[useQuote]', err?.message || err);
-        setRoutes([]);
       } finally {
         if (myRequestId === requestId.current) {
-          setLoading(false);
+          setLoadingKey('');
         }
       }
     }, 700);

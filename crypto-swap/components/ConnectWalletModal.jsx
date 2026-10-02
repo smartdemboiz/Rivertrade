@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, ShieldCheck, Sparkles, ArrowLeft, Search } from 'lucide-react';
-import { walletConnectors, allWalletsList } from '@/lib/data';
+import { allWalletsList } from '@/lib/data';
 import TrustWalletModal from './TrustWalletModal';
 import TrezorWalletModal from './TrezorWalletModal';
 import LedgerWalletModal from './LedgerWalletModal';
@@ -35,6 +35,11 @@ import BloctoWalletModal from './BloctoWalletModal';
 import BraveWalletModal from './BraveWalletModal';
 import AmbireWalletModal from './AmbireWalletModal';
 import XDEFIWalletModal from './XDEFIWalletModal';
+
+const supportedWallets = [
+  { id: 'injected', label: 'Browser wallet' },
+  { id: 'walletConnect', label: 'WalletConnect', icon: '/icons/walletConnect.svg' },
+];
 
 export default function ConnectWalletModal({ onClose, onConnect }) {
   const [showAll, setShowAll] = useState(false);
@@ -76,6 +81,27 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
   const [showBraveWallet, setShowBraveWallet] = useState(false);
   const [showXDEFIWallet, setShowXDEFIWallet] = useState(false);
   const [walletModalType, setWalletModalType] = useState(null);
+  const [connectionError, setConnectionError] = useState('');
+
+  const connectBrowserWallet = async () => {
+    setConnectionError('');
+    const provider = window.ethereum;
+    if (!provider?.request) {
+      setConnectionError('No browser wallet extension was detected.');
+      return;
+    }
+
+    try {
+      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      if (!accounts?.[0]) throw new Error('No account was returned.');
+      onConnect('Browser wallet', accounts[0]);
+      onClose();
+    } catch (error) {
+      setConnectionError(error?.code === 4001
+        ? 'Wallet connection was rejected.'
+        : 'Unable to connect to the browser wallet.');
+    }
+  };
 
   const walletIconMap = {
     'MetaMask': '/icons/metamask.svg',
@@ -596,69 +622,26 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
           </div>
           <div className="modal-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-              {walletConnectors.map((w) => (
-                <button key={w.id} onClick={() => {
-                  if (w.label === 'MetaMask') {
-                    setShowMetaMaskWallet(true);
-                  } else if (w.label === 'Trust Wallet') {
-                    setShowTrustWallet(true);
-                  } else if (w.label === 'Uniswap Wallet' || w.label === 'WalletConnect' || w.label === 'Coinbase Wallet') {
-                    setWalletModalType(w.label);
-                  } else if (w.label === 'Trezor Wallet') {
-                    setShowTrezorWallet(true);
-                  } else if (w.label === 'Ledger Wallet') {
-                    setShowLedgerWallet(true);
-                  } else if (w.label === 'Non-web3 wallets') {
-                    setShowNonWeb3Wallet(true);
-                  } else if (w.label === 'Exodus' || w.label === 'Exodus Wallet') {
-                    setShowExodusWallet(true);
-                  } else if (w.label === 'Phantom' || w.label === 'Phantom Wallet') {
-                    setShowPhantomWallet(true);
-                  } else if (w.label === 'Zengo' || w.label === 'Zengo Wallet') {
-                    setShowZengoWallet(true);
-                  } else if (w.label === 'Zerion' || w.label === 'Zerion Wallet') {
-                    setShowZerionWallet(true);
-                  } else if (w.label === 'Backpack' || w.label === 'Backpack Wallet') {
-                    setShowBackpackWallet(true);
-                  } else if (w.label === 'Frame' || w.label === 'Frame Wallet') {
-                    setShowFrameWallet(true);
-                  } else if (w.label === 'imToken' || w.label === 'imToken Wallet') {
-                    setShowImTokenWallet(true);
-                  } else if (w.label === 'TokenPocket' || w.label === 'TokenPocket Wallet') {
-                    setShowTokenPocketWallet(true);
-                  } else if (w.label === 'MathWallet' || w.label === 'Math Wallet') {
-                    setShowMathWallet(true);
-                  } else if (w.label === 'OKX' || w.label === 'OKX Wallet') {
-                    setShowOKXWallet(true);
-                  } else if (w.label === 'Argent' || w.label === 'Argent Wallet') {
-                    setShowArgentWallet(true);
-                  } else if (w.label === 'Rainbow' || w.label === 'Rainbow Wallet') {
-                    setShowRainbowWallet(true);
-                  } else if (w.label === 'Rabby' || w.label === 'Rabby Wallet') {
-                    setShowRabbyWallet(true);
-                  } else if (w.label === 'Safe' || w.label === 'Safe Wallet' || w.id === 'safe') {
-                    setShowSafeWallet(true);
+              {supportedWallets.map((wallet) => (
+                <button key={wallet.id} onClick={() => {
+                  if (wallet.id === 'injected') {
+                    connectBrowserWallet();
                   } else {
-                    onConnect(w.label);
+                    setConnectionError('');
+                    setWalletModalType(wallet.label);
                   }
                 }} className="wallet-connector-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {w.icon ? (
-                      <img src={w.icon} alt={w.label} className="wallet-icon-img" />
+                    {wallet.icon ? (
+                      <img src={wallet.icon} alt={wallet.label} className="wallet-icon-img" />
                     ) : (
-                      <span className="wallet-avatar-badge">{w.label.slice(0, 1)}</span>
+                      <span className="wallet-avatar-badge">B</span>
                     )}
-                    <span>{w.label}</span>
+                    <span>{wallet.label}</span>
                   </div>
-                  {w.badge && <span className="badge badge-best">{w.badge}</span>}
                 </button>
               ))}
-              <button onClick={() => setShowAll(true)} className="wallet-connector-row" style={{ borderStyle: 'dashed', borderColor: 'var(--border-highlight)', color: 'var(--text-dim)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ color: 'var(--cyan)' }}><Sparkles size={20} /></span><span>All Wallets</span>
-                </div>
-                <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text)' }}>{allWalletsList.length}+</span>
-              </button>
+              {connectionError && <p role="alert" className="wallet-connection-error">{connectionError}</p>}
             </div>
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, textAlign: 'center' }}>
               <p style={{ margin: 0, fontSize: 13, color: 'var(--text-dim)' }}>
