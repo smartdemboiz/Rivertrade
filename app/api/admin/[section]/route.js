@@ -4,7 +4,7 @@ export async function GET(request, { params }) {
   try {
     const authorization = await requireAdmin(request);
     if (authorization.error) return authorization.error;
-    const section = params.section;
+    const { section } = await params;
     const records = await fetchSupabaseRecords(section);
     return Response.json({ data: records || fallbackData[section] || [] });
   } catch (error) {
@@ -16,7 +16,7 @@ export async function POST(request, { params }) {
   try {
     const authorization = await requireAdmin(request);
     if (authorization.error) return authorization.error;
-    const section = params.section;
+    const { section } = await params;
     const body = validateAdminPayload(section, await request.json());
     const record = await insertSupabaseRecord(section, body);
     await logAdminEvent({ userId: authorization.user.id, action: "create", section, recordId: record?.id, metadata: body });
