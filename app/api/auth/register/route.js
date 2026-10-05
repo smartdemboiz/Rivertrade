@@ -53,6 +53,7 @@ export async function POST(request) {
         email,
         password,
         options: {
+          emailRedirectTo: new URL("/auth/callback", request.url).toString(),
           data: {
             first_name: firstName,
             last_name: lastName,

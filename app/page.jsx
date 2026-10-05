@@ -16,7 +16,7 @@ export default function Home() {
 
   const completeAuthentication = ({ token, user }) => {
     persistAuthSession({ token, user });
-    setView("landing");
+    router.push("/dashboard");
   };
 
   const openDashboard = () => {
