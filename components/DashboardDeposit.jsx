@@ -68,6 +68,7 @@ export default function DashboardDeposit() {
         {paymentMethod === "Cryptocurrency" && <>
           <label htmlFor="deposit-cryptocurrency">Cryptocurrency</label>
           <select id="deposit-cryptocurrency" value={cryptocurrency} onChange={(event) => { setCryptocurrency(event.target.value); setNetwork(""); setError(""); }} required>
+            <option value="">-- Choose Cryptocurrency --</option>
             {visibleCryptocurrencies.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <div className="dashboard-deposit-details">
@@ -76,8 +77,9 @@ export default function DashboardDeposit() {
             <button type="button" onClick={() => navigator.clipboard?.writeText(walletAddress)}>Copy address/details</button>
             <small>{selectedInstructions || `Please send the exact amount of ${cryptocurrency.replace(/\s*\([^)]*\)/, "")} on ${networkLabel} to the wallet above. Your deposit will be confirmed after 1–3 blockchain confirmations.`}</small>
           </div>
+          {!cryptocurrency && <p role="status">Choose a cryptocurrency above to see its available networks.</p>}
           <label htmlFor="deposit-network">Select Network</label>
-          <select id="deposit-network" value={network} onChange={(event) => setNetwork(event.target.value)} required>
+          <select id="deposit-network" value={network} onChange={(event) => setNetwork(event.target.value)} required disabled={!visibleNetworks.length}>
             <option value="">-- Choose Network --</option>
             {visibleNetworks.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
