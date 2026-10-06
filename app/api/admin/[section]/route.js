@@ -17,6 +17,9 @@ export async function POST(request, { params }) {
     const authorization = await requireAdmin(request);
     if (authorization.error) return authorization.error;
     const { section } = await params;
+    if (section === "customers") {
+      return Response.json({ error: "Customer accounts must be created through signup or an Auth invite." }, { status: 400 });
+    }
     const body = validateAdminPayload(section, await request.json());
     const record = await insertSupabaseRecord(section, body);
     await logAdminEvent({ userId: authorization.user.id, action: "create", section, recordId: record?.id, metadata: body });

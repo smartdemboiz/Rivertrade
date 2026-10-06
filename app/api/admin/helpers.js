@@ -95,7 +95,7 @@ export const fallbackData = {
 };
 
 export const tableMap = {
-  customers: ["customers", "profiles"],
+  customers: ["profiles"],
   kyc: ["kyc", "user_kyc"],
   investments: ["investments", "investment_plans"],
   userFunds: ["user_funds", "wallets"],
@@ -258,6 +258,23 @@ export function getTableNames(section) {
   return tableMap[section] || [section];
 }
 
+function toDatabasePayload(section, payload) {
+  if (section !== "customers") return payload;
+  const { firstName, lastName, ...rest } = payload;
+  if (firstName !== undefined) rest.first_name = firstName;
+  if (lastName !== undefined) rest.last_name = lastName;
+  return rest;
+}
+
+function toAdminRecord(section, record) {
+  if (section !== "customers") return record;
+  return {
+    ...record,
+    firstName: record.first_name || "",
+    lastName: record.last_name || "",
+  };
+}
+
 export async function fetchSupabaseRecords(section) {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
@@ -275,7 +292,10 @@ export async function fetchSupabaseRecords(section) {
         continue;
       }
 
-      return data ?? [];
+      const records = data ?? [];
+      return section === "customers"
+        ? records.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record))
+        : records;
     } catch {
       continue;
     }
@@ -291,7 +311,7 @@ export async function insertSupabaseRecord(section, payload) {
   }
 
   const table = getTableNames(section)[0] || section;
-  const { data, error } = await supabase.from(table).insert(payload).select().single();
+  const { data, error } = await supabase.from(table).insert(toDatabasePayload(section, payload)).select().single();
 
   if (error) {
     throw new Error(error.message || "Unable to create record");
@@ -307,7 +327,7 @@ export async function updateSupabaseRecord(section, id, payload) {
   }
 
   const table = getTableNames(section)[0] || section;
-  const { data, error } = await supabase.from(table).update(payload).eq("id", id).select().single();
+  const { data, error } = await supabase.from(table).update(toDatabasePayload(section, payload)).eq("id", id).select().single();
 
   if (error) {
     throw new Error(error.message || "Unable to update record");
@@ -319,6 +339,35 @@ export async function updateSupabaseRecord(section, id, payload) {
 export async function deleteSupabaseRecord(section, id) {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
+    return true;
+  }
+
+  if (section === "customers") {
+    const { data: profile, error: readError } = await supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", id)
+      .maybeSingle();
+    if (readError) throw new Error(readError.message || "Unable to load customer");
+    if (!profile) return false;
+    if (profile.role === "admin") throw new Error("Admin accounts cannot be removed from customer management");
+
+    const { error: authError } = await supabase.auth.admin.deleteUser(id, true);
+    if (authError) throw new Error(authError.message || "Unable to disable customer sign-in");
+
+    const { error: anonymizeError } = await supabase
+      .from("profiles")
+      .update({
+        email: `deleted+${id}@privacy.invalid`,
+        first_name: "Deleted",
+        last_name: "User",
+        country: null,
+        country_code: null,
+        phone: null,
+        role: "deleted",
+      })
+      .eq("id", id);
+    if (anonymizeError) throw new Error(anonymizeError.message || "Unable to anonymize customer details");
     return true;
   }
 
@@ -334,7 +383,7 @@ export async function getAdminStats() {
 
   try {
     const [customers, investments, kyc, transactions] = await Promise.all([
-      supabase.from("profiles").select("id"),
+      supabase.from("profiles").select("id").neq("role", "deleted"),
       supabase.from("investments").select("*"),
       supabase.from("kyc").select("*"),
       supabase.from("transactions").select("*"),

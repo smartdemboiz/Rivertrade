@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ArrowDownToLine, ArrowLeftRight, BarChart3, Bell, BriefcaseBusiness, CircleHelp, ClipboardCheck, History, LayoutGrid, LogOut, Menu, Moon, Settings, Sun, TrendingUp, UserRound, Users, UsersRound, Wallet, WalletCards, X } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import AdminRecords from "@/components/AdminRecords";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const emptyStats = { totalUsers: 0, totalRevenue: 0, activeInvestments: 0, pendingKyc: 0, usersChange: 0, revenueChange: 0, investmentsChange: 0, kycChange: 0 };
 const nav = [[LayoutGrid, "dashboard"], [Users, "customers"], [ClipboardCheck, "kyc"], [WalletCards, "transactions"], [BriefcaseBusiness, "investments"], [Wallet, "userFunds"], [ArrowLeftRight, "swaps"], [BriefcaseBusiness, "managedAccounts"], [Wallet, "deposits"], [ArrowDownToLine, "withdrawals"], [BarChart3, "investmentPlans"], [History, "profitHistory"], [UserRound, "profiles"], [UsersRound, "referrals"], [CircleHelp, "support"], [WalletCards, "paymentSettings"], [TrendingUp, "expertTraders"], [Users, "staff"], [Settings, "settings"]];
@@ -36,4 +37,45 @@ function AdminContent() {
   return <div className="admin-shell"><aside className={open ? "admin-side open" : "admin-side"}><div className="admin-brand"><Link className="brand-mark admin-logo" href="/" aria-label="RiverTrade home"><img src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" /></Link><button className="admin-close" onClick={() => setOpen(false)}><X size={18} /></button></div><nav>{nav.map(([Icon, key]) => <button className={section === key ? "active" : ""} onClick={() => { setSection(key); setOpen(false); }} key={key}><Icon size={17} />{t(key)}</button>)}<div className={`schema-menu ${schemaOpen ? "open" : ""}`}><button className={`schema-toggle ${section === "manageSchema" ? "active" : ""}`} onClick={() => { setSchemaOpen(!schemaOpen); setSection("manageSchema"); }}><BriefcaseBusiness size={17} /><span>{t("manageSchema")}</span><span className="schema-chevron">{schemaOpen ? "⌃" : "⌄"}</span></button>{schemaOpen && <div className="schema-submenu">{schemaItems.map(([key, labelKey]) => <button className={section === key ? "subactive" : ""} onClick={() => { setSection(key); setOpen(false); }} key={key}>{t(labelKey)}</button>)}</div>}</div></nav><div className="side-foot"><small>Admin workspace</small><strong>Operations</strong><Link href="/" onClick={() => localStorage.clear()}><LogOut size={15} /> Log out</Link></div></aside><div className="admin-main"><header className="admin-header"><button className="menu-button" onClick={() => setOpen(!open)}><Menu /></button><div><p className="eyebrow">RiverTrade operations</p><h1>{title}</h1></div><div className="admin-tools"><button className="icon-button admin-theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button><select value={language} onChange={event => setLanguage(event.target.value)} aria-label={t("language")}><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="ja">日本語</option><option value="zh">中文</option></select><div className="admin-notifications"><button className="icon-button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen(current => !current)}><Bell size={17} /></button>{notificationsOpen && <div className="admin-notification-menu" role="dialog" aria-label={t("notifications")}><p className="admin-no-notifications">{t("noNotifications")}</p></div>}</div></div></header><main className="admin-content">{section === "dashboard" ? <><div className="admin-intro"><h2>{t("welcome")}</h2><span>{currentDate || "-"}</span></div><div className="admin-stats">{cards.map(([label, value, change]) => <article key={label}><small>{label}</small><strong>{value}</strong><span>{change}</span></article>)}</div><div className="admin-panels"><section className="admin-panel"><div className="admin-panel-head"><h2>Revenue overview</h2></div><p className="admin-empty-chart">No revenue data yet.</p></section><section className="admin-panel"><div className="admin-panel-head"><h2>Platform health</h2><span className="health">Live health check</span></div><p>Use the health endpoint to monitor service status.</p></section></div><TransactionTable transactions={transactions.slice(0, 5)} /></> : <AdminRecords section={section} />}</main></div></div>;
 }
 
-export default function AdminPage() { return <AdminContent />; }
+export default function AdminPage() {
+  const { authenticated } = useAuthSession();
+  const [authorized, setAuthorized] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (!authenticated) return;
+
+    let active = true;
+    fetch("/api/admin/stats", { headers: authHeaders(), cache: "no-store" })
+      .then(response => {
+        if (!active) return;
+        setAuthorized(response.ok);
+        setChecking(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setAuthorized(false);
+        setChecking(false);
+      });
+
+    return () => { active = false; };
+  }, [authenticated]);
+
+  if (!authenticated || (!checking && !authorized)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#101b1d] px-6 text-[#E0F3FF]">
+        <section className="w-full max-w-md rounded-xl border border-white/10 bg-[#202024] p-8 text-center">
+          <h1 className="text-2xl font-semibold">Admin access required</h1>
+          <p className="mt-3 text-sm text-[#aab9bb]">Sign in with an administrator account to continue.</p>
+          <Link className="mt-6 inline-block font-semibold text-[#6CF9D8]" href="/auth">Sign in</Link>
+        </section>
+      </main>
+    );
+  }
+
+  if (checking) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#101b1d] text-[#E0F3FF]">Checking admin access…</main>;
+  }
+
+  return <AdminContent />;
+}
