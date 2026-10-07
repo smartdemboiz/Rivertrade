@@ -209,6 +209,7 @@ create table if not exists public.payment_methods (
   label text not null,
   value text not null,
   instructions text,
+  destination text default 'both' check (destination in ('deposit', 'withdrawal', 'both')),
   enabled boolean default true,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
