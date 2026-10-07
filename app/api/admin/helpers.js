@@ -190,6 +190,18 @@ export function validateAdminPayload(section, payload) {
     throw new Error(`Invalid status for ${section}`);
   }
 
+  if (["paymentSettings", "withdrawalSettings"].includes(section)) {
+    const expectedDestination = getSectionDestination(section);
+    const sourceDestination = payload.destination !== undefined ? String(payload.destination).toLowerCase() : expectedDestination;
+    const resolvedDestination = sourceDestination === "both" ? expectedDestination : sourceDestination;
+
+    if (!resolvedDestination || resolvedDestination !== expectedDestination) {
+      throw new Error(`This ${section === "paymentSettings" ? "payment detail" : "withdrawal method"} must be saved as ${expectedDestination}.`);
+    }
+
+    payload.destination = resolvedDestination;
+  }
+
   if (["deposits", "withdrawals", "swaps"].includes(section) && payload.amount !== undefined) {
     const amount = Number(String(payload.amount).replace(/[$,]/g, ""));
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("Amount must be greater than zero");
@@ -255,6 +267,12 @@ export async function executeOperationalAction({ section, id, action, userId }) 
   return updated;
 }
 
+export function getSectionDestination(section) {
+  if (section === "paymentSettings") return "deposit";
+  if (section === "withdrawalSettings") return "withdrawal";
+  return null;
+}
+
 export function getTableNames(section) {
   return tableMap[section] || [section];
 }
@@ -279,10 +297,11 @@ function toAdminRecord(section, record) {
 export async function fetchSupabaseRecords(section) {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
-    return section === "paymentSettings" ? fallbackData[section] || [] : [];
+    return ["paymentSettings", "withdrawalSettings"].includes(section) ? fallbackData[section] || [] : [];
   }
 
   const candidates = getTableNames(section);
+  const expectedDestination = getSectionDestination(section);
 
   for (const table of candidates) {
     try {
@@ -294,9 +313,10 @@ export async function fetchSupabaseRecords(section) {
       }
 
       const records = data ?? [];
-      const filtered = section === "withdrawalSettings"
-        ? records.filter((record) => record.destination === "withdrawal" || record.destination === "both")
+      const filtered = expectedDestination
+        ? records.filter((record) => String(record.destination || "").toLowerCase() === expectedDestination)
         : records;
+
       return section === "customers"
         ? filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record))
         : filtered;
@@ -305,7 +325,7 @@ export async function fetchSupabaseRecords(section) {
     }
   }
 
-  return section === "paymentSettings" ? fallbackData[section] || [] : [];
+  return ["paymentSettings", "withdrawalSettings"].includes(section) ? fallbackData[section] || [] : [];
 }
 
 export async function insertSupabaseRecord(section, payload) {
@@ -315,7 +335,11 @@ export async function insertSupabaseRecord(section, payload) {
   }
 
   const table = getTableNames(section)[0] || section;
-  const { data, error } = await supabase.from(table).insert(toDatabasePayload(section, payload)).select().single();
+  const normalizedPayload = ["paymentSettings", "withdrawalSettings"].includes(section)
+    ? { ...payload, destination: getSectionDestination(section) }
+    : payload;
+
+  const { data, error } = await supabase.from(table).insert(toDatabasePayload(section, normalizedPayload)).select().single();
 
   if (error) {
     throw new Error(error.message || "Unable to create record");
@@ -331,7 +355,11 @@ export async function updateSupabaseRecord(section, id, payload) {
   }
 
   const table = getTableNames(section)[0] || section;
-  const { data, error } = await supabase.from(table).update(toDatabasePayload(section, payload)).eq("id", id).select().single();
+  const normalizedPayload = ["paymentSettings", "withdrawalSettings"].includes(section)
+    ? { ...payload, destination: getSectionDestination(section) }
+    : payload;
+
+  const { data, error } = await supabase.from(table).update(toDatabasePayload(section, normalizedPayload)).eq("id", id).select().single();
 
   if (error) {
     throw new Error(error.message || "Unable to update record");
@@ -376,6 +404,23 @@ export async function deleteSupabaseRecord(section, id) {
   }
 
   const table = getTableNames(section)[0] || section;
+  const expectedDestination = getSectionDestination(section);
+
+  if (expectedDestination) {
+    const { data: existing, error: readError } = await supabase
+      .from(table)
+      .select("id, destination")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (readError) throw new Error(readError.message || "Unable to load record");
+    if (!existing) return false;
+
+    if (String(existing.destination || "").toLowerCase() !== expectedDestination) {
+      throw new Error(`This record is not configured for ${section}.`);
+    }
+  }
+
   const { error } = await supabase.from(table).delete().eq("id", id);
 
   return !error;
