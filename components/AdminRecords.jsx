@@ -31,6 +31,56 @@ const definitions = {
   transactions: { title: "Transactions", description: "Monitor deposits, withdrawals, and investment activity.", columns: ["user", "amount", "type", "status"], labels: ["User", "Amount", "Type", "Status"] },
 };
 
+const withdrawalMethodOptions = [
+  "Bank Transfer",
+  "Cryptocurrency",
+  "PayPal",
+  "PayPal Friends & Family",
+  "PayPal Goods & Services",
+  "Wise",
+  "Zelle",
+  "Cash App",
+  "Venmo",
+  "Other",
+];
+const withdrawalAssetOptions = [
+  "USD",
+  "EUR",
+  "GBP",
+  "CAD",
+  "AUD",
+  "Bitcoin (BTC)",
+  "Tether (USDT)",
+  "Ethereum (ETH)",
+  "Solana (SOL)",
+  "USD Coin (USDC)",
+  "Binance Coin (BNB)",
+  "Ripple (XRP)",
+  "Dogecoin (DOGE)",
+  "Cardano (ADA)",
+  "Chainlink (LINK)",
+  "Litecoin (LTC)",
+  "Bitcoin Cash (BCH)",
+  "Polkadot (DOT)",
+  "Avalanche (AVAX)",
+  "Other",
+];
+const withdrawalNetworkOptions = [
+  "ACH",
+  "Wire Transfer",
+  "SWIFT",
+  "SEPA",
+  "Faster Payments",
+  "Interac e-Transfer",
+  "Bitcoin Network",
+  "ERC20",
+  "TRC20",
+  "BEP20",
+  "Polygon",
+  "Solana Network",
+  "Other",
+];
+
 const operationalActions = {
   deposits: [["confirm", "Confirm"], ["reject", "Reject"]],
   withdrawals: [["process", "Process"], ["approve", "Approve"], ["reject", "Reject"]],
@@ -144,11 +194,11 @@ export default function AdminRecords({ section }) {
         <form className="admin-editor withdrawal-method-editor" onSubmit={save}>
           <div className="withdrawal-method-heading">
             <h3>{editing === "new" ? "Add a withdrawal option" : "Edit withdrawal option"}</h3>
-            <p>Choose what customers can select. They will provide their own payout details when requesting a withdrawal.</p>
+            <p>Choose what customers can select. They will provide their own payout details when requesting a withdrawal. Common methods, assets, and networks are suggested; custom values are also accepted.</p>
           </div>
-          <label>Method<input required value={form.method || ""} onChange={event => setForm({ ...form, method: event.target.value })} placeholder="e.g. Bank Transfer" /></label>
-          <label>Asset<input required value={form.asset || ""} onChange={event => setForm({ ...form, asset: event.target.value })} placeholder="e.g. USD or USDT" /></label>
-          <label>Network<input required value={form.network || ""} onChange={event => setForm({ ...form, network: event.target.value })} placeholder="e.g. ACH, ERC20" /></label>
+          <label>Method<input list="withdrawal-method-options" required value={form.method || ""} onChange={event => setForm({ ...form, method: event.target.value })} placeholder="e.g. Bank Transfer, Cryptocurrency" /><datalist id="withdrawal-method-options">{withdrawalMethodOptions.map(option => <option key={option} value={option} />)}</datalist></label>
+          <label>Asset<input list="withdrawal-asset-options" required value={form.asset || ""} onChange={event => setForm({ ...form, asset: event.target.value })} placeholder="e.g. USD, BTC, USDT" /><datalist id="withdrawal-asset-options">{withdrawalAssetOptions.map(option => <option key={option} value={option} />)}</datalist></label>
+          <label>Network<input list="withdrawal-network-options" required value={form.network || ""} onChange={event => setForm({ ...form, network: event.target.value })} placeholder="e.g. ACH, Wire Transfer, ERC20" /><datalist id="withdrawal-network-options">{withdrawalNetworkOptions.map(option => <option key={option} value={option} />)}</datalist></label>
           <label className="withdrawal-instructions">Instructions<textarea rows="3" value={form.instructions || ""} onChange={event => setForm({ ...form, instructions: event.target.value })} placeholder="Optional guidance shown with this withdrawal option" /></label>
           <div className="withdrawal-method-controls">
             <label>Availability<select value={form.enabled !== undefined ? String(form.enabled) : "true"} onChange={event => setForm({ ...form, enabled: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select></label>
