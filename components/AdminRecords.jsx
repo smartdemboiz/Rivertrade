@@ -1,15 +1,61 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
 
-const currencies = [
+const definitions = {
+  customers: { title: "Customer management", description: "Review customer accounts, balances, and account status.", columns: ["firstName", "lastName", "email", "country", "currency"], labels: ["First name", "Last name", "Email", "Country", "Currency"] },
+  kyc: { title: "KYC management", description: "Review verification requests and keep compliance work moving.", columns: ["userName", "email", "documentType", "status"], labels: ["User", "Email", "Document", "Status"] },
+  investments: { title: "Investments", description: "Manage investment plans, active strategies, and customer allocation data.", columns: ["userName", "plan", "amount", "status"], labels: ["User", "Plan", "Amount", "Status"] },
+  userFunds: { title: "Manage User Funds", description: "Track wallet balances, transaction activity, and fund movement approvals.", columns: ["userName", "balance", "type", "status"], labels: ["User", "Balance", "Type", "Status"] },
+  expertTraders: { title: "Manage Expert Traders", description: "Monitor expert traders, performance, and assigned portfolios.", columns: ["name", "specialty", "performance", "status"], labels: ["Name", "Specialty", "Performance", "Status"] },
+  staff: { title: "Staff management", description: "Manage operational access and internal responsibilities.", columns: ["name", "email", "role", "status"], labels: ["Name", "Email", "Role", "Status"] },
+  roles: { title: "Manage roles", description: "Define permissions for your operations team.", columns: ["name", "description", "users"], labels: ["Name", "Description", "Users"] },
+  schedules: { title: "Schedules", description: "Maintain operating dates and internal schedules.", columns: ["startDate", "endDate", "description"], labels: ["Start date", "End date", "Description"] },
+  holidays: { title: "Holidays", description: "Manage market and operational holidays.", columns: ["name", "date", "type"], labels: ["Name", "Date", "Type"] },
+  schemas: { title: "Investment schemas", description: "Configure investment ranges and expected returns.", columns: ["name", "minAmount", "maxAmount", "returnRate", "duration"], labels: ["Name", "Minimum", "Maximum", "Return %", "Duration"] },
+  crowdSchemas: { title: "Crowd schemas", description: "Configure collective investment opportunities.", columns: ["name", "participants", "targetAmount", "status"], labels: ["Name", "Participants", "Target amount", "Status"] },
+  notifications: { title: "Notifications", description: "Review messages sent to customers.", columns: ["recipient", "subject", "status"], labels: ["Recipient", "Subject", "Status"] },
+  deposits: { title: "Deposit operations", description: "Monitor incoming deposits, payment methods, and approval workflow.", columns: ["user", "amount", "currency", "status", "method"], labels: ["User", "Amount", "Currency", "Status", "Method"] },
+  withdrawals: { title: "Withdrawal operations", description: "Review requested withdrawals and approve or reject them.", columns: ["user", "amount", "currency", "status", "method"], labels: ["User", "Amount", "Currency", "Status", "Method"] },
+  swaps: { title: "Swap activity", description: "Track crypto swaps and settlement status for user orders.", columns: ["user", "fromAsset", "toAsset", "amount", "status"], labels: ["User", "From", "To", "Amount", "Status"] },
+  managedAccounts: { title: "Managed accounts", description: "Manage assigned strategies, allocations, and active portfolio oversight.", columns: ["user", "strategy", "allocation", "status"], labels: ["User", "Strategy", "Allocation", "Status"] },
+  investmentPlans: { title: "Investment plans", description: "Control plan ranges, ROI, and active strategies for all clients.", columns: ["name", "minimum", "maximum", "roi", "duration", "status"], labels: ["Plan", "Min", "Max", "ROI", "Duration", "Status"] },
+  profitHistory: { title: "Profit history", description: "Review generated profits, settled periods, and pending distributions.", columns: ["user", "period", "profit", "status"], labels: ["User", "Period", "Profit", "Status"] },
+  profiles: { title: "Profile management", description: "Review personal details, verification status, and user account information.", columns: ["user", "fullName", "email", "phone", "country", "verified"], labels: ["User", "Full name", "Email", "Phone", "Country", "Verified"] },
+  referrals: { title: "Referral program", description: "Track referrals, campaigns, and user reward performance.", columns: ["user", "code", "referrals", "earnings", "status"], labels: ["User", "Code", "Referrals", "Earnings", "Status"] },
+  support: { title: "Support center", description: "Monitor customer tickets, priorities, and support resolution progress.", columns: ["user", "subject", "status", "priority"], labels: ["User", "Subject", "Status", "Priority"] },
+  settings: { title: "Platform settings", description: "Manage business configuration, withdrawals, branding, and compliance rules.", columns: ["key", "value", "category"], labels: ["Key", "Value", "Category"] },
+  paymentSettings: { title: "Payment details", description: "Manage wallet addresses and payment instructions for deposits.", columns: ["method", "asset", "network", "label", "value", "instructions", "destination", "enabled"], labels: ["Method", "Asset", "Network", "Label", "Details", "Instructions", "Destination", "Enabled"] },
+  withdrawalSettings: { title: "Withdrawal methods", description: "Configure the payout methods users can choose when requesting a withdrawal.", columns: ["method", "asset", "network", "instructions", "enabled"], labels: ["Method", "Asset", "Network", "Instructions", "Enabled"] },
+  transactions: { title: "Transactions", description: "Monitor deposits, withdrawals, and investment activity.", columns: ["user", "amount", "type", "status"], labels: ["User", "Amount", "Type", "Status"] },
+};
+
+const withdrawalMethodOptions = [
+  "Bank Transfer",
+  "Cryptocurrency",
+  "PayPal",
+  "PayPal Friends & Family",
+  "PayPal Goods & Services",
+  "Wise",
+  "Zelle",
+  "Cash App",
+  "Venmo",
+  "Other",
+];
+const withdrawalAssetOptions = [
+  "USD",
+  "EUR",
+  "GBP",
+  "CAD",
+  "AUD",
   "Bitcoin (BTC)",
-  "Ethereum (ETH)",
   "Tether (USDT)",
+  "Ethereum (ETH)",
+  "Solana (SOL)",
   "USD Coin (USDC)",
   "Binance Coin (BNB)",
   "Ripple (XRP)",
-  "Solana (SOL)",
   "Dogecoin (DOGE)",
   "Cardano (ADA)",
   "Chainlink (LINK)",
@@ -17,8 +63,9 @@ const currencies = [
   "Bitcoin Cash (BCH)",
   "Polkadot (DOT)",
   "Avalanche (AVAX)",
+  "Other",
 ];
-const networks = [
+const withdrawalNetworkOptions = [
   "ACH",
   "Wire Transfer",
   "SWIFT",
@@ -26,159 +73,156 @@ const networks = [
   "Faster Payments",
   "Interac e-Transfer",
   "Bitcoin Network",
-  "Mainnet",
-  "BEP20",
   "ERC20",
   "TRC20",
-  "Polygon (MATIC)",
-  "BEP20 (Binance Smart Chain)",
-  "ERC20 (Ethereum)",
-  "TRC20 (Tron)",
-  "Solana Network",
+  "BEP20",
   "Polygon",
+  "Solana Network",
   "Other",
 ];
 
-export default function DashboardWithdraw() {
-  const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState("");
-  const [method, setMethod] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
-  const [network, setNetwork] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [routingNumber, setRoutingNumber] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [paypalEmail, setPaypalEmail] = useState("");
-  const [payoutDetails, setPayoutDetails] = useState("");
-  const [managedAccount, setManagedAccount] = useState("");
+const operationalActions = {
+  deposits: [["confirm", "Confirm"], ["reject", "Reject"]],
+  withdrawals: [["process", "Process"], ["approve", "Approve"], ["reject", "Reject"]],
+  swaps: [["complete", "Complete"], ["fail", "Fail"]],
+  managedAccounts: [["activate", "Activate"], ["review", "Review"], ["pause", "Pause"]],
+  investments: [["activate", "Activate"], ["complete", "Complete"], ["cancel", "Cancel"]],
+  profitHistory: [["settle", "Settle"], ["reopen", "Reopen"]],
+  referrals: [["activate", "Activate"], ["deactivate", "Deactivate"]],
+  support: [["resolve", "Resolve"], ["close", "Close"], ["reopen", "Reopen"]],
+};
+
+const apiBase = () => process.env.NEXT_PUBLIC_API_URL || "";
+const buildUrl = path => `${apiBase()}${path}`;
+const displayValue = value => value === undefined || value === null || value === "" ? "-" : String(value);
+const authHeaders = () => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : "";
+  return token && token !== "null" ? { Authorization: `Bearer ${token}` } : {};
+};
+
+export default function AdminRecords({ section }) {
+  const definition = definitions[section] || definitions.customers;
+  const [records, setRecords] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({});
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [withdrawalMethods, setWithdrawalMethods] = useState([]);
-  const [methodsLoaded, setMethodsLoaded] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/withdrawal-settings")
-      .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((body) => setWithdrawalMethods(body.data || []))
-      .catch(() => setWithdrawalMethods([]))
-      .finally(() => setMethodsLoaded(true));
-  }, []);
+  async function load() {
+    setLoading(true);
+    try {
+      const response = await fetch(buildUrl(`/api/admin/${section}`), { headers: authHeaders() });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Unable to load records");
+      setRecords(body.data || []);
+    } catch (loadError) {
+      setError(loadError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const changeMethod = (event) => {
-    const selected = configuredMethods[Number(event.target.value)];
-    setMethod(event.target.value);
-    setError("");
-    const configuredAsset = selected?.asset || "";
-    setCurrency(currencies.find((item) => item.toLowerCase() === configuredAsset.toLowerCase())
-      || currencies.find((item) => item.toLowerCase().includes(`(${configuredAsset.toLowerCase()})`))
-      || configuredAsset);
-    setWalletAddress("");
-    const configuredNetwork = selected?.network || "";
-    setNetwork(configuredNetwork
-      ? networks.find((item) => item === configuredNetwork || item.toLowerCase().includes(configuredNetwork.toLowerCase())) || configuredNetwork
-      : "");
-    setAccountName("");
-    setAccountNumber("");
-    setRoutingNumber("");
-    setBankName("");
-    setPaypalEmail("");
-    setPayoutDetails("");
-    setManagedAccount("");
-  };
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [section]);
 
-  const configuredMethods = withdrawalMethods.filter((item) => item.method);
-  const withdrawalMethod = method === "" ? null : configuredMethods[Number(method)] || null;
-  const methodName = withdrawalMethod?.method || "";
-  const assetName = withdrawalMethod?.asset || "";
-  const isCryptoMethod = /\b(crypto|bitcoin|btc|ethereum|ether|eth|tether|usdt|usdc|solana|sol|bnb|xrp|doge|ada|link|ltc|bch|dot|avax)\b/i.test(`${methodName} ${assetName}`);
-  const isBankMethod = /bank|ach|wire|swift|sepa|transfer/i.test(methodName);
-  const isPayPalMethod = /paypal/i.test(methodName);
-  const selectedInstructions = withdrawalMethod?.instructions;
-  const methodOptionLabel = (item) => [item.method, item.asset, item.network].filter(Boolean).join(" · ");
-  const usesCustomPayoutDetails = withdrawalMethod && !isCryptoMethod && !isBankMethod && !isPayPalMethod && methodName !== "RiverTrade managed account";
-  const configuredAssetIsListed = currencies.some((item) => item.toLowerCase() === assetName.toLowerCase() || item.toLowerCase().includes(`(${assetName.toLowerCase()})`));
-  const cryptoCurrencies = assetName && !configuredAssetIsListed ? [assetName, ...currencies] : currencies;
-  const cryptoNetworks = withdrawalMethod?.network && !networks.includes(withdrawalMethod.network)
-    ? [withdrawalMethod.network, ...networks]
-    : networks;
+  function openEditor(record = {}) {
+    setEditing(record.id || "new");
+    const values = Object.fromEntries(definition.columns.map((column) => {
+      if (column === "enabled") return [column, record.enabled ?? true];
+      if (column === "destination") return [column, record.destination || (section === "paymentSettings" ? "deposit" : "withdrawal")];
+      return [column, record[column] || ""];
+    }));
+    if (section === "withdrawalSettings") {
+      values.method = record.method || record.label || "";
+      values.value = record.value || "";
+      values.destination = "withdrawal";
+    }
+    setForm(values);
+  }
 
-  const submitWithdrawal = (event) => {
+  async function save(event) {
     event.preventDefault();
-    setError("Withdrawal processing is not connected to a payout provider yet. No funds were moved.");
-  };
+    const isNew = editing === "new";
+    const payload = section === "withdrawalSettings"
+      ? {
+          ...form,
+          label: form.method,
+          value: form.value || "Payout details provided by the user",
+          destination: "withdrawal",
+        }
+      : form;
+    const response = await fetch(buildUrl(`/api/admin/${section}${isNew ? "" : `/${editing}`}`), {
+      method: isNew ? "POST" : "PATCH",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const body = await response.json();
+    if (!response.ok) { setError(body.error || "Unable to save record"); return; }
+    setEditing(null);
+    setError("");
+    load();
+  }
 
-  if (!methodsLoaded || withdrawalMethods.length === 0) {
-    return (
-      <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
-        <h2 id="withdraw-title">Withdraw Funds</h2>
-        <p role="status">{methodsLoaded ? "No withdrawal methods are currently available." : "Loading available withdrawal methods…"}</p>
-      </section>
-    );
+  async function remove(id) {
+    const message = section === "customers"
+      ? "This permanently disables customer sign-in and anonymizes personal details. Linked financial history is retained. Continue?"
+      : "Delete this record?";
+    if (!window.confirm(message)) return;
+    const response = await fetch(buildUrl(`/api/admin/${section}/${id}`), { method: "DELETE", headers: authHeaders() });
+    if (!response.ok) { const body = await response.json(); setError(body.error || "Unable to delete record"); return; }
+    load();
+  }
+
+  async function updateKyc(id, status) {
+    const response = await fetch(buildUrl(`/api/admin/kyc/${id}`), { method: "PATCH", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ status }) });
+    if (response.ok) load();
+  }
+
+  async function applyAction(id, action) {
+    const response = await fetch(buildUrl(`/api/admin/${section}/${id}/action`), { method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
+    const body = await response.json();
+    if (!response.ok) { setError(body.error || "Unable to apply action"); return; }
+    setError("");
+    load();
   }
 
   return (
-    <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
-      <h2 id="withdraw-title">Withdraw Funds</h2>
-      <form className="dashboard-withdraw-form" onSubmit={submitWithdrawal}>
-        <label htmlFor="withdraw-amount">Amount</label>
-        <input id="withdraw-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
-
-        <label htmlFor="withdraw-method">Withdrawal Method</label>
-        <select id="withdraw-method" value={method} onChange={changeMethod} required>
-          <option value="">-- Choose Method --</option>
-          {configuredMethods.map((item, index) => <option key={item.id || `${item.method}-${index}`} value={index}>{methodOptionLabel(item)}</option>)}
-        </select>
-
-        {isCryptoMethod && <>
-          <label htmlFor="withdraw-currency">Select Cryptocurrency</label>
-          <select id="withdraw-currency" value={currency} onChange={(event) => setCurrency(event.target.value)} required>
-            <option value="">-- Choose Currency --</option>
-            {cryptoCurrencies.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-          <label htmlFor="withdraw-wallet">Wallet Address</label>
-          <input id="withdraw-wallet" value={walletAddress} onChange={(event) => setWalletAddress(event.target.value)} placeholder="Enter wallet address" required />
-          <label htmlFor="withdraw-network">Network (if applicable)</label>
-          <select id="withdraw-network" value={network} onChange={(event) => setNetwork(event.target.value)} required>
-            <option value="">-- Select Network --</option>
-            {cryptoNetworks.map((item) => <option key={item} value={item}>{item}</option>)}
-          </select>
-        </>}
-
-        {isBankMethod && <>
-          <label htmlFor="withdraw-account-name">Account Name</label>
-          <input id="withdraw-account-name" value={accountName} onChange={(event) => setAccountName(event.target.value)} placeholder="Account holder name" required />
-          <label htmlFor="withdraw-account-number">Account Number</label>
-          <input id="withdraw-account-number" value={accountNumber} onChange={(event) => setAccountNumber(event.target.value)} placeholder="Account number" required />
-          <label htmlFor="withdraw-routing-number">Routing Number</label>
-          <input id="withdraw-routing-number" value={routingNumber} onChange={(event) => setRoutingNumber(event.target.value)} placeholder="Routing number" required />
-          <label htmlFor="withdraw-bank-name">Bank Name</label>
-          <input id="withdraw-bank-name" value={bankName} onChange={(event) => setBankName(event.target.value)} placeholder="Bank name" required />
-        </>}
-
-        {isPayPalMethod && <>
-          <label htmlFor="withdraw-paypal-email">PayPal Email</label>
-          <input id="withdraw-paypal-email" type="email" value={paypalEmail} onChange={(event) => setPaypalEmail(event.target.value)} placeholder="example@paypal.com" required />
-        </>}
-
-        {usesCustomPayoutDetails && <>
-          <label htmlFor="withdraw-payout-details">Payout Account Details</label>
-          <input id="withdraw-payout-details" value={payoutDetails} onChange={(event) => setPayoutDetails(event.target.value)} placeholder="Account, username, email, or payment handle" required />
-        </>}
-
-        {methodName === "RiverTrade managed account" && <>
-          <label htmlFor="withdraw-managed-account">Managed Account</label>
-          <select id="withdraw-managed-account" value={managedAccount} onChange={(event) => setManagedAccount(event.target.value)} required>
-            <option value="">-- Choose Account --</option>
-            <option value="managed-growth">Managed Growth Account</option>
-            <option value="managed-balanced">Managed Balanced Account</option>
-          </select>
-        </>}
-
-        {withdrawalMethod && <div className="dashboard-deposit-details"><p>{methodOptionLabel(withdrawalMethod)}</p><small>{selectedInstructions || "Review the destination details before submitting your withdrawal request."}</small></div>}
-
-        <button type="submit">Withdraw</button>
-        {error && <p className="dashboard-withdraw-error" role="alert">{error}</p>}
-      </form>
-    </section>
+    <>
+      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section !== "customers" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
+      {error && <p className="form-message">{error}</p>}
+      {editing && (section === "withdrawalSettings" ? (
+        <form className="admin-editor withdrawal-method-editor" onSubmit={save}>
+          <div className="withdrawal-method-heading">
+            <h3>{editing === "new" ? "Add a withdrawal option" : "Edit withdrawal option"}</h3>
+            <p>Choose what customers can select. They will provide their own payout details when requesting a withdrawal. Common methods, assets, and networks are suggested; custom values are also accepted.</p>
+          </div>
+          <label>Method<input list="withdrawal-method-options" required value={form.method || ""} onChange={event => setForm({ ...form, method: event.target.value })} placeholder="e.g. Bank Transfer, Cryptocurrency" /><datalist id="withdrawal-method-options">{withdrawalMethodOptions.map(option => <option key={option} value={option} />)}</datalist></label>
+          <label>Asset<input list="withdrawal-asset-options" required value={form.asset || ""} onChange={event => setForm({ ...form, asset: event.target.value })} placeholder="e.g. USD, BTC, USDT" /><datalist id="withdrawal-asset-options">{withdrawalAssetOptions.map(option => <option key={option} value={option} />)}</datalist></label>
+          <label>Network<input list="withdrawal-network-options" required value={form.network || ""} onChange={event => setForm({ ...form, network: event.target.value })} placeholder="e.g. ACH, Wire Transfer, ERC20" /><datalist id="withdrawal-network-options">{withdrawalNetworkOptions.map(option => <option key={option} value={option} />)}</datalist></label>
+          <label className="withdrawal-instructions">Instructions<textarea rows="3" value={form.instructions || ""} onChange={event => setForm({ ...form, instructions: event.target.value })} placeholder="Optional guidance shown with this withdrawal option" /></label>
+          <div className="withdrawal-method-controls">
+            <label>Availability<select value={form.enabled !== undefined ? String(form.enabled) : "true"} onChange={event => setForm({ ...form, enabled: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select></label>
+            <div className="withdrawal-method-actions"><button className="button" type="submit">Save method</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
+          </div>
+        </form>
+      ) : (
+        <form className="admin-editor" onSubmit={save}>
+          {definition.columns.map((column, index) => (
+            <label key={column}>
+              {definition.labels[index]}
+              {section === "paymentSettings" && (column === "value" || column === "instructions")
+                ? <textarea required={column === "value"} rows="4" value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />
+                : section === "paymentSettings" && column === "destination"
+                  ? <select value={form[column] || "deposit"} onChange={event => setForm({ ...form, [column]: event.target.value })}><option value="deposit">Deposit only</option><option value="withdrawal">Withdrawal only</option></select>
+                  : column === "enabled"
+                    ? <select value={form[column] !== undefined ? String(form[column]) : "true"} onChange={event => setForm({ ...form, [column]: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select>
+                    : <input required={column !== "description"} readOnly={section === "customers" && column === "email"} value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />}
+            </label>
+          ))}
+          <div><button className="button" type="submit">Save</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
+        </form>
+      ))}
+      <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : displayValue(record[column])}</td>)}<td><span className="row-actions"><button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{label}</button>)}{section !== "customers" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
+    </>
   );
 }
