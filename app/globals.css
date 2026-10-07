@@ -6438,10 +6438,76 @@ body:has(.legacy-home) .hero-banner img {
   outline: 0;
   font-size: 12px;
 }
+.withdrawal-method-editor {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.withdrawal-method-editor .withdrawal-instructions,
+.withdrawal-method-editor > div,
+.withdrawal-method-heading {
+  grid-column: 1 / -1;
+}
+.withdrawal-method-heading h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+.withdrawal-method-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.withdrawal-method-editor textarea {
+  width: 100%;
+  min-height: 84px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 10px;
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+.withdrawal-method-editor select {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 10px;
+  font: inherit;
+  font-size: 12px;
+}
+.withdrawal-method-editor .withdrawal-method-controls {
+  justify-content: space-between;
+}
+.withdrawal-method-controls > label {
+  width: min(100%, 260px);
+}
+.withdrawal-method-editor .withdrawal-method-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
 .admin-editor > div {
   display: flex;
   align-items: end;
   gap: 15px;
+}
+@media (max-width: 640px) {
+  .withdrawal-method-editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .withdrawal-method-editor .withdrawal-instructions,
+  .withdrawal-method-editor > div,
+  .withdrawal-method-heading {
+    grid-column: auto;
+  }
+  .withdrawal-method-editor .withdrawal-method-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .withdrawal-method-controls > label {
+    width: 100%;
+  }
+  .withdrawal-method-editor .withdrawal-method-actions {
+    justify-content: flex-start;
+  }
 }
 .row-actions {
   display: flex;

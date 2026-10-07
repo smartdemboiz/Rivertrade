@@ -27,7 +27,7 @@ const definitions = {
   support: { title: "Support center", description: "Monitor customer tickets, priorities, and support resolution progress.", columns: ["user", "subject", "status", "priority"], labels: ["User", "Subject", "Status", "Priority"] },
   settings: { title: "Platform settings", description: "Manage business configuration, withdrawals, branding, and compliance rules.", columns: ["key", "value", "category"], labels: ["Key", "Value", "Category"] },
   paymentSettings: { title: "Payment details", description: "Manage wallet addresses and payment instructions for deposits.", columns: ["method", "asset", "network", "label", "value", "instructions", "destination", "enabled"], labels: ["Method", "Asset", "Network", "Label", "Details", "Instructions", "Destination", "Enabled"] },
-  withdrawalSettings: { title: "Withdrawal methods", description: "Choose which payment methods and details users can select for withdrawals.", columns: ["method", "asset", "network", "label", "value", "instructions", "destination", "enabled"], labels: ["Method", "Asset", "Network", "Label", "Details", "Instructions", "Destination", "Enabled"] },
+  withdrawalSettings: { title: "Withdrawal methods", description: "Configure the payout methods users can choose when requesting a withdrawal.", columns: ["method", "asset", "network", "instructions", "enabled"], labels: ["Method", "Asset", "Network", "Instructions", "Enabled"] },
   transactions: { title: "Transactions", description: "Monitor deposits, withdrawals, and investment activity.", columns: ["user", "amount", "type", "status"], labels: ["User", "Amount", "Type", "Status"] },
 };
 
@@ -77,20 +77,34 @@ export default function AdminRecords({ section }) {
 
   function openEditor(record = {}) {
     setEditing(record.id || "new");
-    setForm(Object.fromEntries(definition.columns.map((column) => {
+    const values = Object.fromEntries(definition.columns.map((column) => {
       if (column === "enabled") return [column, record.enabled ?? true];
       if (column === "destination") return [column, record.destination || (section === "paymentSettings" ? "deposit" : "withdrawal")];
       return [column, record[column] || ""];
-    })));
+    }));
+    if (section === "withdrawalSettings") {
+      values.method = record.method || record.label || "";
+      values.value = record.value || "";
+      values.destination = "withdrawal";
+    }
+    setForm(values);
   }
 
   async function save(event) {
     event.preventDefault();
     const isNew = editing === "new";
+    const payload = section === "withdrawalSettings"
+      ? {
+          ...form,
+          label: form.method,
+          value: form.value || "Payout details provided by the user",
+          destination: "withdrawal",
+        }
+      : form;
     const response = await fetch(buildUrl(`/api/admin/${section}${isNew ? "" : `/${editing}`}`), {
       method: isNew ? "POST" : "PATCH",
       headers: { ...authHeaders(), "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     const body = await response.json();
     if (!response.ok) { setError(body.error || "Unable to save record"); return; }
@@ -126,7 +140,38 @@ export default function AdminRecords({ section }) {
     <>
       <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section !== "customers" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
       {error && <p className="form-message">{error}</p>}
-      {editing && <form className="admin-editor" onSubmit={save}>{definition.columns.map((column, index) => <label key={column}>{definition.labels[index]}{["paymentSettings", "withdrawalSettings"].includes(section) ? column === "value" || column === "instructions" ? <textarea required={column === "value"} rows="4" value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} /> : column === "destination" ? <select value={form[column] || (section === "paymentSettings" ? "deposit" : "withdrawal")} onChange={event => setForm({ ...form, [column]: event.target.value })}><option value="deposit">Deposit only</option><option value="withdrawal">Withdrawal only</option></select> : column === "enabled" ? <select value={form[column] !== undefined ? String(form[column]) : "true"} onChange={event => setForm({ ...form, [column]: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select> : <input required={column !== "description"} readOnly={section === "customers" && column === "email"} value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} /> : <input required={column !== "description"} readOnly={section === "customers" && column === "email"} value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />}</label>)}<div><button className="button" type="submit">Save</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div></form>}
+      {editing && (section === "withdrawalSettings" ? (
+        <form className="admin-editor withdrawal-method-editor" onSubmit={save}>
+          <div className="withdrawal-method-heading">
+            <h3>{editing === "new" ? "Add a withdrawal option" : "Edit withdrawal option"}</h3>
+            <p>Choose what customers can select. They will provide their own payout details when requesting a withdrawal.</p>
+          </div>
+          <label>Method<input required value={form.method || ""} onChange={event => setForm({ ...form, method: event.target.value })} placeholder="e.g. Bank Transfer" /></label>
+          <label>Asset<input required value={form.asset || ""} onChange={event => setForm({ ...form, asset: event.target.value })} placeholder="e.g. USD or USDT" /></label>
+          <label>Network<input required value={form.network || ""} onChange={event => setForm({ ...form, network: event.target.value })} placeholder="e.g. ACH, ERC20" /></label>
+          <label className="withdrawal-instructions">Instructions<textarea rows="3" value={form.instructions || ""} onChange={event => setForm({ ...form, instructions: event.target.value })} placeholder="Optional guidance shown with this withdrawal option" /></label>
+          <div className="withdrawal-method-controls">
+            <label>Availability<select value={form.enabled !== undefined ? String(form.enabled) : "true"} onChange={event => setForm({ ...form, enabled: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select></label>
+            <div className="withdrawal-method-actions"><button className="button" type="submit">Save method</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
+          </div>
+        </form>
+      ) : (
+        <form className="admin-editor" onSubmit={save}>
+          {definition.columns.map((column, index) => (
+            <label key={column}>
+              {definition.labels[index]}
+              {section === "paymentSettings" && (column === "value" || column === "instructions")
+                ? <textarea required={column === "value"} rows="4" value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />
+                : section === "paymentSettings" && column === "destination"
+                  ? <select value={form[column] || "deposit"} onChange={event => setForm({ ...form, [column]: event.target.value })}><option value="deposit">Deposit only</option><option value="withdrawal">Withdrawal only</option></select>
+                  : column === "enabled"
+                    ? <select value={form[column] !== undefined ? String(form[column]) : "true"} onChange={event => setForm({ ...form, [column]: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select>
+                    : <input required={column !== "description"} readOnly={section === "customers" && column === "email"} value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />}
+            </label>
+          ))}
+          <div><button className="button" type="submit">Save</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
+        </form>
+      ))}
       <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : displayValue(record[column])}</td>)}<td><span className="row-actions"><button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{label}</button>)}{section !== "customers" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
     </>
   );
