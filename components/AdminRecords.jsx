@@ -77,7 +77,11 @@ export default function AdminRecords({ section }) {
 
   function openEditor(record = {}) {
     setEditing(record.id || "new");
-    setForm(Object.fromEntries(definition.columns.map(column => [column, record[column] || ""])));
+    setForm(Object.fromEntries(definition.columns.map((column) => {
+      if (column === "enabled") return [column, record.enabled ?? true];
+      if (column === "destination") return [column, record.destination || (section === "paymentSettings" ? "deposit" : "withdrawal")];
+      return [column, record[column] || ""];
+    })));
   }
 
   async function save(event) {
