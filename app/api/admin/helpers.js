@@ -294,6 +294,48 @@ function toAdminRecord(section, record) {
   };
 }
 
+async function toAdminKycRecords(records, supabase) {
+  const userIds = [...new Set(records.map((record) => record.user_id).filter(Boolean))];
+  const profilesById = new Map();
+
+  if (userIds.length) {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, email, first_name, last_name")
+      .in("id", userIds);
+    if (error) throw new Error(error.message || "Unable to load customer details for KYC requests.");
+    for (const profile of profiles || []) profilesById.set(profile.id, profile);
+  }
+
+  return Promise.all(records.map(async (record) => {
+    let metadata = {};
+    try {
+      metadata = JSON.parse(record.notes || "{}");
+    } catch {
+      metadata = {};
+    }
+
+    let documentUrl = "";
+    if (metadata.documentPath) {
+      const { data, error } = await supabase.storage
+        .from("kyc-documents")
+        .createSignedUrl(metadata.documentPath, 60 * 60);
+      if (error) throw new Error(error.message || "Unable to create a secure link to a KYC document.");
+      documentUrl = data.signedUrl;
+    }
+
+    const profile = profilesById.get(record.user_id);
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || metadata.fullName || "";
+    return {
+      ...record,
+      userName: fullName || profile?.email || record.user_id || "-",
+      email: profile?.email || "-",
+      documentType: record.document_type || "",
+      documentUrl,
+    };
+  }));
+}
+
 export async function fetchSupabaseRecords(section) {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
@@ -317,9 +359,11 @@ export async function fetchSupabaseRecords(section) {
         ? records.filter((record) => String(record.destination || "").toLowerCase() === expectedDestination)
         : records;
 
-      return section === "customers"
-        ? filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record))
-        : filtered;
+      if (section === "customers") {
+        return filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record));
+      }
+      if (section === "kyc") return toAdminKycRecords(filtered, supabase);
+      return filtered;
     } catch {
       continue;
     }

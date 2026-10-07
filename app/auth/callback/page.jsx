@@ -35,7 +35,7 @@ export default function AuthCallbackPage() {
         if (!response.ok) throw new Error(result.error || "Unable to verify your account.");
 
         persistAuthSession({ token: accessToken, user: result.user });
-        router.replace("/dashboard");
+        router.replace("/dashboard?kyc=required");
       } catch (verificationError) {
         setError(verificationError.message || "Unable to verify your account.");
       }

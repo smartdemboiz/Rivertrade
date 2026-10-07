@@ -14,3 +14,5 @@ SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 Notes:
 - The app keeps a fallback in place when Supabase is not configured.
 - The live Supabase path is now the default when env vars are present.
+- Email-confirmed customers can submit identity documents from Dashboard → KYC verification. The first submission creates a private `kyc-documents` Storage bucket using the service-role key; administrators receive expiring signed links in KYC management.
+- KYC submissions use the existing `kyc` table. Its `notes` field stores the submitted name, issuing country, and private document path; do not make the Storage bucket public.

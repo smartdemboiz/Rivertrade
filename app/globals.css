@@ -2685,6 +2685,44 @@ body:has(.admin-shell) .health-line i {
   font-size: 26px;
   font-weight: 500;
 }
+.dashboard-kyc {
+  display: grid;
+  gap: 24px;
+  padding: 12px 0 35px;
+}
+.dashboard-kyc .dashboard-section-view-head {
+  margin-bottom: 4px;
+}
+.dashboard-kyc-form select,
+.dashboard-kyc-form input[type="file"] {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--dashboard-border);
+  background: var(--dashboard-panel-strong);
+  color: var(--dashboard-ink);
+  font: inherit;
+}
+.dashboard-kyc-form .dashboard-kyc-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+}
+.dashboard-kyc-consent input {
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+}
+.dashboard-kyc-form button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.dashboard-kyc-error {
+  margin: 0;
+  color: #c34f45;
+}
 .dashboard-support {
   padding: 12px 0 35px;
 }
