@@ -8,7 +8,7 @@ import AdminRecords from "@/components/AdminRecords";
 import { useAuthSession } from "@/hooks/useAuthSession";
 
 const emptyStats = { totalUsers: 0, totalRevenue: 0, activeInvestments: 0, pendingKyc: 0, usersChange: 0, revenueChange: 0, investmentsChange: 0, kycChange: 0 };
-const nav = [[LayoutGrid, "dashboard"], [Users, "customers"], [ClipboardCheck, "kyc"], [WalletCards, "transactions"], [BriefcaseBusiness, "investments"], [Wallet, "userFunds"], [ArrowLeftRight, "swaps"], [BriefcaseBusiness, "managedAccounts"], [Wallet, "deposits"], [ArrowDownToLine, "withdrawals"], [BarChart3, "investmentPlans"], [History, "profitHistory"], [UserRound, "profiles"], [UsersRound, "referrals"], [CircleHelp, "support"], [WalletCards, "paymentSettings"], [TrendingUp, "expertTraders"], [Users, "staff"], [Settings, "settings"]];
+const nav = [[LayoutGrid, "dashboard"], [Users, "customers"], [ClipboardCheck, "kyc"], [WalletCards, "transactions"], [BriefcaseBusiness, "investments"], [Wallet, "userFunds"], [ArrowLeftRight, "swaps"], [BriefcaseBusiness, "managedAccounts"], [Wallet, "deposits"], [ArrowDownToLine, "withdrawals"], [BarChart3, "investmentPlans"], [History, "profitHistory"], [UserRound, "profiles"], [UsersRound, "referrals"], [CircleHelp, "support"], [WalletCards, "paymentSettings"], [ArrowDownToLine, "withdrawalSettings"], [TrendingUp, "expertTraders"], [Users, "staff"], [Settings, "settings"]];
 const schemaItems = [["schedule", "schedule"], ["holiday", "holiday"], ["manageSchema", "manageSchema"], ["editInvestmentPlans", "editInvestmentPlans"]];
 const authHeaders = () => { const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : ""; return token && token !== "null" ? { Authorization: `Bearer ${token}` } : {}; };
 
