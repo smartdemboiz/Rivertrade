@@ -112,6 +112,7 @@ export const tableMap = {
   support: ["support_tickets", "support"],
   settings: ["manage_schema", "settings"],
   paymentSettings: ["payment_methods"],
+  withdrawalSettings: ["payment_methods"],
   transactions: ["transactions", "wallet_transactions"],
 };
 
@@ -293,9 +294,12 @@ export async function fetchSupabaseRecords(section) {
       }
 
       const records = data ?? [];
-      return section === "customers"
-        ? records.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record))
+      const filtered = section === "withdrawalSettings"
+        ? records.filter((record) => record.destination === "withdrawal" || record.destination === "both")
         : records;
+      return section === "customers"
+        ? filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record))
+        : filtered;
     } catch {
       continue;
     }
