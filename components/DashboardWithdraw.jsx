@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const currencies = [
   "Bitcoin (BTC)",
@@ -15,7 +15,6 @@ const currencies = [
   "Chainlink (LINK)",
   "Litecoin (LTC)",
 ];
-const methods = ["Blockchain Wallet Address", "Bank Transfer", "PayPal", "RiverTrade managed account"];
 const networks = [
   "Bitcoin Network",
   "Mainnet",
@@ -42,6 +41,16 @@ export default function DashboardWithdraw() {
   const [paypalEmail, setPaypalEmail] = useState("");
   const [managedAccount, setManagedAccount] = useState("");
   const [error, setError] = useState("");
+  const [withdrawalMethods, setWithdrawalMethods] = useState([]);
+  const [methodsLoaded, setMethodsLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/withdrawal-settings")
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((body) => setWithdrawalMethods(body.data || []))
+      .catch(() => setWithdrawalMethods([]))
+      .finally(() => setMethodsLoaded(true));
+  }, []);
 
   const changeMethod = (event) => {
     setMethod(event.target.value);
@@ -57,10 +66,26 @@ export default function DashboardWithdraw() {
     setManagedAccount("");
   };
 
+  const configuredMethods = [...new Set(withdrawalMethods.map((item) => item.method).filter(Boolean))];
+  const withdrawalMethod = withdrawalMethods.find((item) => item.method === method) || null;
+  const isCryptoMethod = method === "Cryptocurrency";
+  const bankDetails = withdrawalMethod?.value ? withdrawalMethod.value.split("\n").map((line) => line.split(": ")) : [];
+  const paypalDetails = withdrawalMethod?.value ? withdrawalMethod.value.split("\n").map((line) => line.split(": ")) : [];
+  const selectedInstructions = withdrawalMethod?.instructions;
+
   const submitWithdrawal = (event) => {
     event.preventDefault();
     setError("Withdrawal processing is not connected to a payout provider yet. No funds were moved.");
   };
+
+  if (!methodsLoaded || withdrawalMethods.length === 0) {
+    return (
+      <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
+        <h2 id="withdraw-title">Withdraw Funds</h2>
+        <p role="status">{methodsLoaded ? "No withdrawal methods are currently available." : "Loading available withdrawal methods…"}</p>
+      </section>
+    );
+  }
 
   return (
     <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
@@ -72,10 +97,10 @@ export default function DashboardWithdraw() {
         <label htmlFor="withdraw-method">Withdrawal Method</label>
         <select id="withdraw-method" value={method} onChange={changeMethod} required>
           <option value="">-- Choose Method --</option>
-          {methods.map((item) => <option key={item} value={item}>{item}</option>)}
+          {configuredMethods.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
 
-        {method === "Blockchain Wallet Address" && <>
+        {isCryptoMethod && <>
           <label htmlFor="withdraw-currency">Select Cryptocurrency</label>
           <select id="withdraw-currency" value={currency} onChange={(event) => setCurrency(event.target.value)} required>
             <option value="">-- Choose Currency --</option>
@@ -114,6 +139,8 @@ export default function DashboardWithdraw() {
             <option value="managed-balanced">Managed Balanced Account</option>
           </select>
         </>}
+
+        {withdrawalMethod && <div className="dashboard-deposit-details"><p>{withdrawalMethod.label}</p><small>{selectedInstructions || "Review the destination details before submitting your withdrawal request."}</small></div>}
 
         <button type="submit">Withdraw</button>
         {error && <p className="dashboard-withdraw-error" role="alert">{error}</p>}
