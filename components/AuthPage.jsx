@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 const languages = ["EN", "ES", "FR"];
@@ -54,7 +55,7 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   return (
     <main className="min-h-screen bg-[#101b1d] text-[#101b1d]">
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#101b1d] px-6 py-5">
-        <button onClick={onBack} className="font-black tracking-[2px] text-[#6CF9D8]">RIVERTRADE</button>
+        <button onClick={onBack} className="shrink-0" aria-label="RiverTrade home"><Image src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" width={1800} height={700} className="h-14 w-auto" /></button>
         <div className="flex items-center gap-3">
           <div className="relative">
             <button onClick={() => setLanguageOpen((open) => !open)} className="flex items-center gap-2 rounded-xl border border-white/15 bg-[#202024] px-3 py-2 text-sm font-bold text-[#E0F3FF]" aria-label="Choose language" aria-expanded={languageOpen}>
