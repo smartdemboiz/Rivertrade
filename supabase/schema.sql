@@ -158,7 +158,10 @@ create table if not exists public.referrals (
 create table if not exists public.support_tickets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete cascade,
+  name text,
+  email text,
   subject text,
+  message text,
   status text default 'open' check (status in ('open', 'pending', 'resolved', 'closed')),
   priority text default 'medium' check (priority in ('low', 'medium', 'high')),
   created_at timestamptz default now(),

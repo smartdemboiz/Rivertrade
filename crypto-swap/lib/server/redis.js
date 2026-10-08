@@ -9,7 +9,13 @@ async function connectRedis() {
   if (connection) return connection;
   if (!REDIS_URL) return null;
 
-  const nextClient = createClient({ url: REDIS_URL });
+  let nextClient;
+  try {
+    nextClient = createClient({ url: REDIS_URL });
+  } catch (error) {
+    console.error('[Redis] invalid connection URL', error.message || error);
+    return null;
+  }
   nextClient.on('error', (err) => {
     console.error('[Redis] connection error', err.message || err);
   });
