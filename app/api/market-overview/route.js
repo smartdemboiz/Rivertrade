@@ -1,6 +1,6 @@
 const API = 'https://api.coingecko.com/api/v3';
-const COIN_IDS = 'bitcoin,ethereum,solana,ripple';
-const CHART_IDS = new Set(COIN_IDS.split(','));
+const MARKET_PARAMS = 'vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false';
+const CHART_IDS = new Set(['bitcoin', 'ethereum', 'solana', 'ripple']);
 
 export async function GET(request) {
   const requestedId = new URL(request.url).searchParams.get('selectedId') || 'bitcoin';
@@ -8,7 +8,7 @@ export async function GET(request) {
 
   try {
     const [coinsResponse, globalResponse] = await Promise.all([
-      fetch(`${API}/coins/markets?vs_currency=usd&ids=${COIN_IDS}&order=market_cap_desc&sparkline=false`, {
+      fetch(`${API}/coins/markets?${MARKET_PARAMS}`, {
         next: { revalidate: 60 },
       }),
       fetch(`${API}/global`, { next: { revalidate: 300 } }),
