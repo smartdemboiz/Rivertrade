@@ -1,7 +1,6 @@
 import { MarketTable } from "./MarketTable";
 import { SiteHeader } from "./SiteHeader";
 import Image from "next/image";
-import { TradingViewChart } from "../components/TradingViewChart";
 import { formatMoney, formatPercent } from "../types/market";
 import { useRef, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -48,10 +47,6 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
         <section id="markets" className="py-16">
           <div className="mb-5 flex items-end justify-between"><p className="text-xs font-black uppercase tracking-[2px] text-olive">{t("exploreMarkets")}</p><span className="text-sm font-black text-olive">{t("liveData")}</span></div>
           {data.loading && !data.coins.length ? <p className="text-muted">{t("connectingMarkets")}</p> : data.error && !data.coins.length ? <p className="text-muted" role="status">Live market data is temporarily unavailable.</p> : <MarketTable coins={data.coins} />}
-        </section>
-        <section className="pb-16">
-          <p className="text-xs font-black uppercase tracking-[2px] text-olive">{t("liveAnalysis")}</p>
-          <div className="mt-5 rounded-3xl bg-surface p-4"><div className="mb-4 flex items-end justify-between"><strong className="text-2xl font-black text-white">{btc ? formatMoney(btc.current_price) : "--"}</strong><span className="font-bold text-brand">{btc ? formatPercent(btc.price_change_percentage_24h) : "--"}</span></div><TradingViewChart /></div>
         </section>
         <section id="about" className="cursor-pointer rounded-3xl bg-brand p-8" onClick={onDashboard} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onDashboard(); }} role="button" tabIndex={0}><p className="text-xs font-black uppercase tracking-[2px] text-foreground/70">{t("builtForNext")}</p><h2 className="mt-3 max-w-xl text-4xl font-black">{t("clearView")}</h2><button onClick={(event) => { event.stopPropagation(); onDashboard(); }} className="mt-6 rounded-full bg-surface-strong px-5 py-3 font-black text-white">{t("openDashboard")} →</button></section>
         <section id="bitcoin-calculator" className="relative left-1/2 w-screen -translate-x-1/2 bg-deep px-5 py-20 text-white sm:py-24">

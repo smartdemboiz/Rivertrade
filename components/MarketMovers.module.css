@@ -1,0 +1,519 @@
+.panel {
+  min-width: 0;
+  margin-top: 35px;
+  padding: 0;
+  border: 1px solid #242424;
+  border-radius: 16px;
+  background: #000;
+  color: #f5f5f5;
+  overflow: hidden;
+}
+
+.compact {
+  margin-top: 0;
+}
+
+.compact .content {
+  padding: 12px;
+}
+
+.compact .chart {
+  height: 82px;
+}
+
+.compact .chartStatus {
+  min-height: 82px;
+  padding-top: 30px;
+}
+
+.compact .challenge {
+  margin-top: 12px;
+  padding: 10px 0;
+}
+
+.compact .challenge p {
+  margin: 6px 0 9px;
+}
+
+.compact .challenge button {
+  min-height: 32px;
+}
+
+.compact .movers {
+  margin-top: 13px;
+}
+
+.compact .filters {
+  margin-top: 14px;
+}
+
+.compact .columns {
+  padding: 10px 0 7px;
+}
+
+.compact .row {
+  min-height: 36px;
+}
+
+.compact .rail {
+  gap: 0;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.compact .rail a {
+  min-height: 58px;
+  gap: 4px;
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 68px;
+}
+
+.content {
+  min-width: 0;
+  padding: 20px;
+}
+
+.chartHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.marketTabs {
+  display: flex;
+  min-width: 0;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.marketTabs button {
+  padding-bottom: 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.marketTabs button.selectedTab {
+  border-bottom: 2px solid #55a6fa;
+  color: #55a6fa;
+  font-weight: 700;
+}
+
+.bitcoinQuote {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.bitcoinQuote strong {
+  font-size: 18px;
+}
+
+.bitcoinQuote span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.periods {
+  display: flex;
+  gap: 16px;
+  margin-top: 5px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.periods button {
+  flex: 0 0 auto;
+  padding: 5px 0 7px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.periods button.selectedPeriod {
+  border-bottom-color: #fff;
+  color: #fff;
+  font-weight: 700;
+}
+
+.chartLabel {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  color: #aaa;
+  font-size: 10px;
+}
+
+.chart {
+  position: relative;
+  height: 118px;
+  margin-top: 9px;
+  background: linear-gradient(180deg, rgba(85, 166, 250, 0.13), transparent);
+}
+
+.chart svg {
+  width: 100%;
+  height: 100%;
+}
+
+.gridLine {
+  fill: none;
+  stroke: #3b3b3b;
+  stroke-width: 0.7;
+}
+
+.chartPositive,
+.chartNegative {
+  fill: none;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartAreaPositive,
+.chartAreaNegative {
+  stroke: none;
+}
+
+.chartAreaPositive {
+  fill: rgba(85, 166, 250, 0.12);
+}
+
+.chartAreaNegative {
+  fill: rgba(239, 100, 97, 0.12);
+}
+
+.chartPositive {
+  stroke: #55a6fa;
+}
+
+.chartNegative {
+  stroke: #ef6461;
+}
+
+.chart > p {
+  padding-top: 35px;
+  color: #aaa;
+  font-size: 12px;
+  text-align: center;
+}
+
+.chartStatus {
+  min-height: 118px;
+  margin: 0;
+  padding-top: 48px;
+  color: #aaa;
+  font-size: 12px;
+  text-align: center;
+}
+
+.otherMarkets {
+  margin-top: 12px;
+}
+
+.marketSource {
+  margin: 0;
+  color: #aaa;
+  font-size: 10px;
+}
+
+.instrumentButtons {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-top: 12px;
+  padding-bottom: 4px;
+}
+
+.instrumentButtons button {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  border: 1px solid #444;
+  border-radius: 5px;
+  background: transparent;
+  color: #bbb;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.instrumentButtons button.selectedInstrument {
+  border-color: #55a6fa;
+  color: #55a6fa;
+}
+
+.tradingViewChart {
+  display: block;
+  width: 100%;
+  height: 180px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 6px;
+  background: #101010;
+}
+
+.chartTimes {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  color: #aaa;
+  font-size: 10px;
+}
+
+.challenge {
+  margin-top: 25px;
+  padding: 18px 0;
+  border-top: 1px solid #333;
+  border-bottom: 1px solid #333;
+}
+
+.challengeTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.challengeTitle svg {
+  color: #55a6fa;
+}
+
+.challenge h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.challenge p {
+  margin: 9px 0 13px;
+  color: #bbb;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.challenge button {
+  width: 100%;
+  min-height: 38px;
+  border: 0;
+  border-radius: 6px;
+  background: #1559a5;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.movers {
+  margin-top: 18px;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heading h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.heading > span {
+  color: #aaa;
+  font-size: 24px;
+  line-height: 20px;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #72e7a2;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.live span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  margin-top: 22px;
+  border-bottom: 1px solid #292929;
+}
+
+.filters button {
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.filters button.active {
+  border-bottom-color: #55a6fa;
+  color: #fff;
+}
+
+.columns,
+.row {
+  display: grid;
+  grid-template-columns: minmax(72px, 1.3fr) minmax(58px, 1fr) minmax(48px, 0.9fr) minmax(45px, 0.8fr);
+  align-items: center;
+  column-gap: 8px;
+}
+
+.columns {
+  padding: 14px 0 10px;
+  border-bottom: 1px solid #292929;
+  color: #aaa;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.columns span:not(:first-child),
+.row > span:not(:first-child) {
+  text-align: right;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  min-height: 49px;
+  border-bottom: 1px solid #222;
+  font-size: 11px;
+}
+
+.name {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name strong {
+  color: #fff;
+  font-size: 12px;
+}
+
+.name small {
+  overflow: hidden;
+  color: #888;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price,
+.volume {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.volume {
+  color: #aaa;
+}
+
+.positive {
+  color: #31c77a;
+}
+
+.negative {
+  color: #ff5b5b;
+}
+
+.empty {
+  margin: 18px 0 4px;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 12px 5px;
+  border-left: 1px solid #303030;
+  background: #101010;
+}
+
+.rail a {
+  display: flex;
+  min-height: 72px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 6px;
+  color: #aaa;
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+}
+
+.rail a:first-child,
+.rail a:hover,
+.rail a:focus-visible {
+  color: #55a6fa;
+}
+
+@media (max-width: 420px) {
+  .dashboard {
+    grid-template-columns: minmax(0, 1fr) 56px;
+  }
+
+  .content {
+    padding: 16px 12px;
+  }
+
+  .filters {
+    gap: 12px;
+  }
+
+  .filters button {
+    font-size: 11px;
+  }
+
+  .columns,
+  .row {
+    column-gap: 5px;
+  }
+
+  .rail {
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
+  .rail a {
+    font-size: 8px;
+  }
+}
