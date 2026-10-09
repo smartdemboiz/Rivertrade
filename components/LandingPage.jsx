@@ -2,8 +2,37 @@ import { MarketTable } from "./MarketTable";
 import { SiteHeader } from "./SiteHeader";
 import Image from "next/image";
 import { formatMoney, formatPercent } from "../types/market";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
+import SwapBridge from "@/components/SwapBridge";
+import { SiApple } from "react-icons/si";
+
+const tradePairs = [
+  {
+    from: { symbol: "BTC", name: "Bitcoin", logo: "/market-icon/s_btc.webp", color: "#f7931a", priceSource: "crypto", priceKey: "bitcoin", unit: "BTC" },
+    to: { symbol: "AAPL", name: "Apple stock", icon: SiApple, color: "#080908", priceSource: "market", priceKey: "AAPL", unit: "AAPL" },
+  },
+  {
+    from: { symbol: "Au", name: "Gold", icon: null, color: "#ad8a4e", priceSource: "market", priceKey: "gold", unit: "oz" },
+    to: { symbol: "NVDA", name: "NVIDIA stock", logo: "/market-icon/nvda_e98uy23454378.webp", color: "#080908", priceSource: "market", priceKey: "NVDA", unit: "NVDA" },
+  },
+  {
+    from: { symbol: "ETH", name: "Ethereum", logo: "/market-icon/s_eth.webp", color: "#627eea", priceSource: "crypto", priceKey: "ethereum", unit: "ETH" },
+    to: { symbol: "EUR", name: "Euro", logo: "/market-icon/eur-19876543567.svg", color: "#3156a5", priceSource: "market", priceKey: "EUR", unit: "EUR" },
+  },
+  {
+    from: { symbol: "SOL", name: "Solana", logo: "/market-icon/s_sol.webp", color: "#7855d6", priceSource: "crypto", priceKey: "solana", unit: "SOL" },
+    to: { symbol: "Au", name: "Gold", icon: null, color: "#ad8a4e", priceSource: "market", priceKey: "gold", unit: "oz" },
+  },
+  {
+    from: { symbol: "XRP", name: "XRP", logo: "/market-icon/s_xrp.webp", color: "#23292f", priceSource: "crypto", priceKey: "ripple", unit: "XRP" },
+    to: { symbol: "USDT", name: "Tether", logo: "/market-icon/s_usdt.webp", color: "#26a17b", priceSource: "crypto", priceKey: "tether", unit: "USDT" },
+  },
+];
+
+const formatTradeAmount = (amount) => new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: amount < 0.01 ? 6 : amount < 1 ? 4 : 2,
+}).format(amount);
 
 const testimonials = [
   ["Diego_1280x720_unlocalised@2x.jpg", "Diego Johnson", "I am a living witness to this company, for some years now I have been receiving my investment and my profit, this is one of the best company to invest on cryptocurrencies"],
@@ -26,13 +55,110 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
   const testimonialTrackRef = useRef(null);
   const [amount, setAmount] = useState("1");
   const [currency, setCurrency] = useState("USD");
+  const [swapBridgeOpen, setSwapBridgeOpen] = useState(false);
+  const [tradePairIndex, setTradePairIndex] = useState(0);
+  const [tradePairState, setTradePairState] = useState("ready");
+  const [liveQuotes, setLiveQuotes] = useState(null);
+  const [liveQuotesError, setLiveQuotesError] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const pairTransitionTimersRef = useRef([]);
   const rates = { USD: 1, EUR: 0.92, GBP: 0.78, CAD: 1.36, JPY: 149 };
   const convertedValue = Number(amount || 0) * (btc?.current_price || 0) * rates[currency];
   const formattedValue = new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 2 }).format(convertedValue);
+  const activeTradePair = tradePairs[tradePairIndex];
+  const FromAssetIcon = activeTradePair.from.icon;
+  const ToAssetIcon = activeTradePair.to.icon;
+  const cryptoQuotes = new Map(data.coins.map((coin) => [coin.id, coin]));
+  const getAssetQuote = (asset) => {
+    if (asset.priceSource === "market") {
+      return liveQuotes?.[asset.priceKey] || null;
+    }
+    const coin = cryptoQuotes.get(asset.priceKey);
+    return Number.isFinite(Number(coin?.current_price))
+      ? { price: Number(coin.current_price), quotedAt: data.updated?.toISOString?.() || null }
+      : null;
+  };
+  const fromQuote = getAssetQuote(activeTradePair.from);
+  const toQuote = getAssetQuote(activeTradePair.to);
+  const convertedAmount = fromQuote && toQuote ? fromQuote.price / toQuote.price : null;
+  const liveQuoteTime = [fromQuote?.quotedAt, toQuote?.quotedAt]
+    .filter(Boolean)
+    .map((time) => new Date(time).getTime())
+    .filter(Number.isFinite);
+  const quoteTimestamp = liveQuoteTime.length ? Math.min(...liveQuoteTime) : null;
+  const quoteStatusLabel = quoteTimestamp && currentTime && currentTime - quoteTimestamp <= 15 * 60 * 1000
+    ? "Live quote"
+    : "Latest quote";
+  const liveQuoteTimeLabel = quoteTimestamp
+    ? new Date(quoteTimestamp).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })
+    : null;
+  const advanceTradePair = useCallback((direction = 1) => {
+    setTradePairIndex((current) => (current + direction + tradePairs.length) % tradePairs.length);
+    setTradePairState("swapping");
+    pairTransitionTimersRef.current.forEach((timer) => clearTimeout(timer));
+    pairTransitionTimersRef.current = [
+      setTimeout(() => setTradePairState("complete"), 2200),
+      setTimeout(() => setTradePairState("ready"), 3300),
+    ];
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => advanceTradePair(), 5200);
+    return () => {
+      clearInterval(interval);
+      pairTransitionTimersRef.current.forEach((timer) => clearTimeout(timer));
+    };
+  }, [advanceTradePair]);
+
+  useEffect(() => {
+    let disposed = false;
+    let timer;
+    let controller;
+
+    const loadQuotes = async () => {
+      controller = new AbortController();
+      try {
+        const response = await fetch("/api/trade-quotes", { signal: controller.signal });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Live quotes are unavailable.");
+        if (!result.quotes || !["AAPL", "NVDA", "gold", "EUR"].every((key) => Number.isFinite(Number(result.quotes[key]?.price)))) {
+          throw new Error("The live quote response is incomplete.");
+        }
+        if (!disposed) {
+          setLiveQuotes(result.quotes);
+          setLiveQuotesError(false);
+        }
+      } catch (error) {
+        if (!disposed && error.name !== "AbortError") {
+          setLiveQuotes(null);
+          setLiveQuotesError(true);
+          console.error("[Trade showcase] Failed to load live quotes.", error);
+        }
+      } finally {
+        if (!disposed) {
+          setCurrentTime(Date.now());
+          timer = setTimeout(loadQuotes, 30000);
+        }
+      }
+    };
+
+    loadQuotes();
+    return () => {
+      disposed = true;
+      clearTimeout(timer);
+      controller?.abort();
+    };
+  }, []);
 
   return (
     <>
       <SiteHeader onDashboard={onDashboard} onLogin={onLogin} onSignup={onSignup} data={data} />
+      {swapBridgeOpen && <SwapBridge mode="Crypto swap" onClose={() => setSwapBridgeOpen(false)} />}
       <main className="legacy-home min-h-screen bg-background px-5 text-foreground">
       <div className="mx-auto max-w-7xl">
         <section className="max-w-3xl py-24">
@@ -47,6 +173,73 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
         <section id="markets" className="py-16">
           <div className="mb-5 flex items-end justify-between"><p className="text-xs font-black uppercase tracking-[2px] text-olive">{t("exploreMarkets")}</p><span className="text-sm font-black text-olive">{t("liveData")}</span></div>
           {data.loading && !data.coins.length ? <p className="text-muted">{t("connectingMarkets")}</p> : data.error && !data.coins.length ? <p className="text-muted" role="status">Live market data is temporarily unavailable.</p> : <MarketTable coins={data.coins} />}
+        </section>
+        <section className="trade-anything-section relative left-1/2 w-screen -translate-x-1/2">
+          <div className="trade-anything-layout">
+            <div className="trade-anything-copy">
+              <span className="trade-anything-label">Trade</span>
+              <h2>Trade anything<br />to anything<span>.</span></h2>
+              <p>
+                Swap crypto, stocks, metals and currencies in one step —
+                <strong> no cashing out in between.</strong>
+                <br />The easiest trading experience.
+              </p>
+              <button type="button" onClick={() => setSwapBridgeOpen(true)} className="trade-anything-cta">
+                Start Trading
+              </button>
+            </div>
+            <div className="trade-anything-visual">
+              <div className="trade-anything-orbit" />
+              <div
+                key={`${tradePairIndex}-from`}
+                className="trade-anything-card trade-anything-card-send"
+              >
+                <span className="trade-anything-asset-icon" style={{ backgroundColor: activeTradePair.from.color }}>
+                  {activeTradePair.from.logo
+                    ? <Image src={activeTradePair.from.logo} alt="" width={64} height={64} className="h-full w-full rounded-full object-cover" />
+                    : FromAssetIcon
+                    ? <FromAssetIcon aria-hidden="true" />
+                    : activeTradePair.from.symbol}
+                </span>
+                <strong>{activeTradePair.from.symbol}</strong>
+                <span className="trade-anything-amount">{fromQuote ? "1.00" : "--"}</span>
+                <span className="trade-anything-rate">{fromQuote ? `Input amount · ${activeTradePair.from.unit}` : "Waiting for quote"}</span>
+              </div>
+              <div
+                key={`${tradePairIndex}-to`}
+                className="trade-anything-card trade-anything-card-receive"
+              >
+                <span className="trade-anything-asset-icon" style={{ backgroundColor: activeTradePair.to.color }}>
+                  {activeTradePair.to.logo
+                    ? <Image src={activeTradePair.to.logo} alt="" width={64} height={64} className="h-full w-full rounded-full object-cover" />
+                    : ToAssetIcon
+                    ? <ToAssetIcon aria-hidden="true" />
+                    : activeTradePair.to.symbol}
+                </span>
+                <strong>{activeTradePair.to.symbol}</strong>
+                <span className="trade-anything-amount">
+                  {Number.isFinite(convertedAmount) && convertedAmount > 0 ? formatTradeAmount(convertedAmount) : "--"}
+                </span>
+                <span className="trade-anything-rate">
+                  {Number.isFinite(convertedAmount) && convertedAmount > 0
+                    ? `${quoteStatusLabel} · ${activeTradePair.to.unit}`
+                    : liveQuotesError ? "Live quote unavailable" : "Loading live quote"}
+                </span>
+              </div>
+              <div
+                className={`trade-anything-arrow trade-anything-arrow-${tradePairState}`}
+                aria-hidden="true"
+              >
+                {tradePairState === "complete" ? "✓" : tradePairState === "swapping" ? "→" : "⇄"}
+              </div>
+              <div className="trade-anything-complete" aria-live="polite">
+                <span>{tradePairState === "complete" ? "✓" : "↗"}</span>
+                {Number.isFinite(convertedAmount) && convertedAmount > 0
+                  ? `1 ${activeTradePair.from.unit} ≈ ${formatTradeAmount(convertedAmount)} ${activeTradePair.to.unit} · ${quoteStatusLabel}${liveQuoteTimeLabel ? ` · ${liveQuoteTimeLabel}` : ""}`
+                  : "Live conversion quote unavailable"}
+              </div>
+            </div>
+          </div>
         </section>
         <section id="about" className="cursor-pointer rounded-3xl bg-brand p-8" onClick={onDashboard} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onDashboard(); }} role="button" tabIndex={0}><p className="text-xs font-black uppercase tracking-[2px] text-foreground/70">{t("builtForNext")}</p><h2 className="mt-3 max-w-xl text-4xl font-black">{t("clearView")}</h2><button onClick={(event) => { event.stopPropagation(); onDashboard(); }} className="mt-6 rounded-full bg-surface-strong px-5 py-3 font-black text-white">{t("openDashboard")} →</button></section>
         <section id="bitcoin-calculator" className="relative left-1/2 w-screen -translate-x-1/2 bg-deep px-5 py-20 text-white sm:py-24">
