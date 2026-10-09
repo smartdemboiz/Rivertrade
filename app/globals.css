@@ -5462,6 +5462,10 @@ body:has(.admin-shell) .health-line i {
     background: rgba(0, 0, 0, 0.38);
   }
 
+  .dashboard-side.open {
+    z-index: 50;
+  }
+
   .dashboard {
     display: block;
     width: 100%;
