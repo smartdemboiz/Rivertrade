@@ -13,7 +13,7 @@ const tradePairs = [
     to: { symbol: "AAPL", name: "Apple stock", icon: SiApple, color: "#080908", priceSource: "market", priceKey: "AAPL", unit: "AAPL" },
   },
   {
-    from: { symbol: "Au", name: "Gold", icon: null, color: "#ad8a4e", priceSource: "market", priceKey: "gold", unit: "oz" },
+    from: { symbol: "Au", name: "Gold", logo: "/market-icon/gold-au.svg", color: "#ad8a4e", priceSource: "market", priceKey: "gold", unit: "oz" },
     to: { symbol: "NVDA", name: "NVIDIA stock", logo: "/market-icon/nvda_e98uy23454378.webp", color: "#080908", priceSource: "market", priceKey: "NVDA", unit: "NVDA" },
   },
   {
@@ -22,11 +22,35 @@ const tradePairs = [
   },
   {
     from: { symbol: "SOL", name: "Solana", logo: "/market-icon/s_sol.webp", color: "#7855d6", priceSource: "crypto", priceKey: "solana", unit: "SOL" },
-    to: { symbol: "Au", name: "Gold", icon: null, color: "#ad8a4e", priceSource: "market", priceKey: "gold", unit: "oz" },
+    to: { symbol: "Au", name: "Gold", logo: "/market-icon/gold-au.svg", color: "#ad8a4e", priceSource: "market", priceKey: "gold", unit: "oz" },
   },
   {
     from: { symbol: "XRP", name: "XRP", logo: "/market-icon/s_xrp.webp", color: "#23292f", priceSource: "crypto", priceKey: "ripple", unit: "XRP" },
     to: { symbol: "USDT", name: "Tether", logo: "/market-icon/s_usdt.webp", color: "#26a17b", priceSource: "crypto", priceKey: "tether", unit: "USDT" },
+  },
+  {
+    from: { symbol: "BTC", name: "Bitcoin", logo: "/market-icon/s_btc.webp", color: "#f7931a", priceSource: "crypto", priceKey: "bitcoin", unit: "BTC" },
+    to: { symbol: "ETH", name: "Ethereum", logo: "/market-icon/s_eth.webp", color: "#627eea", priceSource: "crypto", priceKey: "ethereum", unit: "ETH" },
+  },
+  {
+    from: { symbol: "SOL", name: "Solana", logo: "/market-icon/s_sol.webp", color: "#7855d6", priceSource: "crypto", priceKey: "solana", unit: "SOL" },
+    to: { symbol: "USDC", name: "USD Coin", logo: "/market-icon/s_usdc.webp", color: "#2775ca", priceSource: "crypto", priceKey: "usd-coin", unit: "USDC" },
+  },
+  {
+    from: { symbol: "ADA", name: "Cardano", logo: "/market-icon/s_ada.webp", color: "#3468d1", priceSource: "crypto", priceKey: "cardano", unit: "ADA" },
+    to: { symbol: "DOGE", name: "Dogecoin", logo: "/market-icon/s_doge.webp", color: "#c2a633", priceSource: "crypto", priceKey: "dogecoin", unit: "DOGE" },
+  },
+  {
+    from: { symbol: "DOT", name: "Polkadot", logo: "/market-icon/s_dot.webp", color: "#e6007a", priceSource: "crypto", priceKey: "polkadot", unit: "DOT" },
+    to: { symbol: "LTC", name: "Litecoin", logo: "/market-icon/s_ltc.webp", color: "#345d9d", priceSource: "crypto", priceKey: "litecoin", unit: "LTC" },
+  },
+  {
+    from: { symbol: "LINK", name: "Chainlink", logo: "/market-icon/s_link.webp", color: "#2a5ada", priceSource: "crypto", priceKey: "chainlink", unit: "LINK" },
+    to: { symbol: "XRP", name: "XRP", logo: "/market-icon/s_xrp.webp", color: "#23292f", priceSource: "crypto", priceKey: "ripple", unit: "XRP" },
+  },
+  {
+    from: { symbol: "XLM", name: "Stellar", logo: "/market-icon/s_xlm.webp", color: "#111111", priceSource: "crypto", priceKey: "stellar", unit: "XLM" },
+    to: { symbol: "XMR", name: "Monero", logo: "/market-icon/s_xmr.webp", color: "#f26822", priceSource: "crypto", priceKey: "monero", unit: "XMR" },
   },
 ];
 
