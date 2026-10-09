@@ -13,4 +13,11 @@ export const formatMoney = (value, digits = 2) => value >= 1e12
       ? `$${(value / 1e6).toFixed(2)}M`
       : `$${value.toLocaleString(undefined, { maximumFractionDigits: digits })}`;
 
-export const formatPercent = (value) => `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+export const formatPercent = (value) => {
+  const percentage = Number(value);
+  if (value === null || value === undefined || value === '' || !Number.isFinite(percentage)) {
+    return '--';
+  }
+
+  return `${percentage >= 0 ? '+' : ''}${percentage.toFixed(2)}%`;
+};
