@@ -204,8 +204,7 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
               <span className="trade-anything-label">Trade</span>
               <h2>Trade anything<br />to anything<span>.</span></h2>
               <p>
-                Swap crypto, stocks, metals and currencies in one step —
-                <strong> no cashing out in between.</strong>
+                Swap crypto, stocks, metals and currencies in one step.
                 <br />The easiest trading experience.
               </p>
               <button type="button" onClick={() => setSwapBridgeOpen(true)} className="trade-anything-cta">
