@@ -4683,7 +4683,7 @@ body:has(.admin-shell) .health-line i {
   }
 
   .trade-anything-visual {
-    min-height: 315px;
+    min-height: 370px;
     gap: 30px;
     border-radius: 22px;
   }
@@ -7464,6 +7464,13 @@ html[data-admin-theme="dark"] .admin-notification-menu {
 .testimonialtrack:hover {
   animation-play-state: paused;
 }
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .testimonialtrack {
+    animation-duration: 52s;
+  }
+}
+
 .customertext {
   display: flex;
   flex: 0 0 352px;
@@ -7521,6 +7528,10 @@ html[data-admin-theme="dark"] .admin-notification-menu {
 @media (max-width: 768px) {
   .Customertestimonials {
     padding: 48px 0 60px;
+  }
+
+  .testimonialtrack {
+    animation-duration: 72s;
   }
 
   .customertext {
