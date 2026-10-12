@@ -921,6 +921,52 @@ body {
   letter-spacing: 0.08em;
 }
 
+.wallet-all-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 66px;
+  padding: 12px 20px;
+  border: 1px dashed rgba(108, 249, 216, 0.32);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--muted-soft);
+  font-size: 16px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.wallet-all-cta:hover {
+  border-color: var(--brand);
+  background: rgba(108, 249, 216, 0.06);
+  color: var(--background);
+}
+
+.wallet-all-cta:focus-visible {
+  outline: 3px solid rgba(108, 249, 216, 0.5);
+  outline-offset: 2px;
+}
+
+.wallet-all-cta > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wallet-all-cta svg {
+  color: #00d9f5;
+}
+
+.wallet-all-count {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(224, 243, 255, 0.1);
+  color: var(--background);
+  font-size: 13px;
+}
+
 .wallet-connect-modal .modal-body > div:last-child {
   border-top-color: rgba(224, 243, 255, 0.1) !important;
   padding-top: 18px !important;

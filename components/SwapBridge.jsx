@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useQuote } from "@/crypto-swap/hooks/useQuote";
 import SwapCard from "@/crypto-swap/components/SwapCard";
@@ -130,10 +131,15 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
           onActionClick={executeSwap}
         />
         {executionState && <p className="swap-bridge-status" role="status">{executionState}</p>}
-        {modal === "wallet" && <ConnectWalletModal onClose={() => setModal(null)} onConnect={handleWalletConnect} />}
-        {modal === "from-token" && <TokenSelectModal field="from" defaultChainId={fromToken.chain} onClose={() => setModal(null)} onSelect={(token) => { setFromToken(token); setModal(null); }} />}
-        {modal === "to-token" && <TokenSelectModal field="to" defaultChainId={toToken.chain} onClose={() => setModal(null)} onSelect={(token) => { setToToken(token); setModal(null); }} />}
-        {modal === "destination" && <SendToWalletModal initialValue={destinationWallet} connectedWalletLabel={walletLabel} onClose={() => setModal(null)} onConfirm={(address) => { setDestinationWallet(address); setModal(null); }} />}
+        {modal && createPortal(
+          <>
+            {modal === "wallet" && <ConnectWalletModal onClose={() => setModal(null)} onConnect={handleWalletConnect} />}
+            {modal === "from-token" && <TokenSelectModal field="from" defaultChainId={fromToken.chain} onClose={() => setModal(null)} onSelect={(token) => { setFromToken(token); setModal(null); }} />}
+            {modal === "to-token" && <TokenSelectModal field="to" defaultChainId={toToken.chain} onClose={() => setModal(null)} onSelect={(token) => { setToToken(token); setModal(null); }} />}
+            {modal === "destination" && <SendToWalletModal initialValue={destinationWallet} connectedWalletLabel={walletLabel} onClose={() => setModal(null)} onConfirm={(address) => { setDestinationWallet(address); setModal(null); }} />}
+          </>,
+          document.body,
+        )}
       </section>
     </div>
   );

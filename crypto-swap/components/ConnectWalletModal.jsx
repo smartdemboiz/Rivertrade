@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { X, ShieldCheck, Sparkles, ArrowLeft, Search } from 'lucide-react';
-import { allWalletsList } from '@/lib/data';
+import { allWalletsList, walletConnectors } from '@/lib/data';
 import TrustWalletModal from './TrustWalletModal';
 import TrezorWalletModal from './TrezorWalletModal';
 import LedgerWalletModal from './LedgerWalletModal';
@@ -35,11 +36,6 @@ import BloctoWalletModal from './BloctoWalletModal';
 import BraveWalletModal from './BraveWalletModal';
 import AmbireWalletModal from './AmbireWalletModal';
 import XDEFIWalletModal from './XDEFIWalletModal';
-
-const supportedWallets = [
-  { id: 'injected', label: 'Browser wallet' },
-  { id: 'walletConnect', label: 'WalletConnect', icon: '/icons/walletConnect.svg' },
-];
 
 export default function ConnectWalletModal({ onClose, onConnect }) {
   const [showAll, setShowAll] = useState(false);
@@ -83,6 +79,24 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
   const [walletModalType, setWalletModalType] = useState(null);
   const [connectionError, setConnectionError] = useState('');
 
+  const selectSupportedWallet = (wallet) => {
+    setConnectionError('');
+
+    if (wallet.id === 'injected') {
+      connectBrowserWallet();
+    } else if (wallet.id === 'walletConnect' || wallet.id === 'coinbase') {
+      setWalletModalType(wallet.label);
+    } else if (wallet.id === 'trustWallet') {
+      setShowTrustWallet(true);
+    } else if (wallet.id === 'trezor') {
+      setShowTrezorWallet(true);
+    } else if (wallet.id === 'ledger') {
+      setShowLedgerWallet(true);
+    } else if (wallet.id === 'non-web3') {
+      setShowNonWeb3Wallet(true);
+    }
+  };
+
   const connectBrowserWallet = async () => {
     setConnectionError('');
     const provider = window.ethereum;
@@ -94,7 +108,7 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
     try {
       const accounts = await provider.request({ method: 'eth_requestAccounts' });
       if (!accounts?.[0]) throw new Error('No account was returned.');
-      onConnect('Browser wallet', accounts[0]);
+      onConnect('MetaMask', accounts[0]);
       onClose();
     } catch (error) {
       setConnectionError(error?.code === 4001
@@ -622,32 +636,21 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
           </div>
           <div className="modal-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-              {supportedWallets.map((wallet) => (
-                <button key={wallet.id} onClick={() => {
-                  if (wallet.id === 'injected') {
-                    connectBrowserWallet();
-                  } else {
-                    setConnectionError('');
-                    setWalletModalType(wallet.label);
-                  }
-                }} className="wallet-connector-row">
+              {walletConnectors.map((wallet) => (
+                <button key={wallet.id} onClick={() => selectSupportedWallet(wallet)} className="wallet-connector-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {wallet.icon ? (
-                      <img src={wallet.icon} alt={wallet.label} className="wallet-icon-img" />
-                    ) : (
-                      <span className="wallet-avatar-badge">B</span>
-                    )}
+                    <Image src={wallet.icon} alt="" width={42} height={42} className="wallet-icon-img" />
                     <span>{wallet.label}</span>
                   </div>
+                  {wallet.badge && <span className="badge-best">{wallet.badge}</span>}
                 </button>
               ))}
               {connectionError && <p role="alert" className="wallet-connection-error">{connectionError}</p>}
             </div>
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 16, textAlign: 'center' }}>
-              <p style={{ margin: 0, fontSize: 13, color: 'var(--text-dim)' }}>
-                New to Web3? <a href="#" style={{ color: 'var(--cyan)', textDecoration: 'none', fontWeight: 700 }}>Learn how to set up a wallet</a>
-              </p>
-            </div>
+            <button type="button" className="wallet-all-cta" onClick={() => setShowAll(true)}>
+              <span><Sparkles size={20} />All Wallets</span>
+              <span className="wallet-all-count">{allWalletsList.length}+</span>
+            </button>
           </div>
         </div>
       </div>
