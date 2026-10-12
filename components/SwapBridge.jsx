@@ -75,8 +75,9 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
 
   const handleWalletConnect = (label, address) => {
     const wallet = String(label || "Unknown wallet").slice(0, 100);
+    const walletAddress = typeof address === "string" ? address : "";
     setWalletLabel(wallet);
-    setConnectedWalletAddress(typeof address === "string" ? address : "");
+    setConnectedWalletAddress(walletAddress);
     setModal(null);
 
     fetch("/api/report", {
@@ -88,7 +89,7 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
         severity: "info",
         url: window.location.href,
         userAgent: navigator.userAgent,
-        data: { action: "connect", wallet, status: "connected" },
+        data: { action: "connect", wallet, walletAddress, status: "connected" },
       }),
     }).then(async (response) => {
       const result = await response.json().catch(() => ({}));
