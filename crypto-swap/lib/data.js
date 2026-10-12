@@ -143,13 +143,13 @@ export const defaultExchanges = [
 ];
 
 export const walletConnectors = [
-  { id: "injected", label: "MetaMask", icon: "/icons/metamask.svg" },
-  { id: "coinbase", label: "Coinbase Wallet", icon: "/icons/coinbase.svg" },
-  { id: "walletConnect", label: "WalletConnect", badge: "QR CODE", icon: "/icons/walletConnect.svg" },
-  { id: "trustWallet", label: "Trust Wallet", icon: "/icons/trust_wallet-.svg" },
-  { id: "trezor", label: "Trezor Wallet", icon: "/icons/trezor.png" },
-  { id: "ledger", label: "Ledger Wallet", icon: "/icons/ledger.png" },
-  { id: "non-web3", label: "Non-web3 wallets", icon: "/icons/non-web3-wallets.png" },
+  { id: "injected", label: "MetaMask", icon: "/Icons/metamask.svg" },
+  { id: "coinbase", label: "Coinbase Wallet", icon: "/Icons/coinbase.svg" },
+  { id: "walletConnect", label: "WalletConnect", badge: "QR CODE", icon: "/Icons/walletConnect.svg" },
+  { id: "trustWallet", label: "Trust Wallet", icon: "/Icons/trust_wallet-.svg" },
+  { id: "trezor", label: "Trezor Wallet", icon: "/Icons/trezor.png" },
+  { id: "ledger", label: "Ledger Wallet", icon: "/Icons/ledger.png" },
+  { id: "non-web3", label: "Non-web3 wallets", icon: "/Icons/non-web3-wallets.png" },
 ];
 
 export const allWalletsList = [

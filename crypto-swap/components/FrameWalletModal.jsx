@@ -57,7 +57,7 @@ export default function FrameWalletModal({ onClose, onConnect, onBack, onStartCo
             <>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginBottom: 24 }}>
                 <div style={{ width: 72, height: 72, borderRadius: 18, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src="/icons/framemint.webp" alt="Frame" style={{ width: 44, height: 44, objectFit: 'contain' }} />
+                  <img src="/Icons/framemint.webp" alt="Frame" style={{ width: 44, height: 44, objectFit: 'contain' }} />
                 </div>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5, textAlign: 'center' }}>
                   Connect Frame with the desktop app, website, or mobile wallet, then import your wallet or connect directly.
@@ -85,7 +85,7 @@ export default function FrameWalletModal({ onClose, onConnect, onBack, onStartCo
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Firefox Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -108,7 +108,7 @@ export default function FrameWalletModal({ onClose, onConnect, onBack, onStartCo
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Chrome Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -131,7 +131,7 @@ export default function FrameWalletModal({ onClose, onConnect, onBack, onStartCo
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -154,7 +154,7 @@ export default function FrameWalletModal({ onClose, onConnect, onBack, onStartCo
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

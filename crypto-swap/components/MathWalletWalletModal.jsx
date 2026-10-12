@@ -66,7 +66,7 @@ export default function MathWalletWalletModal({ onClose, onConnect, onBack, onSt
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}>
-                  <img src="/icons/MathWallet_Icon.png" alt="Math Wallet" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                  <img src="/Icons/MathWallet_Icon.png" alt="Math Wallet" style={{ width: 42, height: 42, objectFit: 'contain' }} />
                 </div>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   Connect Math Wallet via extension, web wallet, app, or hardware device. Use the official Math Wallet apps and browser extension for the fastest swap experience.
@@ -94,7 +94,7 @@ export default function MathWalletWalletModal({ onClose, onConnect, onBack, onSt
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/chrome-icon.svg" alt="Extension" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/chrome-icon.svg" alt="Extension" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -117,7 +117,7 @@ export default function MathWalletWalletModal({ onClose, onConnect, onBack, onSt
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Web Wallet" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Web Wallet" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Web Wallet</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -140,7 +140,7 @@ export default function MathWalletWalletModal({ onClose, onConnect, onBack, onSt
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="App" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="App" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>APP</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -163,7 +163,7 @@ export default function MathWalletWalletModal({ onClose, onConnect, onBack, onSt
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Hardware" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Hardware" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Hardware</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

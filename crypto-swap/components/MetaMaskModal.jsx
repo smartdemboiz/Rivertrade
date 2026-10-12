@@ -292,7 +292,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
           marginBottom: '24px',
         }}>
           <img
-            src="/icons/metamask.svg"
+            src="/Icons/metamask.svg"
             alt="MetaMask"
             style={{
               width: '60px',
@@ -356,7 +356,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
             }}
           >
             <img
-              src="/icons/chrome-icon.svg"
+              src="/Icons/chrome-icon.svg"
               alt="Chrome"
               style={{ width: '24px', height: '24px' }}
             />
@@ -393,7 +393,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
             }}
           >
             <img
-              src="/icons/firefox-b-icn.svg"
+              src="/Icons/firefox-b-icn.svg"
               alt="Firefox"
               style={{ width: '24px', height: '24px' }}
             />
@@ -430,7 +430,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
             }}
           >
             <img
-              src="/icons/App_Store_(iOS).svg"
+              src="/Icons/App_Store_(iOS).svg"
               alt="iOS"
               style={{ width: '24px', height: '24px' }}
             />
@@ -467,7 +467,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
             }}
           >
             <img
-              src="/icons/play-store-icon.svg"
+              src="/Icons/play-store-icon.svg"
               alt="Android"
               style={{ width: '24px', height: '24px' }}
             />

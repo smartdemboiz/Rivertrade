@@ -71,7 +71,7 @@ export default function CoinbaseWalletModal({ onClose, onConnect, onBack }) {
 
         <div className="modal-body">
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <img src="/icons/coinbase.svg" alt="Coinbase Wallet" style={{ width: 64, height: 64, margin: '0 auto 16px', display: 'block' }} />
+            <img src="/Icons/coinbase.svg" alt="Coinbase Wallet" style={{ width: 64, height: 64, margin: '0 auto 16px', display: 'block' }} />
             <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.6 }}>
               Get Coinbase Wallet from one of the options below.
             </p>
@@ -99,7 +99,7 @@ export default function CoinbaseWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 28, height: 28 }} />
+                      <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 28, height: 28 }} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>Chrome Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -121,7 +121,7 @@ export default function CoinbaseWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/brave-brow-icon.svg" alt="Brave" style={{ width: 28, height: 28 }} />
+                      <img src="/Icons/brave-brow-icon.svg" alt="Brave" style={{ width: 28, height: 28 }} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>Brave Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -143,7 +143,7 @@ export default function CoinbaseWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 28, height: 28 }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 28, height: 28 }} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -165,7 +165,7 @@ export default function CoinbaseWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 28, height: 28 }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 28, height: 28 }} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -187,7 +187,7 @@ export default function CoinbaseWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Website" style={{ width: 28, height: 28 }} />
+                      <img src="/Icons/website-4946.svg" alt="Website" style={{ width: 28, height: 28 }} />
                       <span style={{ fontSize: 14, fontWeight: 600 }}>Website</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

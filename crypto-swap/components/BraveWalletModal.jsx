@@ -53,7 +53,7 @@ export default function BraveWalletModal({ onClose, onConnect, onBack }) {
           {!showSeedInput ? (
             <>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <img src="/icons/brave-logo.svg" alt="Brave Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
+                <img src="/Icons/brave-logo.svg" alt="Brave Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   Brave Wallet is built into Brave Browser for desktop and mobile. Use the links below to open Brave, enable the wallet, or download the app.
                 </p>
@@ -80,7 +80,7 @@ export default function BraveWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/brave-brow-icon.svg" alt="Brave" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/brave-brow-icon.svg" alt="Brave" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Brave Browser</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -103,7 +103,7 @@ export default function BraveWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Website" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Website" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Website</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -126,7 +126,7 @@ export default function BraveWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -149,7 +149,7 @@ export default function BraveWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

@@ -61,7 +61,7 @@ export default function OKXWalletModal({ onClose, onConnect, onBack }) {
           {!selectedOption ? (
             <>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <img src="/icons/OKX Icon.png" alt="OKX Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
+                <img src="/Icons/OKX Icon.png" alt="OKX Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   Pick how you want to connect your OKX Wallet. Choose Brave Extension, Desktop App, Seed Phrase, or Hardware Wallet.
                 </p>
@@ -137,7 +137,7 @@ export default function OKXWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/brave-brow-icon.svg" alt="Brave" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/brave-brow-icon.svg" alt="Brave" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Brave Extension Search</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -168,7 +168,7 @@ export default function OKXWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Desktop" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Desktop" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Desktop App Download</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

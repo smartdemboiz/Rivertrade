@@ -65,7 +65,7 @@ export default function UniswapWalletModal({ onClose, onConnect, onBack }) {
 
         <div className="modal-body">
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <img src="/icons/uniswap-uni-icon.svg" alt="Uniswap Wallet" style={{ width: 64, height: 64, margin: '0 auto 16px', display: 'block' }} />
+            <img src="/Icons/uniswap-uni-icon.svg" alt="Uniswap Wallet" style={{ width: 64, height: 64, margin: '0 auto 16px', display: 'block' }} />
             <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.6 }}>
               Connect your Uniswap Wallet with a recovery phrase or use iCloud backup for secure access.
             </p>

@@ -81,43 +81,43 @@ export default function RainbowWalletModal({ onClose, onConnect, onBack }) {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
-          <img src="/icons/rainbow_log.png" alt="Rainbow" style={{ width: 64, height: 64, objectFit: 'contain', display: 'block' }} />
+          <img src="/Icons/rainbow_log.png" alt="Rainbow" style={{ width: 64, height: 64, objectFit: 'contain', display: 'block' }} />
         </div>
 
         <div style={{ backgroundColor: 'rgba(139,92,246,0.08)', borderRadius: 12, padding: 12, marginBottom: 14, border: '1px solid rgba(139,92,246,0.18)' }}>
             <h3 style={{ margin: '0 0 10px 0', color: '#fff' }}>Get Rainbow</h3>
 
           <button onClick={() => window.open('https://chrome.google.com/webstore/search/rainbow%20wallet', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24 }} /> <span>Chrome Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
+            <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24 }} /> <span>Chrome Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://microsoftedge.microsoft.com/addons/search?q=rainbow%20wallet', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/microsoft_edge_macos_bigsur_icon_189983.png" alt="Edge" style={{ width: 24, height: 24 }} /> <span>Edge Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
+            <img src="/Icons/microsoft_edge_macos_bigsur_icon_189983.png" alt="Edge" style={{ width: 24, height: 24 }} /> <span>Edge Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://addons.mozilla.org/en-US/firefox/search/?q=rainbow%20wallet', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 24, height: 24 }} /> <span>Firefox Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
+            <img src="/Icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 24, height: 24 }} /> <span>Firefox Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://arc.net/extensions/search?q=rainbow', '_blank')} style={{ width: '100%', padding: 9, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, color: '#fff' }}>
-            <img src="/icons/arc-browr-ico.svg" alt="ARC" style={{ width: 22, height: 22 }} /> <span>ARC Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
+            <img src="/Icons/arc-browr-ico.svg" alt="ARC" style={{ width: 22, height: 22 }} /> <span>ARC Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://developer.apple.com/safari/extensions/', '_blank')} style={{ width: '100%', padding: 9, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, color: '#fff' }}>
-            <img src="/icons/safari-img-cn.svg" alt="Safari" style={{ width: 22, height: 22 }} /> <span>Safari Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
+            <img src="/Icons/safari-img-cn.svg" alt="Safari" style={{ width: 22, height: 22 }} /> <span>Safari Extension</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => setShowSeedInput(true)} style={{ width: '100%', padding: 9, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, color: '#fff' }}>
-            <img src="/icons/images-icn.jpg" alt="Seed" style={{ width: 22, height: 22 }} /> <span>Seed Phrase</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
+            <img src="/Icons/images-icn.jpg" alt="Seed" style={{ width: 22, height: 22 }} /> <span>Seed Phrase</span> <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
           <button onClick={() => window.open('https://apps.apple.com/app/rainbow-ethereum-wallet/id1457119021', '_blank')} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-            <img src="/icons/App_Store_(iOS).svg" alt="App Store" style={{ width: 22, height: 22 }} /> iOS App
+            <img src="/Icons/App_Store_(iOS).svg" alt="App Store" style={{ width: 22, height: 22 }} /> iOS App
           </button>
           <button onClick={() => window.open('https://play.google.com/store/search?q=rainbow%20wallet', '_blank')} style={{ flex: 1, padding: 10, borderRadius: 8, border: '1px solid rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.05)', color: '#fff', display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
-            <img src="/icons/play-store-icon.svg" alt="Play Store" style={{ width: 22, height: 22 }} /> Android App
+            <img src="/Icons/play-store-icon.svg" alt="Play Store" style={{ width: 22, height: 22 }} /> Android App
           </button>
         </div>
 

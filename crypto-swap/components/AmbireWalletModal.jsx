@@ -57,7 +57,7 @@ export default function AmbireWalletModal({ onClose, onConnect, onBack, onStartC
             <>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div style={{ width: 80, height: 80, margin: '0 auto 16px', borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 24px rgba(0,0,0,0.14)' }}>
-                  <img src="/icons/ambire purple.png" alt="Ambire Wallet" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+                  <img src="/Icons/ambire purple.png" alt="Ambire Wallet" style={{ width: 42, height: 42, objectFit: 'contain' }} />
                 </div>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   Ambire Wallet primarily works as a browser extension with built-in swap and bridge features. Use the extension for the fastest cross-chain token experience, and visit Ambire app pages for mobile status.
@@ -85,7 +85,7 @@ export default function AmbireWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Extension Wallet</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -108,7 +108,7 @@ export default function AmbireWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -131,7 +131,7 @@ export default function AmbireWalletModal({ onClose, onConnect, onBack, onStartC
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24, minWidth: 24, minHeight: 24, objectFit: 'contain', display: 'block' }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

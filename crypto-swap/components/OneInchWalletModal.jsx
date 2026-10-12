@@ -53,7 +53,7 @@ export default function OneInchWalletModal({ onClose, onConnect, onBack }) {
           {!showSeedInput ? (
             <>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <img src="/icons/1inch-1inch-logo.svg" alt="1inch Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
+                <img src="/Icons/1inch-1inch-logo.svg" alt="1inch Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block' }} />
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   1inch Wallet is a mobile-first self-custody wallet built for swaps and cross-chain routing. Download the app and use it to swap across supported networks.
                 </p>
@@ -80,7 +80,7 @@ export default function OneInchWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -103,7 +103,7 @@ export default function OneInchWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

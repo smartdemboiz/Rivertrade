@@ -76,32 +76,32 @@ export default function RabbyWalletModal({ onClose, onConnect, onBack }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#fff' }}><X size={20} /></button>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 14 }}>
-          <img src="/icons/rabby-symbol-new.svg" alt="Rabby" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+          <img src="/Icons/rabby-symbol-new.svg" alt="Rabby" style={{ width: 40, height: 40, objectFit: 'contain' }} />
         </div>
 
         <div style={{ backgroundColor: 'rgba(139,92,246,0.08)', borderRadius: 12, padding: 14, marginBottom: 16, border: '1px solid rgba(139,92,246,0.18)' }}>
           <h3 style={{ margin: '0 0 12px 0', color: '#fff' }}>Get Rabby</h3>
 
           <button onClick={() => window.open('https://chrome.google.com/webstore/detail/rabby-wallet/bkhaagjahfmjlhkgeegckofjjedodee', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24 }} />
+            <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 24, height: 24 }} />
             <span>Chrome Extension</span>
             <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://microsoftedge.microsoft.com/addons/detail/rabby-wallet/bkhaagjahfmjlhkgeegckofjjedodee', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/microsoft_edge_macos_bigsur_icon_189983.png" alt="Edge" style={{ width: 24, height: 24 }} />
+            <img src="/Icons/microsoft_edge_macos_bigsur_icon_189983.png" alt="Edge" style={{ width: 24, height: 24 }} />
             <span>Edge Extension</span>
             <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://play.google.com/store/apps/details?id=io.rabby.wallet', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/play-store-icon.svg" alt="Play Store" style={{ width: 24, height: 24 }} />
+            <img src="/Icons/play-store-icon.svg" alt="Play Store" style={{ width: 24, height: 24 }} />
             <span>Android App</span>
             <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>
 
           <button onClick={() => window.open('https://apps.apple.com/app/rabby-wallet/id1567872660', '_blank')} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, color: '#fff' }}>
-            <img src="/icons/App_Store_(iOS).svg" alt="App Store" style={{ width: 24, height: 24 }} />
+            <img src="/Icons/App_Store_(iOS).svg" alt="App Store" style={{ width: 24, height: 24 }} />
             <span>iOS App</span>
             <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
           </button>

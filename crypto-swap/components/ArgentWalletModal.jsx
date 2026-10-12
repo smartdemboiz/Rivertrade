@@ -57,7 +57,7 @@ export default function ArgentWalletModal({ onClose, onConnect, onBack }) {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-              <img src="/icons/Argent_logos.svg" alt="Argent" style={{ width: 60, height: 60 }} />
+              <img src="/Icons/Argent_logos.svg" alt="Argent" style={{ width: 60, height: 60 }} />
             </div>
 
             <p style={{ color: 'var(--text-dim)', textAlign: 'center', marginBottom: 20 }}>
@@ -70,7 +70,7 @@ export default function ArgentWalletModal({ onClose, onConnect, onBack }) {
                 onClick={() => window.open('https://support.argent.xyz/hc/en-us/articles/5975462914961-Argent-X', '_blank')}
                 style={{ width: '100%', padding: 14, borderRadius: 8, border: '1px solid var(--border-highlight)', background: 'transparent', color: 'var(--text)', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12 }}
               >
-                <img src="/icons/chrome-icon.svg" alt="Chrome" style={{ width: 22, height: 22 }} />
+                <img src="/Icons/chrome-icon.svg" alt="Chrome" style={{ width: 22, height: 22 }} />
                 <span>Chrome Extension</span>
                 <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
               </button>
@@ -79,7 +79,7 @@ export default function ArgentWalletModal({ onClose, onConnect, onBack }) {
                 onClick={() => window.open('https://support.argent.xyz/hc/en-us/articles/5975462914961-Argent-X', '_blank')}
                 style={{ width: '100%', padding: 14, borderRadius: 8, border: '1px solid var(--border-highlight)', background: 'transparent', color: 'var(--text)', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12 }}
               >
-                <img src="/icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 22, height: 22 }} />
+                <img src="/Icons/firefox-b-icn.svg" alt="Firefox" style={{ width: 22, height: 22 }} />
                 <span>Firefox Extension</span>
                 <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
               </button>
@@ -88,7 +88,7 @@ export default function ArgentWalletModal({ onClose, onConnect, onBack }) {
                 onClick={() => window.open('https://support.argent.xyz/hc/en-us/articles/360022512752-How-to-create-an-Argent-wallet', '_blank')}
                 style={{ width: '100%', padding: 14, borderRadius: 8, border: '1px solid var(--border-highlight)', background: 'transparent', color: 'var(--text)', fontWeight: 600, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12 }}
               >
-                <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 22, height: 22 }} />
+                <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 22, height: 22 }} />
                 <span>iOS App</span>
                 <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
               </button>
@@ -97,7 +97,7 @@ export default function ArgentWalletModal({ onClose, onConnect, onBack }) {
                 onClick={() => window.open('https://support.argent.xyz/hc/en-us/articles/360022512752-How-to-create-an-Argent-wallet', '_blank')}
                 style={{ width: '100%', padding: 14, borderRadius: 8, border: '1px solid var(--border-highlight)', background: 'transparent', color: 'var(--text)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 12 }}
               >
-                <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 22, height: 22 }} />
+                <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 22, height: 22 }} />
                 <span>Android App</span>
                 <span style={{ marginLeft: 'auto', color: 'var(--cyan)' }}>→</span>
               </button>

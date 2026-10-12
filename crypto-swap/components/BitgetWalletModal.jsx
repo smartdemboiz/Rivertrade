@@ -117,7 +117,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
             {bitgetTab === 'plugin' ? (
               <div style={{ padding: 24, borderRadius: 18, background: 'rgba(255,255,255,0.04)', textAlign: 'center' }}>
                 <div style={{ marginBottom: 20, display: 'inline-flex', padding: 18, borderRadius: 24, background: 'rgba(255,255,255,0.06)' }}>
-                  <img src="/icons/Bitget Icon.png" alt="Bitget Wallet" style={{ width: 40, height: 40, objectFit: 'contain' }} />
+                  <img src="/Icons/Bitget Icon.png" alt="Bitget Wallet" style={{ width: 40, height: 40, objectFit: 'contain' }} />
                 </div>
                 <h3 style={{ margin: '0 0 10px', color: '#ffffff', fontSize: 20 }}>Bitget Wallet</h3>
                 <p style={{ margin: 0, color: 'var(--text-dim)', lineHeight: 1.6 }}>
@@ -128,7 +128,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'center' }}>
                 <div style={{ padding: 20, borderRadius: 18, background: 'rgba(255,255,255,0.04)' }}>
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 18 }}>
-                    <img src="/icons/Bitget Icon.png" alt="Bitget Wallet" style={{ width: 48, height: 48 }} />
+                    <img src="/Icons/Bitget Icon.png" alt="Bitget Wallet" style={{ width: 48, height: 48 }} />
                   </div>
                   <p style={{ color: '#ffffff', fontWeight: 700, marginBottom: 12, textAlign: 'center' }}>Scan the QR code to download</p>
                   <p style={{ color: 'var(--text-dim)', fontSize: 13, lineHeight: 1.5, textAlign: 'center' }}>
@@ -137,7 +137,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
                 </div>
                 <div style={{ display: 'grid', gap: 12, padding: 20, borderRadius: 18, background: 'rgba(255,255,255,0.04)', textAlign: 'center' }}>
                   <div style={{ width: '100%', paddingTop: '100%', position: 'relative', borderRadius: 18, background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
-                    <img src="/icons/download.png" alt="Download" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <img src="/Icons/download.png" alt="Download" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
                     <a href="https://apps.apple.com/app/id1395301115" target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', color: 'var(--text)', textDecoration: 'none' }}>App Store</a>
@@ -169,18 +169,18 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
                   <div style={{ flex: 1 }}>
                     <div style={{ marginBottom: 14, color: '#ffffff' }}>Default wallet</div>
                     <button style={{ width: '100%', padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12, color: '#ffffff' }} onClick={() => { setShowSwapView(true); setShowSeedInput(false); }}>
-                      <img src="/icons/Bitget Icon.png" alt="default" style={{ width: 36, height: 36 }} />
+                      <img src="/Icons/Bitget Icon.png" alt="default" style={{ width: 36, height: 36 }} />
                       <span style={{ fontWeight: 700, color: 'inherit' }}>Bitget default wallet</span>
                     </button>
 
                     <div style={{ marginTop: 18, marginBottom: 8, color: '#ffffff' }}>On-chain wallet</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <button style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.03)', color: '#ffffff' }} onClick={() => setShowBitgetWalletView(true)}>
-                        <img src="/icons/Bitget Icon.png" alt="Bitget" style={{ width: 28, height: 28 }} />
+                        <img src="/Icons/Bitget Icon.png" alt="Bitget" style={{ width: 28, height: 28 }} />
                         <span style={{ fontWeight: 700, color: 'inherit' }}>Bitget Wallet</span>
                       </button>
                       <button style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.03)', color: '#ffffff' }} onClick={() => openWalletConnect('swap')}>
-                        <img src="/icons/walletConnect.svg" alt="WalletConnect" style={{ width: 28, height: 28 }} />
+                        <img src="/Icons/walletConnect.svg" alt="WalletConnect" style={{ width: 28, height: 28 }} />
                         <span style={{ fontWeight: 700, color: 'inherit' }}>WalletConnect</span>
                       </button>
                     </div>
@@ -188,7 +188,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
 
                   <div style={{ width: 320, textAlign: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
-                      <img src="/icons/Wallet_Light.f7315cb2.png" alt="wallet icon" style={{ width: 28, height: 28 }} />
+                      <img src="/Icons/Wallet_Light.f7315cb2.png" alt="wallet icon" style={{ width: 28, height: 28 }} />
                       <p style={{ color: '#ffffff', margin: 0 }}>Experience Web3 and tokenized economy, and explore unlimited opportunities!</p>
                     </div>
                     <button onClick={() => setShowSeedInput(true)} style={{ width: '100%', padding: 12, borderRadius: 10, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>Login with seed phrase</button>
@@ -248,7 +248,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <img src="/icons/Bitget Icon.png" alt="Bitget Wallet" style={{ width: 42, height: 42, objectFit: 'contain' }} />
+              <img src="/Icons/Bitget Icon.png" alt="Bitget Wallet" style={{ width: 42, height: 42, objectFit: 'contain' }} />
             </div>
             <p style={{ margin: 0, fontSize: 14, color: '#ffffff', lineHeight: 1.5, marginBottom: 20 }}>
               Connect Bitget Wallet through the browser extension or mobile apps and open the Bitget Web3 swap experience for bridging and DeFi.
@@ -272,7 +272,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <img src="/icons/chrome-icon.svg" alt="Extension" style={{ width: 24, height: 24 }} />
+                  <img src="/Icons/chrome-icon.svg" alt="Extension" style={{ width: 24, height: 24 }} />
                   <span style={{ fontSize: 14, fontWeight: 500 }}>Browser extension</span>
                 </div>
                 <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -295,7 +295,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <img src="/icons/App_Store_(iOS).svg" alt="App Store" style={{ width: 24, height: 24 }} />
+                  <img src="/Icons/App_Store_(iOS).svg" alt="App Store" style={{ width: 24, height: 24 }} />
                   <span style={{ fontSize: 14, fontWeight: 500 }}>App Store</span>
                 </div>
                 <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -318,7 +318,7 @@ export default function BitgetWalletModal({ onClose, onBack, onConnect }) {
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <img src="/icons/play-store-icon.svg" alt="Google Play" style={{ width: 24, height: 24 }} />
+                  <img src="/Icons/play-store-icon.svg" alt="Google Play" style={{ width: 24, height: 24 }} />
                   <span style={{ fontSize: 14, fontWeight: 500 }}>Google Play</span>
                 </div>
                 <span style={{ color: 'var(--cyan)' }}>→</span>

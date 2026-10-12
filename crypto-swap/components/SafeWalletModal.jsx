@@ -89,7 +89,7 @@ export default function SafeWalletModal({ onClose, onConnect, onBack }) {
           {!selectedOption ? (
             <>
               <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <img src="/icons/safe_log.jpeg" alt="Safe Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block', borderRadius: 20 }} />
+                <img src="/Icons/safe_log.jpeg" alt="Safe Wallet" style={{ width: 60, height: 60, margin: '0 auto 16px', display: 'block', borderRadius: 20 }} />
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.6 }}>
                   {"Safe{Wallet} can connect to swaps and bridges natively, or connect to external dApps via WalletConnect. Use the Safe app to review LI.FI routes and confirm transactions with your multisig approval."}
                 </p>
@@ -165,7 +165,7 @@ export default function SafeWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Website" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Website" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Open Safe Web App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -196,7 +196,7 @@ export default function SafeWalletModal({ onClose, onConnect, onBack }) {
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Desktop" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Desktop" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Safe App Downloads</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>

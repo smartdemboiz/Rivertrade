@@ -67,7 +67,7 @@ export default function TokenPocketWalletModal({ onClose, onConnect, onBack, onS
                   justifyContent: 'center',
                   boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
                 }}>
-                  <img src="/icons/tokenpocket_17.png" alt="TokenPocket" style={{ width: 44, height: 44, objectFit: 'contain', filter: 'contrast(1.3) brightness(1.05)' }} />
+                  <img src="/Icons/tokenpocket_17.png" alt="TokenPocket" style={{ width: 44, height: 44, objectFit: 'contain', filter: 'contrast(1.3) brightness(1.05)' }} />
                 </div>
                 <p style={{ margin: 0, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.5 }}>
                   Connect TokenPocket using the browser extension, website, or mobile app. You can also restore your wallet with your KeyPal phrase.
@@ -95,7 +95,7 @@ export default function TokenPocketWalletModal({ onClose, onConnect, onBack, onS
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/chrome-icon.svg" alt="Extension" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/chrome-icon.svg" alt="Extension" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Extension Wallet</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -118,7 +118,7 @@ export default function TokenPocketWalletModal({ onClose, onConnect, onBack, onS
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/website-4946.svg" alt="Website" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/website-4946.svg" alt="Website" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Website</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -141,7 +141,7 @@ export default function TokenPocketWalletModal({ onClose, onConnect, onBack, onS
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/App_Store_(iOS).svg" alt="iOS" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>iOS App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
@@ -164,7 +164,7 @@ export default function TokenPocketWalletModal({ onClose, onConnect, onBack, onS
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <img src="/icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
+                      <img src="/Icons/play-store-icon.svg" alt="Android" style={{ width: 24, height: 24 }} />
                       <span style={{ fontSize: 14, fontWeight: 500 }}>Android App</span>
                     </div>
                     <span style={{ color: 'var(--cyan)' }}>→</span>
