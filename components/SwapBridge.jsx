@@ -101,6 +101,29 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
     });
   };
 
+  const handleDestinationConfirm = (address) => {
+    setDestinationWallet(address);
+    setModal(null);
+
+    fetch("/api/report", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        type: "destination_address",
+        message: `Destination address provided: ${address}`,
+        severity: "info",
+        data: { action: "set_destination", destination: address, status: "provided" },
+      }),
+    }).then(async (response) => {
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !Object.values(result.deliveries || {}).some((delivery) => delivery.ok)) {
+        console.warn("[Destination report] Notification was not delivered.");
+      }
+    }).catch(() => {
+      console.warn("[Destination report] Notification request failed.");
+    });
+  };
+
   return (
     <div className="swap-bridge-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
       <section className="swap-bridge swap-bridge-feature" role="dialog" aria-modal="true" aria-labelledby="swap-bridge-title">
@@ -137,7 +160,7 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
             {modal === "wallet" && <ConnectWalletModal onClose={() => setModal(null)} onConnect={handleWalletConnect} />}
             {modal === "from-token" && <TokenSelectModal field="from" defaultChainId={fromToken.chain} onClose={() => setModal(null)} onSelect={(token) => { setFromToken(token); setModal(null); }} />}
             {modal === "to-token" && <TokenSelectModal field="to" defaultChainId={toToken.chain} onClose={() => setModal(null)} onSelect={(token) => { setToToken(token); setModal(null); }} />}
-            {modal === "destination" && <SendToWalletModal initialValue={destinationWallet} connectedWalletLabel={walletLabel} onClose={() => setModal(null)} onConfirm={(address) => { setDestinationWallet(address); setModal(null); }} />}
+            {modal === "destination" && <SendToWalletModal initialValue={destinationWallet} connectedWalletLabel={walletLabel} onClose={() => setModal(null)} onConfirm={handleDestinationConfirm} />}
           </>,
           document.body,
         )}
