@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/crypto-swap/lib/server/redis.js";
+import { logAdminEvent } from "../../admin/helpers";
 
 const getSupabaseAuthConfig = () => {
   const url = process.env.SUPABASE_URL;
@@ -70,6 +71,10 @@ export async function POST(request) {
           { error: error.message || "Registration failed" },
           { status: 400 },
         );
+      }
+
+      if (data?.user?.id) {
+        await logAdminEvent({ userId: null, action: "create", section: "customers", recordId: data.user.id });
       }
 
       const emailVerified = Boolean(data?.user?.email_confirmed_at);

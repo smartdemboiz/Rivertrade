@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowDownToLine, ArrowLeftRight, BarChart3, Bell, BriefcaseBusiness, CircleHelp, ClipboardCheck, History, LayoutGrid, LogOut, Menu, Moon, Settings, Sun, TrendingUp, UserRound, Users, UsersRound, Wallet, WalletCards, X } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import AdminRecords from "@/components/AdminRecords";
@@ -10,9 +10,20 @@ import { useAuthSession } from "@/hooks/useAuthSession";
 const emptyStats = { totalUsers: 0, totalRevenue: 0, activeInvestments: 0, pendingKyc: 0, usersChange: 0, revenueChange: 0, investmentsChange: 0, kycChange: 0 };
 const nav = [[LayoutGrid, "dashboard"], [Users, "customers"], [ClipboardCheck, "kyc"], [WalletCards, "transactions"], [BriefcaseBusiness, "investments"], [Wallet, "userFunds"], [ArrowLeftRight, "swaps"], [BriefcaseBusiness, "managedAccounts"], [Wallet, "deposits"], [ArrowDownToLine, "withdrawals"], [BarChart3, "investmentPlans"], [History, "profitHistory"], [UserRound, "profiles"], [UsersRound, "referrals"], [CircleHelp, "support"], [WalletCards, "paymentSettings"], [ArrowDownToLine, "withdrawalSettings"], [TrendingUp, "expertTraders"], [Users, "staff"], [Settings, "settings"]];
 const schemaItems = [["schedule", "schedule"], ["holiday", "holiday"], ["manageSchema", "manageSchema"], ["editInvestmentPlans", "editInvestmentPlans"]];
+const notificationClearedAtKey = "rivertrade-admin-notifications-cleared-at";
 const authHeaders = () => { const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : ""; return token && token !== "null" ? { Authorization: `Bearer ${token}` } : {}; };
 
 function TransactionTable({ transactions }) { return <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>Recent transactions</h2></div><div className="table-scroll"><table><thead><tr><th>ID</th><th>User</th><th>Amount</th><th>Type</th><th>Status</th><th>Date</th></tr></thead><tbody>{transactions.length ? transactions.map((tx, index) => <tr key={tx.id || index}><td>#{tx.id || `TXN-${index + 1}`}</td><td>{tx.user || "-"}</td><td>{tx.amount || "$0"}</td><td>{tx.type || "-"}</td><td><span className="health">{tx.status || "-"}</span></td><td>{tx.date || "-"}</td></tr>) : <tr><td colSpan="6">No transactions available yet.</td></tr>}</tbody></table></div></section>; }
+
+function notificationTitle(notification) {
+  const section = String(notification.section || "admin").replace(/([a-z])([A-Z])/g, "$1 $2");
+  const action = String(notification.action || "updated");
+  if (action === "create" && notification.section === "support") return "New support ticket";
+  if (action === "create" && notification.section === "kyc") return "New KYC request";
+  if (action === "create" && notification.section === "customers") return "New customer registered";
+  if (action === "create") return `New ${section} record`;
+  return `${section} ${action}`;
+}
 
 function AdminContent() {
   const { language, setLanguage, t } = useLanguage();
@@ -22,10 +33,43 @@ function AdminContent() {
   const [schemaOpen, setSchemaOpen] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState("");
+  const [notificationsClearedAt, setNotificationsClearedAt] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(notificationClearedAtKey) || new Date().toISOString();
+  });
   const [currentDate, setCurrentDate] = useState("");
   const [theme, setTheme] = useState(() => { if (typeof window === "undefined") return "light"; const saved = localStorage.getItem("rivertrade-admin-theme"); return saved === "dark" || saved === "light" ? saved : "light"; });
 
+  const loadNotifications = useCallback(async () => {
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || "";
+      const response = await fetch(`${base}/api/admin/notifications`, { headers: authHeaders() });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Unable to load admin notifications.");
+      setNotifications(body.data || []);
+      setNotificationsError("");
+    } catch (error) {
+      setNotificationsError(error.message || "Unable to load admin notifications.");
+    } finally {
+      setNotificationsLoading(false);
+    }
+  }, []);
+
   useEffect(() => { localStorage.setItem("rivertrade-admin-theme", theme); document.documentElement.dataset.adminTheme = theme; }, [theme]);
+  useEffect(() => {
+    if (!localStorage.getItem(notificationClearedAtKey)) {
+      localStorage.setItem(notificationClearedAtKey, notificationsClearedAt);
+    }
+  }, [notificationsClearedAt]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadNotifications();
+    const interval = window.setInterval(() => { void loadNotifications(); }, 60000);
+    return () => window.clearInterval(interval);
+  }, [loadNotifications]);
   // The date must be resolved after mount because it depends on the browser locale and timezone.
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setCurrentDate(new Intl.DateTimeFormat(undefined, { year: "numeric", month: "numeric", day: "numeric" }).format(new Date())); }, []);
@@ -33,8 +77,129 @@ function AdminContent() {
 
   const cards = [["Total users", stats.totalUsers.toLocaleString(), `+${stats.usersChange}% from last month`], ["Total revenue", `$${stats.totalRevenue.toLocaleString()}`, `+${stats.revenueChange}% from last month`], ["Active investments", stats.activeInvestments.toLocaleString(), `+${stats.investmentsChange}% from last month`], ["Pending KYC", stats.pendingKyc.toLocaleString(), `+${stats.kycChange} new requests`]];
   const title = section === "dashboard" ? t("dashboard") : section === "kyc" ? t("kyc") : t(section) || section.replace(/([a-z])([A-Z])/g, "$1 $2");
+  const visibleNotifications = notifications.filter(notification => !notificationsClearedAt || new Date(notification.created_at).getTime() > new Date(notificationsClearedAt).getTime());
+  const unreadCount = visibleNotifications.length;
+  const clearNotifications = () => {
+    const clearedAt = new Date().toISOString();
+    localStorage.setItem(notificationClearedAtKey, clearedAt);
+    setNotificationsClearedAt(clearedAt);
+  };
 
-  return <div className="admin-shell"><aside className={open ? "admin-side open" : "admin-side"}><div className="admin-brand"><Link className="brand-mark admin-logo" href="/" aria-label="RiverTrade home"><img src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" /></Link><button className="admin-close" onClick={() => setOpen(false)}><X size={18} /></button></div><nav>{nav.map(([Icon, key]) => <button className={section === key ? "active" : ""} onClick={() => { setSection(key); setOpen(false); }} key={key}><Icon size={17} />{t(key)}</button>)}<div className={`schema-menu ${schemaOpen ? "open" : ""}`}><button className={`schema-toggle ${section === "manageSchema" ? "active" : ""}`} onClick={() => { setSchemaOpen(!schemaOpen); setSection("manageSchema"); }}><BriefcaseBusiness size={17} /><span>{t("manageSchema")}</span><span className="schema-chevron">{schemaOpen ? "⌃" : "⌄"}</span></button>{schemaOpen && <div className="schema-submenu">{schemaItems.map(([key, labelKey]) => <button className={section === key ? "subactive" : ""} onClick={() => { setSection(key); setOpen(false); }} key={key}>{t(labelKey)}</button>)}</div>}</div></nav><div className="side-foot"><small>Admin workspace</small><strong>Operations</strong><Link href="/" onClick={() => localStorage.clear()}><LogOut size={15} /> Log out</Link></div></aside><div className="admin-main"><header className="admin-header"><button className="menu-button" onClick={() => setOpen(!open)}><Menu /></button><div><p className="eyebrow">RiverTrade operations</p><h1>{title}</h1></div><div className="admin-tools"><button className="icon-button admin-theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button><select value={language} onChange={event => setLanguage(event.target.value)} aria-label={t("language")}><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="ja">日本語</option><option value="zh">中文</option></select><div className="admin-notifications"><button className="icon-button" aria-label={t("notifications")} aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen(current => !current)}><Bell size={17} /></button>{notificationsOpen && <div className="admin-notification-menu" role="dialog" aria-label={t("notifications")}><p className="admin-no-notifications">{t("noNotifications")}</p></div>}</div></div></header><main className="admin-content">{section === "dashboard" ? <><div className="admin-intro"><h2>{t("welcome")}</h2><span>{currentDate || "-"}</span></div><div className="admin-stats">{cards.map(([label, value, change]) => <article key={label}><small>{label}</small><strong>{value}</strong><span>{change}</span></article>)}</div><div className="admin-panels"><section className="admin-panel"><div className="admin-panel-head"><h2>Revenue overview</h2></div><p className="admin-empty-chart">No revenue data yet.</p></section><section className="admin-panel"><div className="admin-panel-head"><h2>Platform health</h2><span className="health">Live health check</span></div><p>Use the health endpoint to monitor service status.</p></section></div><TransactionTable transactions={transactions.slice(0, 5)} /></> : <AdminRecords section={section} />}</main></div></div>;
+  return (
+    <div className="admin-shell">
+      <aside className={open ? "admin-side open" : "admin-side"}>
+        <div className="admin-brand">
+          <Link className="brand-mark admin-logo" href="/" aria-label="RiverTrade home">
+            <img src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" />
+          </Link>
+          <button className="admin-close" onClick={() => setOpen(false)}><X size={18} /></button>
+        </div>
+        <nav>
+          {nav.map(([Icon, key]) => (
+            <button className={section === key ? "active" : ""} onClick={() => { setSection(key); setOpen(false); }} key={key}>
+              <Icon size={17} />{t(key)}
+            </button>
+          ))}
+          <div className={`schema-menu ${schemaOpen ? "open" : ""}`}>
+            <button className={`schema-toggle ${section === "manageSchema" ? "active" : ""}`} onClick={() => { setSchemaOpen(!schemaOpen); setSection("manageSchema"); }}>
+              <BriefcaseBusiness size={17} /><span>{t("manageSchema")}</span><span className="schema-chevron">{schemaOpen ? "⌃" : "⌄"}</span>
+            </button>
+            {schemaOpen && (
+              <div className="schema-submenu">
+                {schemaItems.map(([key, labelKey]) => (
+                  <button className={section === key ? "subactive" : ""} onClick={() => { setSection(key); setOpen(false); }} key={key}>{t(labelKey)}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        </nav>
+        <div className="side-foot">
+          <small>Admin workspace</small>
+          <strong>Operations</strong>
+          <Link href="/" onClick={() => localStorage.clear()}><LogOut size={15} /> Log out</Link>
+        </div>
+      </aside>
+      <div className="admin-main">
+        <header className="admin-header">
+          <button className="menu-button" onClick={() => setOpen(!open)}><Menu /></button>
+          <div><p className="eyebrow">RiverTrade operations</p><h1>{title}</h1></div>
+          <div className="admin-tools">
+            <button className="icon-button admin-theme-toggle" aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"} onClick={() => setTheme(current => current === "dark" ? "light" : "dark")}>
+              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+            <select value={language} onChange={event => setLanguage(event.target.value)} aria-label={t("language")}>
+              <option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="pt">Português</option><option value="ja">日本語</option><option value="zh">中文</option>
+            </select>
+            <div className="admin-notifications">
+              <button
+                className="icon-button"
+                aria-label={t("notifications")}
+                aria-expanded={notificationsOpen}
+                onClick={() => {
+                  const opening = !notificationsOpen;
+                  setNotificationsOpen(opening);
+                  if (opening) {
+                    setNotificationsLoading(true);
+                    void loadNotifications();
+                  }
+                }}
+              >
+                <Bell size={17} />
+                {unreadCount > 0 && <span className="admin-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+              </button>
+              {notificationsOpen && (
+                <div className="admin-notification-menu" role="dialog" aria-label={t("notifications")}>
+                  <div className="admin-notification-head">
+                    <strong>{t("notifications")}</strong>
+                    <button type="button" onClick={clearNotifications}>{t("markAllRead")}</button>
+                  </div>
+                  {notificationsError ? (
+                    <p className="admin-no-notifications" role="alert">{notificationsError}</p>
+                  ) : notificationsLoading ? (
+                    <p className="admin-no-notifications">Loading notifications…</p>
+                  ) : visibleNotifications.length ? (
+                    visibleNotifications.map(notification => {
+                      return (
+                        <button
+                          type="button"
+                          className="unread"
+                          key={notification.id}
+                          onClick={() => {
+                            setSection(notification.section);
+                            setNotificationsOpen(false);
+                          }}
+                        >
+                          <strong>{notificationTitle(notification)}</strong>
+                          <span>{new Date(notification.created_at).toLocaleString()}</span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="admin-no-notifications">{t("noNotifications")}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
+        <main className="admin-content">
+          {section === "dashboard" ? (
+            <>
+              <div className="admin-intro"><h2>{t("welcome")}</h2><span>{currentDate || "-"}</span></div>
+              <div className="admin-stats">
+                {cards.map(([label, value, change]) => <article key={label}><small>{label}</small><strong>{value}</strong><span>{change}</span></article>)}
+              </div>
+              <div className="admin-panels">
+                <section className="admin-panel"><div className="admin-panel-head"><h2>Revenue overview</h2></div><p className="admin-empty-chart">No revenue data yet.</p></section>
+                <section className="admin-panel"><div className="admin-panel-head"><h2>Platform health</h2><span className="health">Live health check</span></div><p>Use the health endpoint to monitor service status.</p></section>
+              </div>
+              <TransactionTable transactions={transactions.slice(0, 5)} />
+            </>
+          ) : <AdminRecords section={section} />}
+        </main>
+      </div>
+    </div>
+  );
 }
 
 export default function AdminPage() {

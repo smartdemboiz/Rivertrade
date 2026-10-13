@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { checkRateLimit, rateLimitResponse } from "@/crypto-swap/lib/server/rate-limit.js";
+import { logAdminEvent } from "../admin/helpers";
 
 export const runtime = "nodejs";
 
@@ -126,6 +127,8 @@ export async function POST(request) {
       console.error("Unable to save support ticket:", error.message);
       return Response.json({ error: "We could not save your support request. Please try again or email support@rivertrade.com." }, { status: 503 });
     }
+
+    await logAdminEvent({ action: "create", section: "support", recordId: data.id });
 
     let notificationSent = false;
     try {

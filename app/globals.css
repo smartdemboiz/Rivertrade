@@ -7259,7 +7259,7 @@ html[data-admin-theme="dark"] .admin-notification-menu {
 }
 .admin-notification-menu > button:hover,
 .admin-notification-menu > button.unread {
-  background: rgba(199, 227, 94, 0.16);
+  background: rgba(108, 249, 216, 0.16);
 }
 .admin-notification-menu > button strong {
   font-size: 12px;

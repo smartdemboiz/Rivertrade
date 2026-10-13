@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { logAdminEvent } from "../admin/helpers";
 
 export const runtime = "nodejs";
 
@@ -184,10 +185,12 @@ export async function POST(request) {
         status: "pending",
         notes,
       })
-      .select("document_type, status, created_at")
+      .select("id, document_type, status, created_at")
       .single();
 
     if (error) throw new Error(error.message || "Unable to save your verification request.");
+
+    await logAdminEvent({ userId: user.id, action: "create", section: "kyc", recordId: data.id });
 
     return Response.json({
       data: {
