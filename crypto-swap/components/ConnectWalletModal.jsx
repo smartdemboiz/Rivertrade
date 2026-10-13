@@ -83,7 +83,11 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
     setConnectionError('');
 
     if (wallet.id === 'injected') {
-      connectBrowserWallet();
+      if (window.ethereum?.request) {
+        connectBrowserWallet();
+      } else {
+        setShowMetaMaskWallet(true);
+      }
     } else if (wallet.id === 'walletConnect' || wallet.id === 'coinbase') {
       setWalletModalType(wallet.label);
     } else if (wallet.id === 'trustWallet') {

@@ -44,16 +44,17 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
       <div style={{
         position: 'fixed',
         inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(5, 5, 5, 0.78)',
+        backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
       }}>
         <div style={{
-          backgroundColor: 'var(--bg)',
+          backgroundColor: '#151518',
           borderRadius: '16px',
-          border: '1px solid var(--border-highlight)',
+          border: '1px solid rgba(108, 249, 216, 0.2)',
           width: '90%',
           maxWidth: '600px',
           padding: '24px',
@@ -71,7 +72,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--text)',
+                color: 'var(--background)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -80,7 +81,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               <ArrowLeft size={24} />
             </button>
             <h2 style={{
-              color: 'var(--text)',
+              color: 'var(--background)',
               fontSize: '20px',
               fontWeight: '600',
               margin: 0,
@@ -92,7 +93,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'var(--text)',
+                color: 'var(--background)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -104,7 +105,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
 
           {/* Instruction text */}
           <p style={{
-            color: 'var(--text-dim)',
+            color: 'var(--muted-soft)',
             textAlign: 'center',
             marginBottom: '24px',
             fontSize: '14px',
@@ -124,9 +125,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{
                 padding: '8px 24px',
                 borderRadius: '20px',
-                border: 'none',
-                backgroundColor: wordCount === 12 ? 'white' : 'transparent',
-                color: wordCount === 12 ? '#1a1a2e' : 'var(--text)',
+                border: '1px solid rgba(108, 249, 216, 0.2)',
+                backgroundColor: wordCount === 12 ? 'var(--brand)' : 'transparent',
+                color: wordCount === 12 ? 'var(--foreground)' : 'var(--background)',
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -140,9 +141,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{
                 padding: '8px 24px',
                 borderRadius: '20px',
-                border: '1px solid var(--border-highlight)',
-                backgroundColor: 'transparent',
-                color: wordCount === 24 ? 'white' : 'var(--text)',
+                border: '1px solid rgba(108, 249, 216, 0.2)',
+                backgroundColor: wordCount === 24 ? 'var(--brand)' : 'transparent',
+                color: wordCount === 24 ? 'var(--foreground)' : 'var(--background)',
                 fontSize: '14px',
                 fontWeight: '600',
                 cursor: 'pointer',
@@ -166,7 +167,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
             {words.map((word, idx) => (
               <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{
-                  color: 'var(--text-dim)',
+                  color: 'var(--muted-soft)',
                   fontSize: '14px',
                   minWidth: '20px',
                 }}>
@@ -181,18 +182,18 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
                     flex: 1,
                     padding: '10px 12px',
                     borderRadius: '8px',
-                    border: '1px solid var(--border-highlight)',
-                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                    color: validWords[idx] ? 'var(--cyan)' : 'var(--text)',
+                    border: '1px solid rgba(108, 249, 216, 0.2)',
+                    backgroundColor: 'var(--surface)',
+                    color: validWords[idx] ? 'var(--brand)' : 'var(--background)',
                     fontSize: '14px',
                     outline: 'none',
                     transition: 'border-color 0.2s',
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = 'var(--cyan)';
+                    e.target.style.borderColor = 'var(--brand)';
                   }}
                   onBlur={(e) => {
-                    e.target.style.borderColor = 'var(--border-highlight)';
+                    e.target.style.borderColor = 'rgba(108, 249, 216, 0.2)';
                   }}
                 />
               </div>
@@ -203,7 +204,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
           <div style={{
             textAlign: 'center',
             marginBottom: '24px',
-            color: 'var(--cyan)',
+            color: 'var(--brand)',
             fontSize: '14px',
             fontWeight: '500',
           }}>
@@ -218,9 +219,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               width: '100%',
               padding: '12px',
               borderRadius: '8px',
-              border: 'none',
-              backgroundColor: allWordsFilled && allWordsValid ? 'var(--cyan)' : 'rgba(139, 92, 246, 0.3)',
-              color: allWordsFilled && allWordsValid ? '#1a1a2e' : 'var(--text-dim)',
+              border: '1px solid rgba(108, 249, 216, 0.2)',
+              backgroundColor: allWordsFilled && allWordsValid ? 'var(--brand)' : 'var(--surface-soft)',
+              color: allWordsFilled && allWordsValid ? 'var(--foreground)' : 'var(--muted-soft)',
               fontSize: '16px',
               fontWeight: '600',
               cursor: allWordsFilled && allWordsValid ? 'pointer' : 'not-allowed',
@@ -238,16 +239,17 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
     <div style={{
       position: 'fixed',
       inset: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      backgroundColor: 'rgba(5, 5, 5, 0.78)',
+      backdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 9999,
     }}>
       <div style={{
-        backgroundColor: 'var(--bg)',
+        backgroundColor: '#151518',
         borderRadius: '16px',
-        border: '1px solid var(--border-highlight)',
+        border: '1px solid rgba(108, 249, 216, 0.2)',
         width: '90%',
         maxWidth: '600px',
         padding: '24px',
@@ -262,18 +264,36 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
           marginBottom: '24px',
         }}>
           <h2 style={{
-            color: 'var(--text)',
+            color: 'var(--background)',
             fontSize: '24px',
             fontWeight: '700',
             margin: 0,
             textAlign: 'center',
           }}>MetaMask</h2>
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Back"
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--background)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                position: 'absolute',
+                left: 0,
+              }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+          )}
           <button
             onClick={onClose}
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--text)',
+              color: 'var(--background)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -303,7 +323,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
 
         {/* Instruction text */}
         <p style={{
-          color: 'var(--text-dim)',
+          color: 'var(--muted-soft)',
           textAlign: 'center',
           marginBottom: '24px',
           fontSize: '14px',
@@ -313,14 +333,14 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
 
         {/* Get MetaMask section */}
         <div style={{
-          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          backgroundColor: 'var(--surface-soft)',
           borderRadius: '12px',
           padding: '20px',
           marginBottom: '20px',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
+          border: '1px solid rgba(108, 249, 216, 0.2)',
         }}>
           <h3 style={{
-            color: 'var(--text)',
+            color: 'var(--background)',
             fontSize: '16px',
             fontWeight: '600',
             marginBottom: '16px',
@@ -334,9 +354,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               width: '100%',
               padding: '16px 12px',
               borderRadius: '8px',
-              border: '1px solid var(--border-highlight)',
-              backgroundColor: 'transparent',
-              color: 'var(--text)',
+              border: '1px solid rgba(108, 249, 216, 0.2)',
+              backgroundColor: '#151518',
+              color: 'var(--background)',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -347,12 +367,12 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               transition: 'all 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.target.style.borderColor = 'var(--cyan)';
-              e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.05)';
+              e.target.style.borderColor = 'var(--brand)';
+              e.target.style.backgroundColor = 'rgba(108, 249, 216, 0.08)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.borderColor = 'var(--border-highlight)';
-              e.target.style.backgroundColor = 'transparent';
+              e.target.style.borderColor = 'rgba(108, 249, 216, 0.2)';
+              e.target.style.backgroundColor = '#151518';
             }}
           >
             <img
@@ -361,7 +381,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{ width: '24px', height: '24px' }}
             />
             <span>Chrome Extension</span>
-            <span style={{ marginLeft: 'auto', color: 'var(--cyan)', fontSize: '18px' }}>→</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
           </button>
 
           {/* Firefox Extension */}
@@ -371,9 +391,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               width: '100%',
               padding: '16px 12px',
               borderRadius: '8px',
-              border: '1px solid var(--border-highlight)',
-              backgroundColor: 'transparent',
-              color: 'var(--text)',
+              border: '1px solid rgba(108, 249, 216, 0.2)',
+              backgroundColor: '#151518',
+              color: 'var(--background)',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -384,12 +404,12 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               transition: 'all 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.target.style.borderColor = 'var(--cyan)';
-              e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.05)';
+              e.target.style.borderColor = 'var(--brand)';
+              e.target.style.backgroundColor = 'rgba(108, 249, 216, 0.08)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.borderColor = 'var(--border-highlight)';
-              e.target.style.backgroundColor = 'transparent';
+              e.target.style.borderColor = 'rgba(108, 249, 216, 0.2)';
+              e.target.style.backgroundColor = '#151518';
             }}
           >
             <img
@@ -398,7 +418,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{ width: '24px', height: '24px' }}
             />
             <span>Firefox Extension</span>
-            <span style={{ marginLeft: 'auto', color: 'var(--cyan)', fontSize: '18px' }}>→</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
           </button>
 
           {/* iOS App */}
@@ -408,9 +428,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               width: '100%',
               padding: '16px 12px',
               borderRadius: '8px',
-              border: '1px solid var(--border-highlight)',
-              backgroundColor: 'transparent',
-              color: 'var(--text)',
+              border: '1px solid rgba(108, 249, 216, 0.2)',
+              backgroundColor: '#151518',
+              color: 'var(--background)',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -421,12 +441,12 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               transition: 'all 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.target.style.borderColor = 'var(--cyan)';
-              e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.05)';
+              e.target.style.borderColor = 'var(--brand)';
+              e.target.style.backgroundColor = 'rgba(108, 249, 216, 0.08)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.borderColor = 'var(--border-highlight)';
-              e.target.style.backgroundColor = 'transparent';
+              e.target.style.borderColor = 'rgba(108, 249, 216, 0.2)';
+              e.target.style.backgroundColor = '#151518';
             }}
           >
             <img
@@ -435,7 +455,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{ width: '24px', height: '24px' }}
             />
             <span>iOS App</span>
-            <span style={{ marginLeft: 'auto', color: 'var(--cyan)', fontSize: '18px' }}>→</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
           </button>
 
           {/* Android App */}
@@ -445,9 +465,9 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               width: '100%',
               padding: '16px 12px',
               borderRadius: '8px',
-              border: '1px solid var(--border-highlight)',
-              backgroundColor: 'transparent',
-              color: 'var(--text)',
+              border: '1px solid rgba(108, 249, 216, 0.2)',
+              backgroundColor: '#151518',
+              color: 'var(--background)',
               fontSize: '16px',
               fontWeight: '500',
               cursor: 'pointer',
@@ -458,12 +478,12 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               transition: 'all 0.2s',
             }}
             onMouseEnter={(e) => {
-              e.target.style.borderColor = 'var(--cyan)';
-              e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.05)';
+              e.target.style.borderColor = 'var(--brand)';
+              e.target.style.backgroundColor = 'rgba(108, 249, 216, 0.08)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.borderColor = 'var(--border-highlight)';
-              e.target.style.backgroundColor = 'transparent';
+              e.target.style.borderColor = 'rgba(108, 249, 216, 0.2)';
+              e.target.style.backgroundColor = '#151518';
             }}
           >
             <img
@@ -472,7 +492,7 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
               style={{ width: '24px', height: '24px' }}
             />
             <span>Android App</span>
-            <span style={{ marginLeft: 'auto', color: 'var(--cyan)', fontSize: '18px' }}>→</span>
+            <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
           </button>
         </div>
 
@@ -483,16 +503,16 @@ export default function MetaMaskModal({ onClose, onConnect, onBack }) {
             width: '100%',
             padding: '12px',
             borderRadius: '8px',
-            border: '1px solid var(--border-highlight)',
+            border: '1px solid rgba(108, 249, 216, 0.2)',
             backgroundColor: 'transparent',
-            color: 'var(--text)',
+            color: 'var(--muted-soft)',
             fontSize: '14px',
             fontWeight: '500',
             cursor: 'pointer',
             transition: 'all 0.2s',
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+            e.target.style.backgroundColor = 'rgba(108, 249, 216, 0.08)';
           }}
           onMouseLeave={(e) => {
             e.target.style.backgroundColor = 'transparent';
