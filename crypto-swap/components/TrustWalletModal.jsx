@@ -51,9 +51,11 @@ export default function TrustWalletModal({ onClose, onConnect, onBack }) {
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-content" style={{ maxWidth: 500 }}>
         <div className="modal-header" style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {showSeedInput && (
+          {showSeedInput ? (
             <button className="close-btn" onClick={() => setShowSeedInput(false)} aria-label="Back" style={{ position: 'absolute', left: 0, marginRight: 4 }}><ArrowLeft size={16} /></button>
-          )}
+          ) : onBack ? (
+            <button className="close-btn" onClick={onBack} aria-label="Back" style={{ position: 'absolute', left: 0, marginRight: 4 }}><ArrowLeft size={16} /></button>
+          ) : null}
           <h2 style={{ margin: 0, textAlign: 'center' }}>Trust Wallet</h2>
           <button className="close-btn" onClick={onClose} aria-label="Close" style={{ position: 'absolute', right: 0 }}><X size={18} /></button>
         </div>
