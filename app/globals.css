@@ -7274,6 +7274,23 @@ html[data-admin-theme="dark"] .admin-notification-menu {
   margin: 0;
   padding: 18px 15px;
 }
+@media (max-width: 850px) {
+  .admin-notification-menu {
+    position: fixed;
+    top: 130px;
+    right: max(16px, env(safe-area-inset-right));
+    left: auto;
+    width: min(340px, calc(100vw - 32px));
+    max-height: min(420px, 60dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+@media (max-width: 520px) {
+  .admin-notification-menu {
+    top: 145px;
+  }
+}
 .admin-badge {
   position: absolute;
   top: -5px;
