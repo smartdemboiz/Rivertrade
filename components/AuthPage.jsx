@@ -53,8 +53,8 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#101b1d] text-[#101b1d]">
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#101b1d] px-6 py-5">
+    <main className="min-h-screen bg-[#101b1d] pt-[97px] text-[#101b1d]">
+      <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#101b1d] px-6 py-5">
         <button onClick={onBack} className="shrink-0" aria-label="RiverTrade home"><Image src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" width={1800} height={700} className="h-14 w-auto" /></button>
         <div className="flex items-center gap-3">
           <div className="relative">
