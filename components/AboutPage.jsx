@@ -9,15 +9,15 @@ const stats = [
 
 const journey = [
   {
-    title: "Foundation — 2021",
+    title: "Foundation",
     text: "Founded by a team of traders and engineers with the goal of simplifying access to markets.",
   },
   {
-    title: "Growth — 2022",
+    title: "Growth",
     text: "Reached early traction, grew user base and expanded team across continents.",
   },
   {
-    title: "Innovation — 2023",
+    title: "Innovation",
     text: "Launched AI-powered trading tools and expanded market coverage to 100+ pairs.",
   },
 ];
@@ -114,7 +114,6 @@ export default function AboutPage() {
         <aside className="about-stats-panel">
           <div className="stats-header">
             <h3>Company Stats</h3>
-            <span>2023 Data</span>
           </div>
           <div className="stats-grid">
             {stats.map((stat) => (
