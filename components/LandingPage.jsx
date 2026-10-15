@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/components/LanguageProvider";
 import SwapBridge from "@/components/SwapBridge";
 import { SiApple } from "react-icons/si";
+import { FaInstagram, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 
 const tradePairs = [
   {
@@ -308,7 +309,12 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
         <footer className="relative left-1/2 mt-16 w-screen -translate-x-1/2 border-t-2 border-brand bg-surface-strong px-6 py-9 text-background sm:px-10 lg:px-16">
           <div className="flex flex-wrap items-center justify-between gap-6 border-b border-white/15 pb-8">
             <Image src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" width={1800} height={700} className="h-14 w-auto" />
-            <div className="flex items-center gap-5 text-lg font-black"><span className="mr-1 text-base font-normal text-background/70">{t("followUs")}</span><a href="#about" aria-label="River on X" className="text-background transition hover:text-brand">X</a><a href="#about" aria-label="River on social network" className="text-background transition hover:text-brand">◎</a><a href="#about" aria-label="River on LinkedIn" className="text-background transition hover:text-brand">in</a><a href="#about" aria-label="River on music network" className="text-background transition hover:text-brand">♪</a><a href="#about" aria-label="River video channel" className="text-background transition hover:text-brand">▶</a></div>
+            <div className="flex items-center gap-5 text-background">
+              <span className="mr-1 text-base font-normal text-background/70">{t("followUs")}</span>
+              <a href="#about" aria-label="River on X" className="transition hover:text-brand"><FaXTwitter size={20} aria-hidden="true" /></a>
+              <a href="#about" aria-label="River on Instagram" className="transition hover:text-brand"><FaInstagram size={20} aria-hidden="true" /></a>
+              <a href="#about" aria-label="River on LinkedIn" className="transition hover:text-brand"><FaLinkedin size={20} aria-hidden="true" /></a>
+            </div>
           </div>
           <div className="grid gap-9 pt-12 sm:grid-cols-[1fr_1fr_1.2fr_1.8fr]">
             <div><h2 className="text-xl font-black text-background">{t("product")}</h2><a href="#markets" className="mt-5 block text-lg text-background/90 transition hover:text-brand">{t("markets")}</a></div>
