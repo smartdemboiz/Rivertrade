@@ -242,6 +242,9 @@ export async function executeOperationalAction({ section, id, action, userId }) 
 
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
+    if (section === "deposits" && action === "confirm") {
+      throw new Error("Deposit confirmation is unavailable because Supabase is not configured.");
+    }
     await logAdminEvent({ userId, action, section, recordId: id, metadata: { status: targetStatus, demo: true } });
     return { id, status: targetStatus, demo: true };
   }
@@ -252,14 +255,27 @@ export async function executeOperationalAction({ section, id, action, userId }) 
   if (!current) throw new Error("Operational record not found");
 
   const terminalStatuses = ["approved", "confirmed", "completed", "cancelled", "rejected", "failed", "settled", "closed"];
-  if (terminalStatuses.includes(String(current.status).toLowerCase()) && current.status !== targetStatus) {
+  if (!(section === "deposits" && action === "confirm" && current.status === "confirmed")
+    && terminalStatuses.includes(String(current.status).toLowerCase()) && current.status !== targetStatus) {
     throw new Error(`Record is already in terminal status '${current.status}'`);
+  }
+
+  if (section === "deposits" && action === "confirm") {
+    const { data: confirmed, error: confirmError } = await supabase.rpc("confirm_deposit", { p_deposit_id: id });
+    if (confirmError) throw new Error(confirmError.message || "Unable to confirm and credit this deposit");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: { previousStatus: current.status, status: targetStatus, amount: current.amount, currency: current.currency },
+    });
+    return confirmed;
   }
 
   const { data: updated, error: updateError } = await supabase.from(table).update({ status: targetStatus }).eq("id", id).eq("status", current.status).select().single();
   if (updateError) throw new Error(updateError.message || "Unable to apply operational action");
 
-  if (section === "deposits" && action === "confirm") await supabase.from("transactions").insert({ user_id: current.user_id, amount: current.amount, type: "deposit", status: "completed" });
   if (section === "withdrawals" && action === "approve") await supabase.from("transactions").insert({ user_id: current.user_id, amount: current.amount, type: "withdrawal", status: "completed" });
   if (section === "profitHistory" && action === "settle") await supabase.from("transactions").insert({ user_id: current.user_id, amount: current.profit, type: "bonus", status: "completed" });
 
@@ -338,7 +354,9 @@ async function toAdminKycRecords(records, supabase) {
 
 async function toAdminDepositRecords(records, supabase) {
   const userIds = [...new Set(records.map((record) => record.user_id).filter(Boolean))];
+  const depositIds = records.map((record) => record.id).filter(Boolean);
   const profilesById = new Map();
+  const fundsByDepositId = new Map();
 
   if (userIds.length) {
     const { data: profiles, error } = await supabase
@@ -349,10 +367,26 @@ async function toAdminDepositRecords(records, supabase) {
     for (const profile of profiles || []) profilesById.set(profile.id, profile);
   }
 
+  if (depositIds.length) {
+    const { data: funds, error } = await supabase
+      .from("user_funds")
+      .select("deposit_id, balance, currency")
+      .in("deposit_id", depositIds);
+    if (error) throw new Error(error.message || "Unable to load credited deposit balances.");
+    for (const fund of funds || []) fundsByDepositId.set(fund.deposit_id, fund);
+  }
+
   return records.map((record) => {
     const profile = profilesById.get(record.user_id);
+    const fund = fundsByDepositId.get(record.id);
     const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
-    return { ...record, user: fullName || profile?.email || record.user_id || "-" };
+    return {
+      ...record,
+      user: fullName || profile?.email || record.user_id || "-",
+      isCredited: Boolean(fund),
+      creditedAmount: fund?.balance ?? null,
+      creditedCurrency: fund?.currency || null,
+    };
   });
 }
 

@@ -7,7 +7,7 @@ const definitions = {
   customers: { title: "Customer management", description: "Review customer accounts, balances, and account status.", columns: ["firstName", "lastName", "email", "country", "currency"], labels: ["First name", "Last name", "Email", "Country", "Currency"] },
   kyc: { title: "KYC management", description: "Review customer identity verification requests and submitted documents.", columns: ["userName", "email", "documentType", "status", "documentUrl"], labels: ["User", "Email", "Document type", "Status", "Identity document"] },
   investments: { title: "Investments", description: "Manage investment plans, active strategies, and customer allocation data.", columns: ["userName", "plan", "amount", "status"], labels: ["User", "Plan", "Amount", "Status"] },
-  userFunds: { title: "Manage User Funds", description: "Track wallet balances, transaction activity, and fund movement approvals.", columns: ["userName", "balance", "type", "status"], labels: ["User", "Balance", "Type", "Status"] },
+  userFunds: { title: "Manage User Funds", description: "Track customer fund balances. Balances are recorded in the specified currency.", columns: ["userName", "balance", "currency", "type", "status"], labels: ["User", "Balance", "Currency", "Type", "Status"] },
   expertTraders: { title: "Manage Expert Traders", description: "Monitor expert traders, performance, and assigned portfolios.", columns: ["name", "specialty", "performance", "status"], labels: ["Name", "Specialty", "Performance", "Status"] },
   staff: { title: "Staff management", description: "Manage operational access and internal responsibilities.", columns: ["name", "email", "role", "status"], labels: ["Name", "Email", "Role", "Status"] },
   roles: { title: "Manage roles", description: "Define permissions for your operations team.", columns: ["name", "description", "users"], labels: ["Name", "Description", "Users"] },
@@ -16,7 +16,7 @@ const definitions = {
   schemas: { title: "Investment schemas", description: "Configure investment ranges and expected returns.", columns: ["name", "minAmount", "maxAmount", "returnRate", "duration"], labels: ["Name", "Minimum", "Maximum", "Return %", "Duration"] },
   crowdSchemas: { title: "Crowd schemas", description: "Configure collective investment opportunities.", columns: ["name", "participants", "targetAmount", "status"], labels: ["Name", "Participants", "Target amount", "Status"] },
   notifications: { title: "Notifications", description: "Review messages sent to customers.", columns: ["recipient", "subject", "status"], labels: ["Recipient", "Subject", "Status"] },
-  deposits: { title: "Deposit operations", description: "Review deposit requests and independently verify payments before updating request status. Status changes do not process or settle payments.", columns: ["user", "amount", "currency", "status", "method", "network", "reference"], labels: ["User", "Amount", "Currency", "Status", "Method", "Network", "Payment reference"] },
+  deposits: { title: "Deposit operations", description: "Verify payment receipt, then confirm to credit the customer in the original deposit currency. No currency conversion is applied.", columns: ["user", "amount", "currency", "status", "method", "network", "reference", "creditedAmount", "creditedCurrency"], labels: ["User", "Amount", "Currency", "Status", "Method", "Network", "Payment reference", "Credited amount", "Credit currency"] },
   withdrawals: { title: "Withdrawal operations", description: "Review requested withdrawals and approve or reject them.", columns: ["user", "amount", "currency", "status", "method"], labels: ["User", "Amount", "Currency", "Status", "Method"] },
   swaps: { title: "Swap activity", description: "Track crypto swaps and settlement status for user orders.", columns: ["user", "fromAsset", "toAsset", "amount", "status"], labels: ["User", "From", "To", "Amount", "Status"] },
   managedAccounts: { title: "Managed accounts", description: "Manage assigned strategies, allocations, and active portfolio oversight.", columns: ["user", "strategy", "allocation", "status"], labels: ["User", "Strategy", "Allocation", "Status"] },
@@ -130,6 +130,7 @@ export default function AdminRecords({ section }) {
     const values = Object.fromEntries(definition.columns.map((column) => {
       if (column === "enabled") return [column, record.enabled ?? true];
       if (column === "destination") return [column, record.destination || (section === "paymentSettings" ? "deposit" : "withdrawal")];
+      if (column === "currency" && section === "userFunds") return [column, record.currency || "USD"];
       return [column, record[column] || ""];
     }));
     if (section === "withdrawalSettings") {
@@ -179,7 +180,11 @@ export default function AdminRecords({ section }) {
   }
 
   async function applyAction(id, action) {
-    const response = await fetch(buildUrl(`/api/admin/${section}/${id}/action`), { method: "POST", headers: { ...authHeaders(), "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
+    const response = await fetch(buildUrl(`/api/admin/${section}/${id}/action`), {
+      method: "POST",
+      headers: { ...authHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
     const body = await response.json();
     if (!response.ok) { setError(body.error || "Unable to apply action"); return; }
     setError("");
@@ -188,7 +193,7 @@ export default function AdminRecords({ section }) {
 
   return (
     <>
-      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section !== "customers" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
+      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section !== "customers" && section !== "deposits" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
       {error && <p className="form-message">{error}</p>}
       {editing && (section === "withdrawalSettings" ? (
         <form className="admin-editor withdrawal-method-editor" onSubmit={save}>
@@ -222,7 +227,7 @@ export default function AdminRecords({ section }) {
           <div><button className="button" type="submit">Save</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
         </form>
       ))}
-      <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : column === "documentUrl" && section === "kyc" ? record.documentUrl ? <a href={record.documentUrl} target="_blank" rel="noreferrer">View document</a> : "Unavailable" : column === "message" && section === "support" ? <details><summary>View message</summary><p>{displayValue(record[column])}</p></details> : displayValue(record[column])}</td>)}<td><span className="row-actions">{section !== "kyc" && <button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>}{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{label}</button>)}{section !== "customers" && section !== "kyc" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
+      <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : column === "documentUrl" && section === "kyc" ? record.documentUrl ? <a href={record.documentUrl} target="_blank" rel="noreferrer">View document</a> : "Unavailable" : column === "message" && section === "support" ? <details><summary>View message</summary><p>{displayValue(record[column])}</p></details> : column === "creditedAmount" && record.isCredited ? `${displayValue(record[column])} ${displayValue(record.creditedCurrency)}` : displayValue(record[column])}</td>)}<td><span className="row-actions">{section !== "kyc" && section !== "deposits" && <button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>}{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).filter(([action]) => section !== "deposits" || (action === "confirm" ? record.status !== "rejected" && !record.isCredited : record.status === "pending")).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{section === "deposits" && action === "confirm" ? record.status === "confirmed" ? "Credit deposit" : "Confirm + credit" : label}</button>)}{section !== "customers" && section !== "kyc" && section !== "deposits" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
     </>
   );
 }

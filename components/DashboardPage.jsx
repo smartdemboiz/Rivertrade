@@ -209,6 +209,21 @@ function TradingViewMarketBoard({ theme }) {
   );
 }
 
+function formatUsd(value) {
+  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(Number(value));
+}
+
+function formatAssetBalances(balances) {
+  if (!balances.length) return formatUsd(0);
+  return balances.map(({ currency, amount }) => {
+    const formattedAmount = new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: currency === "USD" ? 2 : 0,
+      maximumFractionDigits: currency === "USD" ? 2 : 8,
+    }).format(amount);
+    return `${formattedAmount} ${currency}`;
+  }).join(" · ");
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
@@ -220,6 +235,8 @@ export default function DashboardPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState("");
   const [greeting, setGreeting] = useState("");
+  const [accountData, setAccountData] = useState({ data: [], availableBalances: [] });
+  const [accountError, setAccountError] = useState("");
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";
     const savedTheme = localStorage.getItem("rivertrade-dashboard-theme");
@@ -238,6 +255,35 @@ export default function DashboardPage() {
       router.replace("/dashboard");
     }
   }, [authenticated, router]);
+
+  useEffect(() => {
+    if (!authenticated) return undefined;
+
+    let cancelled = false;
+    async function loadAccountData() {
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch("/api/account/transactions", {
+          headers: { Authorization: `Bearer ${token || ""}` },
+          cache: "no-store",
+        });
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Unable to load account information.");
+        if (!cancelled) {
+          setAccountData({
+            data: body.data || [],
+            availableBalances: body.availableBalances || [],
+          });
+          setAccountError("");
+        }
+      } catch (loadError) {
+        if (!cancelled) setAccountError(loadError.message || "Unable to load account information.");
+      }
+    }
+
+    loadAccountData();
+    return () => { cancelled = true; };
+  }, [authenticated]);
 
   useEffect(() => {
     const updateDate = () => {
@@ -353,9 +399,9 @@ export default function DashboardPage() {
           {activeSection === "Overview" && <>
           <section className="balance-banner">
             <div>
-              <span>Total portfolio value</span>
-              <strong>{visible ? "$0.00" : "••••••••"}</strong>
-              <small>No portfolio activity yet</small>
+              <span>Available balances by currency</span>
+              <strong>{visible ? accountError ? "Unavailable" : formatAssetBalances(accountData.availableBalances) : "••••••••"}</strong>
+              <small>{accountError || "Each balance is held and displayed in its recorded currency; no conversion is applied."}</small>
             </div>
             <button className="icon-button light" onClick={() => setVisible(!visible)} aria-label="Toggle balance visibility">
               {visible ? <Eye /> : <EyeOff />}
@@ -367,7 +413,7 @@ export default function DashboardPage() {
             <div>
               <div className="dash-section-head"><h2>Account overview</h2><button className="text-link">This month</button></div>
               <div className="stat-grid">
-                <StatCard label="Available balance" value={visible ? "$0.00" : "••••••"} detail="No funds available yet" />
+                <StatCard label="Available balance" value={visible ? accountError ? "Unavailable" : formatAssetBalances(accountData.availableBalances) : "••••••"} detail={accountError || "Available funds are shown separately by currency"} />
                 <StatCard label="Investment profit" value={visible ? "$0.00" : "••••••"} detail="No profit recorded yet" />
                 <StatCard label="Locked balance" value={visible ? "$0.00" : "••••••"} detail="No active positions" />
                 <StatCard label="Next payout" value="-" detail="No payout scheduled" />
@@ -385,9 +431,18 @@ export default function DashboardPage() {
             </div>
 
             <div id="activity" className="activity">
-              <div className="dash-section-head"><h2>Recent activity</h2><button className="text-link">View all</button></div>
-              <p className="dashboard-empty-state">No activity yet. Your deposits, investments, and payouts will appear here.</p>
-              <button className="button full-button">Open activity</button>
+              <div className="dash-section-head"><h2>Recent activity</h2><button className="text-link" onClick={() => setActiveSection("Transactions")}>View all</button></div>
+              {accountData.data.length ? accountData.data.slice(0, 3).map((item) => (
+                <div className="activity-item" key={item.id}>
+                  <span className="activity-icon"><Receipt size={15} /></span>
+                  <div>
+                    <strong>{item.type.charAt(0).toUpperCase() + item.type.slice(1)} · {item.status}</strong>
+                    <small>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"} · {item.amount} {item.currency}{item.creditedAmount !== null ? ` · Credited: ${item.creditedAmount} ${item.creditedCurrency}` : item.type === "deposit" && item.status === "confirmed" ? " · Credit pending" : ""}</small>
+                  </div>
+                  <b>{item.type === "deposit" && item.creditedAmount !== null ? `+${item.creditedAmount} ${item.creditedCurrency}` : ""}</b>
+                </div>
+              )) : <p className="dashboard-empty-state">{accountError || "No account activity yet."}</p>}
+              <button className="button full-button" onClick={() => setActiveSection("Transactions")}>Open activity</button>
             </div>
           </div>
           </>}

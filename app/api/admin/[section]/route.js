@@ -17,6 +17,9 @@ export async function POST(request, { params }) {
     const authorization = await requireAdmin(request);
     if (authorization.error) return authorization.error;
     const { section } = await params;
+    if (section === "deposits") {
+      return Response.json({ error: "Deposit requests must be submitted by customers." }, { status: 400 });
+    }
     if (section === "customers") {
       return Response.json({ error: "Customer accounts must be created through signup or an Auth invite." }, { status: 400 });
     }

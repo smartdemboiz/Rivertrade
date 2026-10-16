@@ -5,6 +5,9 @@ export async function PATCH(request, { params }) {
     const authorization = await requireAdmin(request);
     if (authorization.error) return authorization.error;
     const { section, id } = await params;
+    if (section === "deposits") {
+      return Response.json({ error: "Use the deposit review actions to confirm or reject a deposit request." }, { status: 400 });
+    }
     const body = validateAdminPayload(section, await request.json());
     const updated = await updateSupabaseRecord(section, id, body);
     await logAdminEvent({ userId: authorization.user.id, action: "update", section, recordId: id, metadata: body });
@@ -19,6 +22,9 @@ export async function DELETE(request, { params }) {
     const authorization = await requireAdmin(request);
     if (authorization.error) return authorization.error;
     const { section, id } = await params;
+    if (section === "deposits") {
+      return Response.json({ error: "Deposit requests cannot be deleted from the admin panel." }, { status: 400 });
+    }
     const deleted = await deleteSupabaseRecord(section, id);
     if (!deleted) throw new Error("Unable to delete record");
     await logAdminEvent({ userId: authorization.user.id, action: "delete", section, recordId: id });

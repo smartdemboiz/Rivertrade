@@ -7,10 +7,21 @@ export async function POST(request, { params }) {
     const { section, id } = await params;
     const body = await request.json();
     if (!body?.action) return Response.json({ error: "Action is required" }, { status: 400 });
-    const data = await executeOperationalAction({ section, id, action: body.action, userId: authorization.user.id });
+    const data = await executeOperationalAction({
+      section,
+      id,
+      action: body.action,
+      userId: authorization.user.id,
+    });
     return Response.json({ data });
   } catch (error) {
-    const clientError = error.message?.includes("not available") || error.message?.includes("terminal") || error.message?.includes("required");
+    const clientError = error.message?.includes("not available")
+      || error.message?.includes("terminal")
+      || error.message?.includes("required")
+      || error.message?.includes("already has a different")
+      || error.message?.includes("already credited in a different")
+      || error.message?.includes("missing a valid customer")
+      || error.message?.includes("rejected deposit");
     return Response.json({ error: error.message || "Unable to apply action" }, { status: clientError ? 400 : 500 });
   }
 }
