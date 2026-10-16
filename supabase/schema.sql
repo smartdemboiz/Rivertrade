@@ -91,6 +91,8 @@ create table if not exists public.deposits (
   amount numeric default 0,
   currency text,
   method text,
+  network text,
+  reference text,
   status text default 'pending' check (status in ('pending', 'confirmed', 'rejected')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()

@@ -11,29 +11,67 @@ export default function DashboardDeposit() {
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState([]);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [settingsError, setSettingsError] = useState("");
 
   useEffect(() => {
     fetch("/api/payment-settings")
-      .then(response => response.ok ? response.json() : Promise.reject())
-      .then(body => setPaymentSettings(body.data || []))
-      .catch(() => setPaymentSettings([]))
+      .then(async response => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Unable to load deposit methods.");
+        setPaymentSettings(body.data || []);
+      })
+      .catch(loadError => setSettingsError(loadError.message || "Unable to load deposit methods."))
       .finally(() => setSettingsLoaded(true));
   }, []);
 
-  const submitDeposit = (event) => {
+  const submitDeposit = async (event) => {
     event.preventDefault();
-    setError("Deposit requests are not connected to a payment processor yet. No funds were moved.");
+    setSubmitting(true);
+    setError("");
+    setSuccess("");
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/deposits", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token || ""}`,
+        },
+        body: JSON.stringify({
+          amount,
+          method: paymentMethod,
+          asset: paymentMethod === "Cryptocurrency" ? cryptocurrency : "",
+          network: paymentMethod === "Cryptocurrency" ? network : "",
+          reference: paymentMethod === "PayPal" ? paypalReference : "",
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Unable to submit your deposit request.");
+
+      setSuccess(`Request ${body.data.id} submitted for manual review. This records a request only; no payment was processed and no funds were credited.`);
+      setAmount("");
+      setPaymentMethod("");
+      setCryptocurrency("");
+      setNetwork("");
+      setPaypalReference("");
+    } catch (submitError) {
+      setError(submitError.message || "Unable to submit your deposit request.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const configuredCrypto = paymentSettings.filter(item => item.method === "Cryptocurrency");
   const configuredMethods = [...new Set(paymentSettings.map(item => item.method))];
   const visiblePaymentMethods = configuredMethods;
   const visibleCryptocurrencies = [...new Set(configuredCrypto.map(item => item.asset).filter(Boolean))];
-  const selectedCrypto = configuredCrypto.find(item => item.asset === cryptocurrency) || configuredCrypto[0];
+  const selectedCrypto = configuredCrypto.find(item => item.asset === cryptocurrency && item.network === network);
   const walletAddress = selectedCrypto?.value || "";
-  const networkLabel = selectedCrypto?.network || network;
+  const networkLabel = network || "the selected network";
   const visibleNetworks = [...new Set(configuredCrypto.filter(item => item.asset === cryptocurrency).map(item => item.network).filter(Boolean))];
   const bankSetting = paymentSettings.find(item => item.method === "Bank Transfer");
   const bankDetails = bankSetting?.value ? bankSetting.value.split("\n").map(line => line.split(": ")) : [];
@@ -41,13 +79,15 @@ export default function DashboardDeposit() {
   const paypalSetting = paymentSettings.find(item => item.method === "PayPal");
   const paypalDetails = paypalSetting?.value ? paypalSetting.value.split("\n").map(line => line.split(": ")) : [];
   const paypalDetailsText = paypalDetails.map(([label, value]) => `${label}: ${value}`).join("\n");
-  const selectedInstructions = selectedCrypto?.instructions || bankSetting?.instructions || paypalSetting?.instructions;
+  const selectedInstructions = paymentMethod === "Cryptocurrency"
+    ? selectedCrypto?.instructions
+    : paymentMethod === "Bank Transfer" ? bankSetting?.instructions : paypalSetting?.instructions;
 
   if (!settingsLoaded || paymentSettings.length === 0) {
     return (
       <section className="dashboard-deposit" aria-labelledby="deposit-title">
         <h2 id="deposit-title">Deposit Funds</h2>
-        <p role="status">{settingsLoaded ? "No verified deposit methods are configured." : "Loading available deposit methods…"}</p>
+        <p role={settingsError ? "alert" : "status"}>{settingsError || (settingsLoaded ? "No deposit methods are currently available." : "Loading available deposit methods…")}</p>
       </section>
     );
   }
@@ -55,12 +95,13 @@ export default function DashboardDeposit() {
   return (
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
       <h2 id="deposit-title">Deposit Funds</h2>
+      <p role="note">Submitting this form records a request only. It does not process a payment or credit your balance; contact support if you need manual payment verification.</p>
       <form className="dashboard-deposit-form" onSubmit={submitDeposit}>
-        <label htmlFor="deposit-amount">Amount</label>
+        <label htmlFor="deposit-amount">Amount {paymentMethod === "Cryptocurrency" ? cryptocurrency && `(${cryptocurrency})` : "(USD)"}</label>
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
 
         <label htmlFor="deposit-method">Payment Method</label>
-        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setError(""); }} required>
+        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setCryptocurrency(""); setNetwork(""); setPaypalReference(""); setError(""); setSuccess(""); }} required>
           <option value="">-- Choose Payment Method --</option>
           {visiblePaymentMethods.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
@@ -73,9 +114,9 @@ export default function DashboardDeposit() {
           </select>
           <div className="dashboard-deposit-details">
             <p>Send {cryptocurrency.replace(/\s*\([^)]*\)/, "")} on {networkLabel} to this wallet address:</p>
-            <code>{walletAddress}</code>
-            <button type="button" onClick={() => navigator.clipboard?.writeText(walletAddress)}>Copy address/details</button>
-            <small>{selectedInstructions || `Please send the exact amount of ${cryptocurrency.replace(/\s*\([^)]*\)/, "")} on ${networkLabel} to the wallet above. Your deposit will be confirmed after 1–3 blockchain confirmations.`}</small>
+            <code>{walletAddress || "Choose a network to view the matching wallet address."}</code>
+            <button type="button" disabled={!walletAddress} onClick={() => navigator.clipboard?.writeText(walletAddress)}>Copy address/details</button>
+            <small>{selectedInstructions || "After sending your payment, submit a request for manual review. Submitting the request does not verify or credit the transfer."}</small>
           </div>
           {!cryptocurrency && <p role="status">Choose a cryptocurrency above to see its available networks.</p>}
           <label htmlFor="deposit-network">Select Network</label>
@@ -101,8 +142,9 @@ export default function DashboardDeposit() {
           <small>{paypalSetting?.instructions || "Include your RiverTrade email in the payment reference. PayPal deposits are normally confirmed within 1–3 business days."}</small>
         </div>}
 
-        <button type="submit">Deposit</button>
+        <button type="submit" disabled={submitting}>{submitting ? "Submitting…" : "Submit deposit request"}</button>
         {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
+        {success && <p className="dashboard-deposit-success" role="status">{success}</p>}
       </form>
     </section>
   );
