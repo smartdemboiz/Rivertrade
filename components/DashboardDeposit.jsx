@@ -1,12 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { addPendingDepositId } from "../lib/deposit-receipts";
+import { useEffect, useRef, useState } from "react";
+import DepositSuccessReceipt from "@/components/DepositSuccessReceipt";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const CRYPTO_PAYMENT_WINDOW_MS = 45 * 60 * 1000;
 const CRYPTO_PAYMENT_WINDOW_KEY = "rivertrade-crypto-payment-window";
 
-export default function DashboardDeposit() {
+function receiptStorageKey(userId) {
+  return `rivertrade-seen-deposit-receipts:${userId}`;
+}
+
+function getSeenDepositIds(userId) {
+  try {
+    const ids = JSON.parse(localStorage.getItem(receiptStorageKey(userId)) || "[]");
+    return Array.isArray(ids) ? ids.filter(id => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export default function DashboardDeposit({ onAccountDataUpdate }) {
+  const { authenticated, ready, user } = useAuthSession();
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [cryptocurrency, setCryptocurrency] = useState("");
@@ -17,10 +32,82 @@ export default function DashboardDeposit() {
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [error, setError] = useState("");
+  const [approvedDeposit, setApprovedDeposit] = useState(null);
+  const [approvalError, setApprovalError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState([]);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsError, setSettingsError] = useState("");
+  const confirmedDepositsRef = useRef([]);
+  const checkingApprovalsRef = useRef(false);
+
+  useEffect(() => {
+    if (!ready || !authenticated || !user?.id) return undefined;
+
+    let active = true;
+    async function checkDepositApprovals() {
+      if (checkingApprovalsRef.current) return;
+      checkingApprovalsRef.current = true;
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch("/api/account/transactions", {
+          headers: { Authorization: `****** || ""}` },
+          cache: "no-store",
+        });
+        const body = await response.json();
+        if (!active) return;
+        if (!response.ok) {
+          if (response.status === 401) {
+            setApprovalError("");
+            return;
+          }
+          throw new Error(body.error || "Unable to check deposit status.");
+        }
+        if (!active) return;
+
+        const confirmed = (body.data || []).filter(transaction =>
+          transaction.type === "deposit"
+          && transaction.status === "confirmed"
+          && transaction.creditedAmount !== null
+          && transaction.creditedAmount !== undefined,
+        );
+        confirmedDepositsRef.current = confirmed;
+        onAccountDataUpdate?.(body);
+
+        const seenIds = getSeenDepositIds(user.id);
+        const nextReceipt = confirmed.find(deposit => !seenIds.includes(deposit.id));
+        if (nextReceipt) setApprovedDeposit(nextReceipt);
+        setApprovalError("");
+      } catch (approvalCheckError) {
+        if (active) setApprovalError(approvalCheckError.message || "Unable to check deposit status.");
+      } finally {
+        checkingApprovalsRef.current = false;
+      }
+    }
+
+    void checkDepositApprovals();
+    const timer = window.setInterval(() => { void checkDepositApprovals(); }, 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [authenticated, onAccountDataUpdate, ready, user?.id]);
+
+  const dismissApprovedDeposit = () => {
+    if (!user?.id) {
+      setApprovedDeposit(null);
+      return;
+    }
+
+    try {
+      const seenIds = new Set(getSeenDepositIds(user.id));
+      for (const deposit of confirmedDepositsRef.current) seenIds.add(deposit.id);
+      localStorage.setItem(receiptStorageKey(user.id), JSON.stringify([...seenIds]));
+    } catch (storageError) {
+      console.error("Unable to save seen deposit receipt state:", storageError);
+    }
+    setApprovedDeposit(null);
+  };
 
   useEffect(() => {
     const initialClock = window.setTimeout(() => setNow(Date.now()), 0);
@@ -90,11 +177,6 @@ export default function DashboardDeposit() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Unable to submit your deposit request.");
 
-      try {
-        addPendingDepositId(body.data.id);
-      } catch (trackingError) {
-        console.error("Unable to save deposit approval tracking:", trackingError);
-      }
       setAmount("");
       setPaymentMethod("");
       setCryptocurrency("");
@@ -142,6 +224,7 @@ export default function DashboardDeposit() {
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
       <h2 id="deposit-title">Deposit Funds</h2>
       <form className="dashboard-deposit-form" onSubmit={submitDeposit}>
+        {approvalError && <p className="dashboard-deposit-error" role="status">{approvalError}</p>}
         <label htmlFor="deposit-amount">Amount {paymentMethod === "Cryptocurrency" ? cryptocurrency && `(${cryptocurrency})` : "(USD)"}</label>
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
 
@@ -235,6 +318,7 @@ export default function DashboardDeposit() {
         <button type="submit" disabled={submitting || (paymentMethod === "Cryptocurrency" && cryptoWindowExpired)}>{submitting ? "Submitting…" : "Submit deposit request"}</button>
         {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
       </form>
+      <DepositSuccessReceipt deposit={approvedDeposit} onClose={dismissApprovedDeposit} />
     </section>
   );
 }

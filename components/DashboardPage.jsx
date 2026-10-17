@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowLeftRight,
@@ -26,7 +26,6 @@ import {
   Wallet,
 } from "lucide-react";
 import StatCard from "@/components/StatCard";
-import DepositSuccessReceipt from "@/components/DepositSuccessReceipt";
 import { useLanguage } from "@/components/LanguageProvider";
 import DashboardSupport from "@/components/DashboardSupport";
 import DashboardInvestmentPlans from "@/components/DashboardInvestmentPlans";
@@ -41,7 +40,6 @@ import DashboardProfile from "@/components/DashboardProfile";
 import DashboardKyc from "@/components/DashboardKyc";
 import DashboardActivePositions from "@/components/DashboardActivePositions";
 import { clearAuthSession, useAuthSession } from "@/hooks/useAuthSession";
-import { readPendingDepositIds, removePendingDepositId } from "../lib/deposit-receipts";
 
 const nav = [
   [LayoutDashboard, "Overview"],
@@ -74,12 +72,12 @@ const sectionContent = {
   Support: ["Support", "How can we help?", "Contact the RiverTrade support team for assistance."],
 };
 
-function DashboardSection({ section }) {
+function DashboardSection({ section, onAccountDataUpdate }) {
   if (section === "KYC verification") return <DashboardKyc />;
   if (section === "Support") return <DashboardSupport />;
   if (section === "Investment plans") return <DashboardInvestmentPlans />;
   if (section === "Withdraw") return <DashboardWithdraw />;
-  if (section === "Deposit") return <DashboardDeposit />;
+  if (section === "Deposit") return <DashboardDeposit onAccountDataUpdate={onAccountDataUpdate} />;
   if (section === "Swap crypto") return <DashboardSwapCrypto />;
   if (section === "Referrals") return <DashboardReferrals />;
   if (section === "Transactions") return <DashboardTransactions />;
@@ -245,13 +243,17 @@ export default function DashboardPage() {
   const [greeting, setGreeting] = useState("");
   const [accountData, setAccountData] = useState({ data: [], availableBalances: [] });
   const [accountError, setAccountError] = useState("");
-  const [approvedDeposit, setApprovedDeposit] = useState(null);
-  const [depositApprovalError, setDepositApprovalError] = useState("");
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";
     const savedTheme = localStorage.getItem("rivertrade-dashboard-theme");
     return savedTheme === "dark" || savedTheme === "light" ? savedTheme : "light";
   });
+  const updateAccountData = useCallback((data) => {
+    setAccountData({
+      data: data.data || [],
+      availableBalances: data.availableBalances || [],
+    });
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("rivertrade-dashboard-theme", theme);
@@ -295,62 +297,6 @@ export default function DashboardPage() {
     loadAccountData();
     return () => { cancelled = true; };
   }, [authenticated]);
-
-  useEffect(() => {
-    if (!ready || !authenticated || approvedDeposit) return undefined;
-
-    let active = true;
-    let checking = false;
-    async function checkDepositApprovals() {
-      const pendingIds = readPendingDepositIds();
-      if (!pendingIds.length || checking) return;
-      checking = true;
-
-      try {
-        const token = localStorage.getItem("authToken");
-        const response = await fetch("/api/account/transactions", {
-          headers: { Authorization: `****** || ""}` },
-          cache: "no-store",
-        });
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error || "Unable to check deposit status.");
-        if (!active) return;
-
-        const confirmed = (body.data || []).find(transaction => {
-          const depositId = typeof transaction.id === "string" ? transaction.id.replace(/^deposit-/, "") : "";
-          return pendingIds.includes(depositId)
-            && transaction.type === "deposit"
-            && transaction.status === "confirmed"
-            && transaction.creditedAmount !== null
-            && transaction.creditedAmount !== undefined;
-        });
-
-        if (confirmed) {
-          removePendingDepositId(confirmed.id.replace(/^deposit-/, ""));
-          setAccountData({
-            data: body.data || [],
-            availableBalances: body.availableBalances || [],
-          });
-          setApprovedDeposit(confirmed);
-        }
-        setDepositApprovalError("");
-      } catch (checkError) {
-        if (active) {
-          const message = checkError.message || "Unable to check deposit status. Retrying shortly.";
-          setDepositApprovalError(message === "Sign in to view your account history." ? "" : message);
-        }
-      } finally {
-        checking = false;
-      }
-    }
-
-    void checkDepositApprovals();
-    const timer = window.setInterval(() => { void checkDepositApprovals(); }, 10_000);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-    };
-  }, [authenticated, approvedDeposit, ready]);
 
   useEffect(() => {
     const updateDate = () => {
@@ -462,8 +408,10 @@ export default function DashboardPage() {
         {activeSection === "Overview" && <TradingViewTicker theme={theme} />}
 
         <main id="overview" className="dash-content">
-          {depositApprovalError && <p className="dashboard-deposit-error" role="status">{depositApprovalError} We’ll keep checking.</p>}
-          {activeSection !== "Overview" && <DashboardSection section={activeSection} />}
+          {activeSection !== "Overview" && <DashboardSection
+            section={activeSection}
+            onAccountDataUpdate={updateAccountData}
+          />}
           {activeSection === "Overview" && <>
           <section className="balance-banner">
             <div>
@@ -531,7 +479,6 @@ export default function DashboardPage() {
         <button type="button" onClick={() => openMobileSection("Withdraw")}><ArrowDownToLine size={18} /><span>Withdraw</span></button>
         <button type="button" onClick={toggleMobileMenu} aria-label={sidebar ? "Close dashboard menu" : "Open dashboard menu"}><Menu size={19} /><span>Menu</span></button>
       </nav>
-      <DepositSuccessReceipt deposit={approvedDeposit} onClose={() => setApprovedDeposit(null)} />
     </div>
   );
 }
