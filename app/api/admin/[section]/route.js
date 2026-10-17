@@ -20,6 +20,9 @@ export async function POST(request, { params }) {
     if (section === "deposits") {
       return Response.json({ error: "Deposit requests must be submitted by customers." }, { status: 400 });
     }
+    if (section === "investments") {
+      return Response.json({ error: "Investments must be submitted by customers using an active plan and available balance." }, { status: 400 });
+    }
     if (section === "customers") {
       return Response.json({ error: "Customer accounts must be created through signup or an Auth invite." }, { status: 400 });
     }

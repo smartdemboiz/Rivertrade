@@ -33,8 +33,12 @@ create table if not exists public.kyc (
 create table if not exists public.investments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete cascade,
+  plan_id uuid,
   plan text,
   amount numeric default 0,
+  funding_currency text,
+  funding_amount numeric,
+  exchange_rate_usd numeric,
   status text default 'pending' check (status in ('pending', 'active', 'completed', 'cancelled')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -46,9 +50,10 @@ create table if not exists public.user_funds (
   user_id uuid references public.profiles(id) on delete cascade,
   balance numeric default 0,
   currency text,
-  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'bonus')),
+  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'bonus', 'investment', 'investment_refund')),
   status text default 'available' check (status in ('available', 'processing', 'pending', 'failed')),
   deposit_id uuid,
+  investment_id uuid references public.investments(id) on delete restrict,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -80,10 +85,11 @@ create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete set null,
   amount numeric default 0,
-  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'investment', 'bonus')),
+  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'investment', 'investment_refund', 'bonus')),
   status text default 'completed' check (status in ('pending', 'completed', 'failed')),
   currency text,
   deposit_id uuid,
+  investment_id uuid references public.investments(id) on delete restrict,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -353,6 +359,16 @@ create table if not exists public.investment_plans (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'investments_plan_id_fkey') then
+    alter table public.investments
+      add constraint investments_plan_id_fkey
+      foreign key (plan_id) references public.investment_plans(id) on delete set null;
+  end if;
+end;
+$$;
 
 -- Indexes
 create index if not exists profiles_email_idx on public.profiles(email);

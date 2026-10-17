@@ -90,8 +90,8 @@ export async function GET(request) {
       const currency = String(fund.currency || "").trim().toUpperCase();
       if (!currency) return balances;
       const balance = balances.get(currency) || 0;
-      if (fund.type === "withdrawal") balances.set(currency, balance - amount);
-      if (fund.type === "deposit" || fund.type === "bonus") balances.set(currency, balance + amount);
+      if (fund.type === "withdrawal" || fund.type === "investment") balances.set(currency, balance - amount);
+      if (fund.type === "deposit" || fund.type === "bonus" || fund.type === "investment_refund") balances.set(currency, balance + amount);
       return balances;
     }, new Map());
     const availableBalances = [...availableBalancesByCurrency.entries()]

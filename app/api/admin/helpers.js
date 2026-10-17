@@ -273,6 +273,27 @@ export async function executeOperationalAction({ section, id, action, userId }) 
     return confirmed;
   }
 
+  if (section === "investments") {
+    const { data: reviewed, error: reviewError } = await supabase.rpc("review_funded_investment", {
+      p_investment_id: id,
+      p_action: action,
+    });
+    if (reviewError) throw new Error(reviewError.message || "Unable to apply this investment review action");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: {
+        previousStatus: current.status,
+        status: reviewed.status,
+        fundingAmount: current.funding_amount,
+        fundingCurrency: current.funding_currency,
+      },
+    });
+    return reviewed;
+  }
+
   const { data: updated, error: updateError } = await supabase.from(table).update({ status: targetStatus }).eq("id", id).eq("status", current.status).select().single();
   if (updateError) throw new Error(updateError.message || "Unable to apply operational action");
 
@@ -390,6 +411,29 @@ async function toAdminDepositRecords(records, supabase) {
   });
 }
 
+async function toAdminInvestmentRecords(records, supabase) {
+  const userIds = [...new Set(records.map((record) => record.user_id).filter(Boolean))];
+  const profilesById = new Map();
+
+  if (userIds.length) {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, email, first_name, last_name")
+      .in("id", userIds);
+    if (error) throw new Error(error.message || "Unable to load customer details for investments.");
+    for (const profile of profiles || []) profilesById.set(profile.id, profile);
+  }
+
+  return records.map((record) => {
+    const profile = profilesById.get(record.user_id);
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+    return {
+      ...record,
+      userName: fullName || profile?.email || record.user_id || "-",
+    };
+  });
+}
+
 export async function fetchSupabaseRecords(section) {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
@@ -418,6 +462,7 @@ export async function fetchSupabaseRecords(section) {
       }
       if (section === "kyc") return toAdminKycRecords(filtered, supabase);
       if (section === "deposits") return toAdminDepositRecords(filtered, supabase);
+      if (section === "investments") return toAdminInvestmentRecords(filtered, supabase);
       return filtered;
     } catch {
       continue;

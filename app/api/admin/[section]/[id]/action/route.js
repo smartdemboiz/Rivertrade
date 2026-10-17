@@ -21,7 +21,10 @@ export async function POST(request, { params }) {
       || error.message?.includes("already has a different")
       || error.message?.includes("already credited in a different")
       || error.message?.includes("missing a valid customer")
-      || error.message?.includes("rejected deposit");
+      || error.message?.includes("rejected deposit")
+      || error.message?.includes("Only pending investments")
+      || error.message?.includes("Investment cannot be moved")
+      || error.message?.includes("Investment review action");
     return Response.json({ error: error.message || "Unable to apply action" }, { status: clientError ? 400 : 500 });
   }
 }

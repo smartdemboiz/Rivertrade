@@ -213,15 +213,21 @@ function formatUsd(value) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(Number(value));
 }
 
-function formatAssetBalances(balances) {
+function formatAssetBalance({ currency, amount }) {
+  const formattedAmount = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: currency === "USD" ? 2 : 0,
+    maximumFractionDigits: currency === "USD" ? 2 : 8,
+  }).format(amount);
+  return `${formattedAmount} ${currency}`;
+}
+
+function AssetBalanceList({ balances }) {
   if (!balances.length) return formatUsd(0);
-  return balances.map(({ currency, amount }) => {
-    const formattedAmount = new Intl.NumberFormat(undefined, {
-      minimumFractionDigits: currency === "USD" ? 2 : 0,
-      maximumFractionDigits: currency === "USD" ? 2 : 8,
-    }).format(amount);
-    return `${formattedAmount} ${currency}`;
-  }).join(" · ");
+  return balances.map((balance) => (
+    <span className="asset-balance-item" key={balance.currency}>
+      {formatAssetBalance(balance)}
+    </span>
+  ));
 }
 
 export default function DashboardPage() {
@@ -400,7 +406,9 @@ export default function DashboardPage() {
           <section className="balance-banner">
             <div>
               <span>Available balances by currency</span>
-              <strong>{visible ? accountError ? "Unavailable" : formatAssetBalances(accountData.availableBalances) : "••••••••"}</strong>
+              <strong className="balance-banner-amounts">
+                {visible ? accountError ? "Unavailable" : <AssetBalanceList balances={accountData.availableBalances} /> : "••••••••"}
+              </strong>
               <small>{accountError || "Each balance is held and displayed in its recorded currency; no conversion is applied."}</small>
             </div>
             <button className="icon-button light" onClick={() => setVisible(!visible)} aria-label="Toggle balance visibility">
@@ -413,7 +421,11 @@ export default function DashboardPage() {
             <div>
               <div className="dash-section-head"><h2>Account overview</h2><button className="text-link">This month</button></div>
               <div className="stat-grid">
-                <StatCard label="Available balance" value={visible ? accountError ? "Unavailable" : formatAssetBalances(accountData.availableBalances) : "••••••"} detail={accountError || "Available funds are shown separately by currency"} />
+                <StatCard
+                  label="Available balance"
+                  value={visible ? accountError ? "Unavailable" : <AssetBalanceList balances={accountData.availableBalances} /> : "••••••"}
+                  detail={accountError || "Available funds are shown separately by currency"}
+                />
                 <StatCard label="Investment profit" value={visible ? "$0.00" : "••••••"} detail="No profit recorded yet" />
                 <StatCard label="Locked balance" value={visible ? "$0.00" : "••••••"} detail="No active positions" />
                 <StatCard label="Next payout" value="-" detail="No payout scheduled" />
