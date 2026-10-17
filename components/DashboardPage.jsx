@@ -335,7 +335,10 @@ export default function DashboardPage() {
         }
         setDepositApprovalError("");
       } catch (checkError) {
-        if (active) setDepositApprovalError(checkError.message || "Unable to check deposit status. Retrying shortly.");
+        if (active) {
+          const message = checkError.message || "Unable to check deposit status. Retrying shortly.";
+          setDepositApprovalError(message === "Sign in to view your account history." ? "" : message);
+        }
       } finally {
         checking = false;
       }
