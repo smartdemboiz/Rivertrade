@@ -50,7 +50,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
       try {
         const token = localStorage.getItem("authToken");
         const response = await fetch("/api/account/transactions", {
-          headers: { Authorization: `****** || ""}` },
+          headers: { Authorization: `Bearer ${token || ""}` },
           cache: "no-store",
         });
         const body = await response.json();
