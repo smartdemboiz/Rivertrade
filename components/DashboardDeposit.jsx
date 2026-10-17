@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from "react";
 
+const CRYPTO_PAYMENT_WINDOW_MS = 45 * 60 * 1000;
+const CRYPTO_PAYMENT_WINDOW_KEY = "rivertrade-crypto-payment-window";
+
 export default function DashboardDeposit() {
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [cryptocurrency, setCryptocurrency] = useState("");
   const [network, setNetwork] = useState("");
+  const [paymentWindowExpiresAt, setPaymentWindowExpiresAt] = useState(0);
+  const [now, setNow] = useState(0);
   const [paypalReference, setPaypalReference] = useState("");
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
@@ -16,6 +21,36 @@ export default function DashboardDeposit() {
   const [paymentSettings, setPaymentSettings] = useState([]);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsError, setSettingsError] = useState("");
+
+  useEffect(() => {
+    const initialClock = window.setTimeout(() => setNow(Date.now()), 0);
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      window.clearTimeout(initialClock);
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const restoreWindow = window.setTimeout(() => {
+      try {
+        const savedWindow = sessionStorage.getItem(CRYPTO_PAYMENT_WINDOW_KEY);
+        if (!savedWindow) return;
+        const selection = JSON.parse(savedWindow);
+        if (!selection.asset || !selection.network || !Number.isFinite(selection.expiresAt)) {
+          sessionStorage.removeItem(CRYPTO_PAYMENT_WINDOW_KEY);
+          return;
+        }
+        setCryptocurrency(selection.asset);
+        setNetwork(selection.network);
+        setPaymentWindowExpiresAt(selection.expiresAt);
+        setPaymentMethod("Cryptocurrency");
+      } catch {
+        sessionStorage.removeItem(CRYPTO_PAYMENT_WINDOW_KEY);
+      }
+    }, 0);
+    return () => window.clearTimeout(restoreWindow);
+  }, []);
 
   useEffect(() => {
     fetch("/api/payment-settings")
@@ -30,6 +65,10 @@ export default function DashboardDeposit() {
 
   const submitDeposit = async (event) => {
     event.preventDefault();
+    if (paymentMethod === "Cryptocurrency" && (!paymentWindowExpiresAt || paymentWindowExpiresAt <= Date.now())) {
+      setError("This crypto payment window has expired. Select the network again to start a new 45-minute window.");
+      return;
+    }
     setSubmitting(true);
     setError("");
     setSuccess("");
@@ -57,6 +96,8 @@ export default function DashboardDeposit() {
       setPaymentMethod("");
       setCryptocurrency("");
       setNetwork("");
+      setPaymentWindowExpiresAt(0);
+      sessionStorage.removeItem(CRYPTO_PAYMENT_WINDOW_KEY);
       setPaypalReference("");
     } catch (submitError) {
       setError(submitError.message || "Unable to submit your deposit request.");
@@ -70,8 +111,11 @@ export default function DashboardDeposit() {
   const visiblePaymentMethods = configuredMethods;
   const visibleCryptocurrencies = [...new Set(configuredCrypto.map(item => item.asset).filter(Boolean))];
   const selectedCrypto = configuredCrypto.find(item => item.asset === cryptocurrency && item.network === network);
-  const walletAddress = selectedCrypto?.value || "";
-  const networkLabel = network || "the selected network";
+  const cryptoWindowExpired = Boolean(paymentWindowExpiresAt && now >= paymentWindowExpiresAt);
+  const cryptoWindowSecondsLeft = paymentWindowExpiresAt
+    ? Math.max(0, Math.ceil((paymentWindowExpiresAt - now) / 1000))
+    : 0;
+  const walletAddress = !cryptoWindowExpired ? selectedCrypto?.value || "" : "";
   const visibleNetworks = [...new Set(configuredCrypto.filter(item => item.asset === cryptocurrency).map(item => item.network).filter(Boolean))];
   const bankSetting = paymentSettings.find(item => item.method === "Bank Transfer");
   const bankDetails = bankSetting?.value ? bankSetting.value.split("\n").map(line => line.split(": ")) : [];
@@ -100,26 +144,72 @@ export default function DashboardDeposit() {
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
 
         <label htmlFor="deposit-method">Payment Method</label>
-        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setCryptocurrency(""); setNetwork(""); setPaypalReference(""); setError(""); setSuccess(""); }} required>
+        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setPaypalReference(""); setError(""); setSuccess(""); }}>
           <option value="">-- Choose Payment Method --</option>
           {visiblePaymentMethods.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
 
         {paymentMethod === "Cryptocurrency" && <>
           <label htmlFor="deposit-cryptocurrency">Cryptocurrency</label>
-          <select id="deposit-cryptocurrency" value={cryptocurrency} onChange={(event) => { setCryptocurrency(event.target.value); setNetwork(""); setError(""); }} required>
+          <select id="deposit-cryptocurrency" value={cryptocurrency} onChange={(event) => { setCryptocurrency(event.target.value); setNetwork(""); setPaymentWindowExpiresAt(0); sessionStorage.removeItem(CRYPTO_PAYMENT_WINDOW_KEY); setError(""); }} required>
             <option value="">-- Choose Cryptocurrency --</option>
             {visibleCryptocurrencies.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
           <div className="dashboard-deposit-details">
-            <p>Send {cryptocurrency.replace(/\s*\([^)]*\)/, "")} on {networkLabel} to this wallet address:</p>
-            <code>{walletAddress || "Choose a network to view the matching wallet address."}</code>
+            <p>{cryptoWindowExpired
+              ? "This crypto payment window has expired. Select the network again to start a new 45-minute window."
+              : "Send the selected cryptocurrency on the selected network to this wallet address:"}</p>
+            <code>{walletAddress || (cryptoWindowExpired
+              ? "Payment details are no longer available for this window."
+              : "Choose a network to view the matching wallet address.")}</code>
             <button type="button" disabled={!walletAddress} onClick={() => navigator.clipboard?.writeText(walletAddress)}>Copy address/details</button>
-            <small>{selectedInstructions || "After sending your payment, submit a request for manual review. Submitting the request does not verify or credit the transfer."}</small>
+            {paymentWindowExpiresAt > 0 && <small
+              className={cryptoWindowExpired ? "crypto-payment-expired" : "crypto-payment-countdown"}
+              role={cryptoWindowExpired ? "status" : "timer"}
+              aria-live={cryptoWindowExpired ? "polite" : "off"}
+            >
+              {cryptoWindowExpired
+                ? "Payment option expired."
+                : `Payment option expires in ${Math.floor(cryptoWindowSecondsLeft / 60)}:${String(cryptoWindowSecondsLeft % 60).padStart(2, "0")}.`}
+            </small>}
+            {cryptoWindowExpired && network && <button
+              type="button"
+              className="crypto-payment-restart"
+              onClick={() => {
+                const expiresAt = Date.now() + CRYPTO_PAYMENT_WINDOW_MS;
+                setPaymentWindowExpiresAt(expiresAt);
+                sessionStorage.setItem(CRYPTO_PAYMENT_WINDOW_KEY, JSON.stringify({
+                  asset: cryptocurrency,
+                  network,
+                  expiresAt,
+                }));
+                setError("");
+              }}
+            >
+              Start a new 45-minute payment window
+            </button>}
+            {selectedInstructions && <small>{selectedInstructions}</small>}
+            <small>After sending your payment, submit a request if your account is not credited for review.</small>
           </div>
           {!cryptocurrency && <p role="status">Choose a cryptocurrency above to see its available networks.</p>}
           <label htmlFor="deposit-network">Select Network</label>
-          <select id="deposit-network" value={network} onChange={(event) => setNetwork(event.target.value)} required disabled={!visibleNetworks.length}>
+          <select id="deposit-network" value={network} onChange={(event) => {
+            const selectedNetwork = event.target.value;
+            setNetwork(selectedNetwork);
+            setError("");
+            if (!selectedNetwork) {
+              setPaymentWindowExpiresAt(0);
+              sessionStorage.removeItem(CRYPTO_PAYMENT_WINDOW_KEY);
+              return;
+            }
+            const expiresAt = Date.now() + CRYPTO_PAYMENT_WINDOW_MS;
+            setPaymentWindowExpiresAt(expiresAt);
+            sessionStorage.setItem(CRYPTO_PAYMENT_WINDOW_KEY, JSON.stringify({
+              asset: cryptocurrency,
+              network: selectedNetwork,
+              expiresAt,
+            }));
+          }} required disabled={!visibleNetworks.length}>
             <option value="">-- Choose Network --</option>
             {visibleNetworks.map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
@@ -141,7 +231,7 @@ export default function DashboardDeposit() {
           <small>{paypalSetting?.instructions || "Include your RiverTrade email in the payment reference. PayPal deposits are normally confirmed within 1–3 business days."}</small>
         </div>}
 
-        <button type="submit" disabled={submitting}>{submitting ? "Submitting…" : "Submit deposit request"}</button>
+        <button type="submit" disabled={submitting || (paymentMethod === "Cryptocurrency" && cryptoWindowExpired)}>{submitting ? "Submitting…" : "Submit deposit request"}</button>
         {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
         {success && <p className="dashboard-deposit-success" role="status">{success}</p>}
       </form>

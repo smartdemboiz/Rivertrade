@@ -3268,6 +3268,18 @@ body:has(.admin-shell) .health-line i {
   font-size: 13px;
   line-height: 1.5;
 }
+.dashboard-deposit-details .crypto-payment-countdown {
+  color: var(--dashboard-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-deposit-details .crypto-payment-expired {
+  color: #b42318;
+  font-weight: 600;
+}
+.dashboard-deposit-details .crypto-payment-restart {
+  margin: 0;
+}
 .dashboard-deposit-method-fields {
   display: grid;
   gap: 12px;
