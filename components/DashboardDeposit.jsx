@@ -233,6 +233,9 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
           <option value="">-- Choose Payment Method --</option>
           {visiblePaymentMethods.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
+        <p className="dashboard-deposit-conversion-note">
+          Once confirmed, your deposit is converted to your account currency using the live rate at confirmation.
+        </p>
 
         {paymentMethod === "Cryptocurrency" && <>
           <label htmlFor="deposit-cryptocurrency">Cryptocurrency</label>

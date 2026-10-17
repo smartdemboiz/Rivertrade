@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { getCurrencyFractionDigits, getDepositExchangeRate } from "../../../lib/deposit-exchange-rate.js";
 
 export const fallbackStats = {
   totalUsers: 2543,
@@ -261,14 +262,62 @@ export async function executeOperationalAction({ section, id, action, userId }) 
   }
 
   if (section === "deposits" && action === "confirm") {
-    const { data: confirmed, error: confirmError } = await supabase.rpc("confirm_deposit", { p_deposit_id: id });
+    const alreadyCredited = current.status === "confirmed"
+      && current.credited_amount
+      && current.credited_currency
+      && current.exchange_rate;
+    let creditCurrency;
+    let creditAmount;
+    let exchangeRate;
+    let rateQuotedAt;
+
+    if (alreadyCredited) {
+      creditCurrency = String(current.credited_currency).trim().toUpperCase();
+      creditAmount = Number(current.credited_amount);
+      exchangeRate = Number(current.exchange_rate);
+      rateQuotedAt = current.exchange_rate_quoted_at;
+    } else {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("currency")
+        .eq("id", current.user_id)
+        .maybeSingle();
+      if (profileError) throw new Error(profileError.message || "Unable to load the customer's account currency.");
+
+      creditCurrency = String(profile?.currency || "USD").trim().toUpperCase();
+      const quote = await getDepositExchangeRate(current.currency, creditCurrency);
+      const fractionDigits = getCurrencyFractionDigits(creditCurrency);
+      creditAmount = Number((Number(current.amount) * quote.rate).toFixed(fractionDigits));
+      if (!Number.isFinite(creditAmount) || creditAmount <= 0) {
+        throw new Error("The converted deposit amount is invalid and cannot be credited.");
+      }
+      exchangeRate = quote.rate;
+      rateQuotedAt = quote.quotedAt;
+    }
+
+    const { data: confirmed, error: confirmError } = await supabase.rpc("confirm_deposit", {
+      p_deposit_id: id,
+      p_credited_amount: creditAmount,
+      p_credited_currency: creditCurrency,
+      p_exchange_rate: exchangeRate,
+      p_exchange_rate_quoted_at: rateQuotedAt,
+    });
     if (confirmError) throw new Error(confirmError.message || "Unable to confirm and credit this deposit");
     await logAdminEvent({
       userId,
       action,
       section,
       recordId: id,
-      metadata: { previousStatus: current.status, status: targetStatus, amount: current.amount, currency: current.currency },
+      metadata: {
+        previousStatus: current.status,
+        status: targetStatus,
+        amount: current.amount,
+        currency: current.currency,
+        creditedAmount: creditAmount,
+        creditedCurrency: creditCurrency,
+        exchangeRate,
+        rateQuotedAt,
+      },
     });
     return confirmed;
   }
