@@ -6,7 +6,7 @@ function formatReceiptAmount(value, currency) {
   return `${formatted} ${currency || ""}`.trim();
 }
 
-export default function DepositSuccessReceipt({ deposit, onClose }) {
+export default function DepositSuccessReceipt({ deposit, onReturnToDashboard }) {
   if (!deposit) return null;
   return (
     <div className="deposit-success-backdrop">
@@ -18,13 +18,15 @@ export default function DepositSuccessReceipt({ deposit, onClose }) {
         </div>
         <strong className="deposit-success-amount">{formatReceiptAmount(deposit.creditedAmount, deposit.creditedCurrency)}</strong>
         <dl>
+          <div><dt>Transaction ID</dt><dd>{deposit.transactionId || "Unavailable"}</dd></div>
           <div><dt>Deposit request</dt><dd>{deposit.id.replace(/^deposit-/, "")}</dd></div>
-          <div><dt>Payment method</dt><dd>{deposit.method || "Deposit"}</dd></div>
+          <div><dt>Exchange rate</dt><dd>Not applicable; credited in original currency</dd></div>
+          <div><dt>Total due</dt><dd>{formatReceiptAmount(deposit.amount, deposit.currency)}</dd></div>
           <div><dt>Amount paid</dt><dd>{formatReceiptAmount(deposit.amount, deposit.currency)}</dd></div>
           <div><dt>Amount credited</dt><dd>{formatReceiptAmount(deposit.creditedAmount, deposit.creditedCurrency)}</dd></div>
           <div><dt>Status</dt><dd>Confirmed</dd></div>
         </dl>
-        <button type="button" onClick={onClose}>Continue</button>
+        <button type="button" onClick={onReturnToDashboard}>Return to dashboard</button>
       </section>
     </div>
   );

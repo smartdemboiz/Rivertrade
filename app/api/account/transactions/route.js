@@ -42,9 +42,8 @@ export async function GET(request) {
         .limit(100),
       serviceClient
         .from("transactions")
-        .select("id, amount, type, status, currency, created_at")
+        .select("id, amount, type, status, currency, deposit_id, created_at")
         .eq("user_id", userId)
-        .neq("type", "deposit")
         .order("created_at", { ascending: false })
         .limit(100),
       serviceClient
@@ -61,10 +60,17 @@ export async function GET(request) {
     const fundsByDepositId = new Map(
       (fundsResult.data || []).filter(fund => fund.deposit_id).map(fund => [fund.deposit_id, fund]),
     );
+    const transactionsByDepositId = new Map(
+      (transactionsResult.data || [])
+        .filter(transaction => transaction.type === "deposit" && transaction.deposit_id)
+        .map(transaction => [transaction.deposit_id, transaction]),
+    );
     const deposits = (depositsResult.data || []).map(deposit => {
       const fund = fundsByDepositId.get(deposit.id);
+      const transaction = transactionsByDepositId.get(deposit.id);
       return {
         id: `deposit-${deposit.id}`,
+        transactionId: transaction?.id || null,
         amount: deposit.amount,
         currency: deposit.currency || "—",
         method: deposit.method || "Deposit",
@@ -75,7 +81,7 @@ export async function GET(request) {
         createdAt: deposit.created_at,
       };
     });
-    const transactions = (transactionsResult.data || []).map(transaction => ({
+    const transactions = (transactionsResult.data || []).filter(transaction => transaction.type !== "deposit").map(transaction => ({
       id: transaction.id,
       amount: transaction.amount,
       currency: transaction.currency || "—",

@@ -20,7 +20,7 @@ function getSeenDepositIds(userId) {
   }
 }
 
-export default function DashboardDeposit({ onAccountDataUpdate }) {
+export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashboard }) {
   const { authenticated, ready, user } = useAuthSession();
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -38,11 +38,10 @@ export default function DashboardDeposit({ onAccountDataUpdate }) {
   const [paymentSettings, setPaymentSettings] = useState([]);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [settingsError, setSettingsError] = useState("");
-  const confirmedDepositsRef = useRef([]);
   const checkingApprovalsRef = useRef(false);
 
   useEffect(() => {
-    if (!ready || !authenticated || !user?.id) return undefined;
+    if (!ready || !authenticated || !user?.id || approvedDeposit) return undefined;
 
     let active = true;
     async function checkDepositApprovals() {
@@ -71,7 +70,6 @@ export default function DashboardDeposit({ onAccountDataUpdate }) {
           && transaction.creditedAmount !== null
           && transaction.creditedAmount !== undefined,
         );
-        confirmedDepositsRef.current = confirmed;
         onAccountDataUpdate?.(body);
 
         const seenIds = getSeenDepositIds(user.id);
@@ -91,7 +89,7 @@ export default function DashboardDeposit({ onAccountDataUpdate }) {
       active = false;
       window.clearInterval(timer);
     };
-  }, [authenticated, onAccountDataUpdate, ready, user?.id]);
+  }, [authenticated, approvedDeposit, onAccountDataUpdate, ready, user?.id]);
 
   const dismissApprovedDeposit = () => {
     if (!user?.id) {
@@ -101,7 +99,7 @@ export default function DashboardDeposit({ onAccountDataUpdate }) {
 
     try {
       const seenIds = new Set(getSeenDepositIds(user.id));
-      for (const deposit of confirmedDepositsRef.current) seenIds.add(deposit.id);
+      seenIds.add(approvedDeposit.id);
       localStorage.setItem(receiptStorageKey(user.id), JSON.stringify([...seenIds]));
     } catch (storageError) {
       console.error("Unable to save seen deposit receipt state:", storageError);
@@ -223,7 +221,7 @@ export default function DashboardDeposit({ onAccountDataUpdate }) {
   return (
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
       <h2 id="deposit-title">Deposit Funds</h2>
-      <form className="dashboard-deposit-form" onSubmit={submitDeposit}>
+      <form className="dashboard-deposit-form" onSubmit={submitDeposit} aria-busy={submitting}>
         {approvalError && <p className="dashboard-deposit-error" role="status">{approvalError}</p>}
         <label htmlFor="deposit-amount">Amount {paymentMethod === "Cryptocurrency" ? cryptocurrency && `(${cryptocurrency})` : "(USD)"}</label>
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
@@ -315,10 +313,22 @@ export default function DashboardDeposit({ onAccountDataUpdate }) {
           <small>{paypalSetting?.instructions || "Include your RiverTrade email in the payment reference. PayPal deposits are normally confirmed within 1–3 business days."}</small>
         </div>}
 
-        <button type="submit" disabled={submitting || (paymentMethod === "Cryptocurrency" && cryptoWindowExpired)}>{submitting ? "Submitting…" : "Submit deposit request"}</button>
+        <button
+          type="submit"
+          disabled={submitting || (paymentMethod === "Cryptocurrency" && cryptoWindowExpired)}
+          aria-live="polite"
+        >
+          {submitting ? "Submitting..." : "Submit deposit request"}
+        </button>
         {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
       </form>
-      <DepositSuccessReceipt deposit={approvedDeposit} onClose={dismissApprovedDeposit} />
+      <DepositSuccessReceipt
+        deposit={approvedDeposit}
+        onReturnToDashboard={() => {
+          dismissApprovedDeposit();
+          onReturnToDashboard?.();
+        }}
+      />
     </section>
   );
 }

@@ -72,12 +72,19 @@ const sectionContent = {
   Support: ["Support", "How can we help?", "Contact the RiverTrade support team for assistance."],
 };
 
-function DashboardSection({ section, onAccountDataUpdate }) {
+function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard }) {
   if (section === "KYC verification") return <DashboardKyc />;
   if (section === "Support") return <DashboardSupport />;
   if (section === "Investment plans") return <DashboardInvestmentPlans />;
   if (section === "Withdraw") return <DashboardWithdraw />;
-  if (section === "Deposit") return <DashboardDeposit onAccountDataUpdate={onAccountDataUpdate} />;
+  if (section === "Deposit") {
+    return (
+      <DashboardDeposit
+        onAccountDataUpdate={onAccountDataUpdate}
+        onReturnToDashboard={onReturnToDashboard}
+      />
+    );
+  }
   if (section === "Swap crypto") return <DashboardSwapCrypto />;
   if (section === "Referrals") return <DashboardReferrals />;
   if (section === "Transactions") return <DashboardTransactions />;
@@ -411,6 +418,7 @@ export default function DashboardPage() {
           {activeSection !== "Overview" && <DashboardSection
             section={activeSection}
             onAccountDataUpdate={updateAccountData}
+            onReturnToDashboard={() => setActiveSection("Overview")}
           />}
           {activeSection === "Overview" && <>
           <section className="balance-banner">
