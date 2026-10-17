@@ -73,8 +73,10 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
         onAccountDataUpdate?.(body);
 
         const seenIds = getSeenDepositIds(user.id);
-        const nextReceipt = confirmed.find(deposit => !seenIds.includes(deposit.id));
-        if (nextReceipt) setApprovedDeposit(nextReceipt);
+        const latestConfirmed = confirmed[0];
+        if (latestConfirmed && !seenIds.includes(latestConfirmed.id)) {
+          setApprovedDeposit(latestConfirmed);
+        }
         setApprovalError("");
       } catch (approvalCheckError) {
         if (active) setApprovalError(approvalCheckError.message || "Unable to check deposit status.");
