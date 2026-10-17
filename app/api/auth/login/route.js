@@ -58,6 +58,8 @@ export async function POST(request) {
       return Response.json({
         message: "Login successful",
         token: data.session?.access_token || null,
+        refreshToken: data.session?.refresh_token || null,
+        expiresAt: data.session?.expires_at || null,
         user: {
           id: user.id,
           email: user.email,

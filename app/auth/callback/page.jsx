@@ -17,6 +17,8 @@ export default function AuthCallbackPage() {
     const finishConfirmation = async () => {
       const parameters = new URLSearchParams(window.location.hash.slice(1));
       const accessToken = parameters.get("access_token");
+      const refreshToken = parameters.get("refresh_token");
+      const expiresAt = parameters.get("expires_at");
       const confirmationError = parameters.get("error_description");
       window.history.replaceState({}, document.title, window.location.pathname);
 
@@ -34,7 +36,12 @@ export default function AuthCallbackPage() {
         const result = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(result.error || "Unable to verify your account.");
 
-        persistAuthSession({ token: accessToken, user: result.user });
+        persistAuthSession({
+          token: accessToken,
+          refreshToken,
+          expiresAt,
+          user: result.user,
+        });
         router.replace("/dashboard?kyc=required");
       } catch (verificationError) {
         setError(verificationError.message || "Unable to verify your account.");

@@ -203,12 +203,12 @@ function AdminContent() {
 }
 
 export default function AdminPage() {
-  const { authenticated } = useAuthSession();
+  const { authenticated, ready } = useAuthSession();
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!authenticated) return;
+    if (!ready || !authenticated) return;
 
     let active = true;
     fetch("/api/admin/stats", { headers: authHeaders(), cache: "no-store" })
@@ -224,7 +224,11 @@ export default function AdminPage() {
       });
 
     return () => { active = false; };
-  }, [authenticated]);
+  }, [authenticated, ready]);
+
+  if (!ready || (authenticated && checking)) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#101b1d] text-[#E0F3FF]">Checking admin access…</main>;
+  }
 
   if (!authenticated || (!checking && !authorized)) {
     return (
@@ -236,10 +240,6 @@ export default function AdminPage() {
         </section>
       </main>
     );
-  }
-
-  if (checking) {
-    return <main className="flex min-h-screen items-center justify-center bg-[#101b1d] text-[#E0F3FF]">Checking admin access…</main>;
   }
 
   return <AdminContent />;

@@ -14,8 +14,8 @@ export default function Home() {
   const [authMode, setAuthMode] = useState("login");
   const { authenticated } = useAuthSession();
 
-  const completeAuthentication = ({ token, user }) => {
-    persistAuthSession({ token, user });
+  const completeAuthentication = ({ token, user, refreshToken, expiresAt }) => {
+    persistAuthSession({ token, user, refreshToken, expiresAt });
     router.push("/dashboard");
   };
 

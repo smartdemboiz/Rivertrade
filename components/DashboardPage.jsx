@@ -233,7 +233,7 @@ function AssetBalanceList({ balances }) {
 export default function DashboardPage() {
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
-  const { authenticated, user } = useAuthSession();
+  const { authenticated, user, ready } = useAuthSession();
   const [visible, setVisible] = useState(true);
   const [sidebar, setSidebar] = useState(false);
   const [activeSection, setActiveSection] = useState("Overview");
@@ -255,12 +255,13 @@ export default function DashboardPage() {
   }, [theme]);
 
   useEffect(() => {
+    if (!ready) return;
     if (!authenticated) router.replace("/");
     else if (new URLSearchParams(window.location.search).get("kyc") === "required") {
       startTransition(() => setActiveSection("KYC verification"));
       router.replace("/dashboard");
     }
-  }, [authenticated, router]);
+  }, [authenticated, ready, router]);
 
   useEffect(() => {
     if (!authenticated) return undefined;
@@ -344,7 +345,7 @@ export default function DashboardPage() {
     setSidebar(true);
   };
 
-  if (!authenticated) return null;
+  if (!ready || !authenticated) return null;
 
   return (
     <div className={`dashboard ${theme === "dark" ? "theme-dark" : "theme-light"}`}>

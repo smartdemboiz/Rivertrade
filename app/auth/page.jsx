@@ -17,18 +17,18 @@ function AuthRouteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mode, setMode] = useState(() => searchParams.get("mode") === "register" ? "signup" : "login");
-  const { authenticated } = useAuthSession();
+  const { authenticated, ready } = useAuthSession();
 
   useEffect(() => {
-    if (authenticated) router.replace("/dashboard");
-  }, [authenticated, router]);
+    if (ready && authenticated) router.replace("/dashboard");
+  }, [authenticated, ready, router]);
 
   return (
     <AuthPage
       mode={mode}
       onBack={() => router.push("/")}
-      onSuccess={({ token, user }) => {
-        persistAuthSession({ token, user });
+      onSuccess={({ token, user, refreshToken, expiresAt }) => {
+        persistAuthSession({ token, user, refreshToken, expiresAt });
         router.push("/dashboard");
       }}
       onSwitchMode={() => setMode((current) => current === "login" ? "signup" : "login")}

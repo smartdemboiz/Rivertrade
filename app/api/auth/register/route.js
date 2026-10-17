@@ -84,6 +84,8 @@ export async function POST(request) {
         emailVerified,
         requiresEmailVerification: !emailVerified,
         token: data?.session?.access_token || null,
+        refreshToken: data?.session?.refresh_token || null,
+        expiresAt: data?.session?.expires_at || null,
         user: {
           id: data?.user?.id || null,
           firstName,

@@ -44,7 +44,12 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
         setNotice(result.message || "Check your email to verify your account before signing in.");
         return;
       }
-      onSuccess({ token: result.token, user: result.user });
+      onSuccess({
+        token: result.token,
+        refreshToken: result.refreshToken,
+        expiresAt: result.expiresAt,
+        user: result.user,
+      });
     } catch (requestError) {
       setError(requestError.message || "Authentication failed. Please try again.");
     } finally {
