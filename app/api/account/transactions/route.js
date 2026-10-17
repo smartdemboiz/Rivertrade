@@ -67,6 +67,7 @@ export async function GET(request) {
         id: `deposit-${deposit.id}`,
         amount: deposit.amount,
         currency: deposit.currency || "—",
+        method: deposit.method || "Deposit",
         type: "deposit",
         status: deposit.status,
         creditedAmount: fund?.balance ?? null,

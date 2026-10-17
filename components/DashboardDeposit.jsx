@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { addPendingDepositId } from "../lib/deposit-receipts";
 
 const CRYPTO_PAYMENT_WINDOW_MS = 45 * 60 * 1000;
 const CRYPTO_PAYMENT_WINDOW_KEY = "rivertrade-crypto-payment-window";
@@ -16,7 +17,6 @@ export default function DashboardDeposit() {
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState([]);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -71,7 +71,6 @@ export default function DashboardDeposit() {
     }
     setSubmitting(true);
     setError("");
-    setSuccess("");
     try {
       const token = localStorage.getItem("authToken");
       const response = await fetch("/api/deposits", {
@@ -91,7 +90,11 @@ export default function DashboardDeposit() {
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Unable to submit your deposit request.");
 
-      setSuccess(`Request ${body.data.id} submitted for manual review. This records a request only; no payment was processed and no funds were credited.`);
+      try {
+        addPendingDepositId(body.data.id);
+      } catch (trackingError) {
+        console.error("Unable to save deposit approval tracking:", trackingError);
+      }
       setAmount("");
       setPaymentMethod("");
       setCryptocurrency("");
@@ -126,7 +129,6 @@ export default function DashboardDeposit() {
   const selectedInstructions = paymentMethod === "Cryptocurrency"
     ? selectedCrypto?.instructions
     : paymentMethod === "Bank Transfer" ? bankSetting?.instructions : paypalSetting?.instructions;
-
   if (!settingsLoaded || paymentSettings.length === 0) {
     return (
       <section className="dashboard-deposit" aria-labelledby="deposit-title">
@@ -144,7 +146,7 @@ export default function DashboardDeposit() {
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
 
         <label htmlFor="deposit-method">Payment Method</label>
-        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setPaypalReference(""); setError(""); setSuccess(""); }}>
+        <select id="deposit-method" value={paymentMethod} onChange={(event) => { setPaymentMethod(event.target.value); setPaypalReference(""); setError(""); }}>
           <option value="">-- Choose Payment Method --</option>
           {visiblePaymentMethods.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
@@ -189,7 +191,6 @@ export default function DashboardDeposit() {
               Start a new 45-minute payment window
             </button>}
             {selectedInstructions && <small>{selectedInstructions}</small>}
-            <small>After sending your payment, submit a request if your account is not credited for review.</small>
           </div>
           {!cryptocurrency && <p role="status">Choose a cryptocurrency above to see its available networks.</p>}
           <label htmlFor="deposit-network">Select Network</label>
@@ -233,7 +234,6 @@ export default function DashboardDeposit() {
 
         <button type="submit" disabled={submitting || (paymentMethod === "Cryptocurrency" && cryptoWindowExpired)}>{submitting ? "Submitting…" : "Submit deposit request"}</button>
         {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
-        {success && <p className="dashboard-deposit-success" role="status">{success}</p>}
       </form>
     </section>
   );
