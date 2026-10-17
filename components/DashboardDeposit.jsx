@@ -95,7 +95,6 @@ export default function DashboardDeposit() {
   return (
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
       <h2 id="deposit-title">Deposit Funds</h2>
-      <p role="note">Submitting this form records a request only. It does not process a payment or credit your balance; contact support if you need manual payment verification.</p>
       <form className="dashboard-deposit-form" onSubmit={submitDeposit}>
         <label htmlFor="deposit-amount">Amount {paymentMethod === "Cryptocurrency" ? cryptocurrency && `(${cryptocurrency})` : "(USD)"}</label>
         <input id="deposit-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
