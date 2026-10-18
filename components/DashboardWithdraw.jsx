@@ -91,7 +91,7 @@ export default function DashboardWithdraw() {
       try {
         const token = localStorage.getItem("authToken");
         const response = await fetch("/api/account/transactions", {
-          headers: { Authorization: `****** || ""}` },
+          headers: { Authorization: `Bearer ${token || ""}` },
           cache: "no-store",
         });
         const body = await response.json();
@@ -178,7 +178,7 @@ export default function DashboardWithdraw() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `****** || ""}`,
+          Authorization: `Bearer ${token || ""}`,
         },
         body: JSON.stringify({
           amount,
