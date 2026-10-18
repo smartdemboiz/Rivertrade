@@ -23,7 +23,7 @@ export async function GET(request) {
   const authorization = request.headers.get("authorization") || "";
   const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
   if (!accessToken) {
-    return Response.json({ error: "Sign in to view your account history." }, { status: 401 });
+    return Response.json({ error: "Authentication required." }, { status: 401 });
   }
 
   const { data: authData, error: authError } = await authClient.auth.getUser(accessToken);

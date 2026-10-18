@@ -241,7 +241,6 @@ export default function DashboardWithdraw() {
       <form className="dashboard-withdraw-form" onSubmit={submitWithdrawal} aria-busy={submitting}>
         <label htmlFor="withdraw-amount">Amount (account currency)</label>
         <input id="withdraw-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
-        <p className="dashboard-deposit-conversion-note">Pending requests reserve this amount from your available balance. Payouts are sent manually after admin review.</p>
 
         <label htmlFor="withdraw-method">Withdrawal Method</label>
         <select id="withdraw-method" value={method} onChange={changeMethod} required>
