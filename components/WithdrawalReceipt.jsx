@@ -12,17 +12,24 @@ export default function WithdrawalReceipt({ withdrawal, onClose }) {
   const status = withdrawal.status;
   const successful = status === "approved";
   const rejected = status === "rejected";
-  const title = successful ? "Withdrawal successful" : rejected ? "Withdrawal rejected" : "Withdrawal request received";
+  const processing = status === "processing";
+  const title = successful
+    ? "Withdrawal successful"
+    : rejected
+      ? "Withdrawal rejected"
+      : processing ? "Withdrawal processing" : "Withdrawal request received";
   const description = successful
     ? "An administrator confirmed that your manual payout was sent."
     : rejected
       ? "Your withdrawal request was rejected. No payout was sent."
-      : "Your request is awaiting review. No payout has been sent yet.";
+      : processing
+        ? "Your request is being processed. Payout has not been confirmed yet."
+        : "Your request is awaiting review. No payout has been sent yet.";
 
   return (
     <div className="withdrawal-receipt-backdrop">
       <section
-        className={`withdrawal-receipt${successful ? " is-successful" : ""}${rejected ? " is-rejected" : ""}`}
+        className={`withdrawal-receipt${successful ? " is-successful" : ""}${rejected ? " is-rejected" : ""}${processing ? " is-processing" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="withdrawal-receipt-title"
@@ -39,7 +46,7 @@ export default function WithdrawalReceipt({ withdrawal, onClose }) {
           <div><dt>Payment method</dt><dd>{withdrawal.method || "Withdrawal"}</dd></div>
           {withdrawal.asset && <div><dt>Payout asset</dt><dd>{withdrawal.asset}</dd></div>}
           {withdrawal.network && <div><dt>Network</dt><dd>{withdrawal.network}</dd></div>}
-          <div><dt>Status</dt><dd>{successful ? "Payout sent" : rejected ? "Rejected" : "Pending review"}</dd></div>
+          <div><dt>Status</dt><dd>{successful ? "Payout sent" : rejected ? "Rejected" : processing ? "Processing" : "Pending review"}</dd></div>
           <div><dt>Request date</dt><dd>{withdrawal.createdAt ? new Date(withdrawal.createdAt).toLocaleString() : "—"}</dd></div>
         </dl>
         <button type="button" onClick={onClose}>Close receipt</button>

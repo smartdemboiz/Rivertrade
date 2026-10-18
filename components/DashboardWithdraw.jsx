@@ -98,10 +98,13 @@ export default function DashboardWithdraw() {
         if (!active) return;
         if (!response.ok) throw new Error(body.error || "Unable to check withdrawal status.");
 
-        const latestWithdrawal = (body.data || []).find(item => item.type === "withdrawal");
-        if (!latestWithdrawal || !["pending", "approved", "rejected"].includes(latestWithdrawal.status)) return;
-        const stage = `${latestWithdrawal.requestId}:${latestWithdrawal.status}`;
-        if (!getSeenReceiptStages(receiptStorageKey).includes(stage)) setWithdrawalReceipt(latestWithdrawal);
+        const seenStages = new Set(getSeenReceiptStages(receiptStorageKey));
+        const unacknowledgedWithdrawal = (body.data || []).find(item =>
+          item.type === "withdrawal"
+          && ["pending", "processing", "approved", "rejected"].includes(item.status)
+          && !seenStages.has(`${item.requestId}:${item.status}`),
+        );
+        if (unacknowledgedWithdrawal) setWithdrawalReceipt(unacknowledgedWithdrawal);
       } catch (statusError) {
         if (active) setError(statusError.message || "Unable to check withdrawal status.");
       } finally {

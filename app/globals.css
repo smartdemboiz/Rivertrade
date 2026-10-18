@@ -3316,6 +3316,9 @@ body:has(.admin-shell) .health-line i {
 .withdrawal-receipt.is-successful .withdrawal-receipt-heading > span {
   background: #27b58e;
 }
+.withdrawal-receipt.is-processing .withdrawal-receipt-heading > span {
+  background: #e5a83e;
+}
 .withdrawal-receipt.is-rejected .withdrawal-receipt-heading > span {
   background: #d94b5b;
 }
@@ -3326,6 +3329,9 @@ body:has(.admin-shell) .health-line i {
 }
 .withdrawal-receipt.is-successful .withdrawal-receipt-heading h3 {
   color: #159b77;
+}
+.withdrawal-receipt.is-processing .withdrawal-receipt-heading h3 {
+  color: #a56b0d;
 }
 .withdrawal-receipt.is-rejected .withdrawal-receipt-heading h3 {
   color: #c83d4c;
