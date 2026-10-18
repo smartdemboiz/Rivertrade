@@ -32,7 +32,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [error, setError] = useState("");
-  const [approvedDeposit, setApprovedDeposit] = useState(null);
+  const [depositReceipt, setDepositReceipt] = useState(null);
   const [approvalError, setApprovalError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState([]);
@@ -41,7 +41,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
   const checkingApprovalsRef = useRef(false);
 
   useEffect(() => {
-    if (!ready || !authenticated || !user?.id || approvedDeposit) return undefined;
+    if (!ready || !authenticated || !user?.id || depositReceipt) return undefined;
 
     let active = true;
     async function checkDepositApprovals() {
@@ -64,18 +64,23 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
         }
         if (!active) return;
 
-        const confirmed = (body.data || []).filter(transaction =>
+        const completedDeposits = (body.data || []).filter(transaction =>
           transaction.type === "deposit"
-          && transaction.status === "confirmed"
-          && transaction.creditedAmount !== null
-          && transaction.creditedAmount !== undefined,
+          && (
+            transaction.status === "rejected"
+            || (
+              transaction.status === "confirmed"
+              && transaction.creditedAmount !== null
+              && transaction.creditedAmount !== undefined
+            )
+          ),
         );
         onAccountDataUpdate?.(body);
 
         const seenIds = getSeenDepositIds(user.id);
-        const latestConfirmed = confirmed[0];
-        if (latestConfirmed && !seenIds.includes(latestConfirmed.id)) {
-          setApprovedDeposit(latestConfirmed);
+        const latestCompleted = completedDeposits[0];
+        if (latestCompleted && !seenIds.includes(latestCompleted.id)) {
+          setDepositReceipt(latestCompleted);
         }
         setApprovalError("");
       } catch (approvalCheckError) {
@@ -91,22 +96,22 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
       active = false;
       window.clearInterval(timer);
     };
-  }, [authenticated, approvedDeposit, onAccountDataUpdate, ready, user?.id]);
+  }, [authenticated, depositReceipt, onAccountDataUpdate, ready, user?.id]);
 
-  const dismissApprovedDeposit = () => {
+  const dismissDepositReceipt = () => {
     if (!user?.id) {
-      setApprovedDeposit(null);
+      setDepositReceipt(null);
       return;
     }
 
     try {
       const seenIds = new Set(getSeenDepositIds(user.id));
-      seenIds.add(approvedDeposit.id);
+      seenIds.add(depositReceipt.id);
       localStorage.setItem(receiptStorageKey(user.id), JSON.stringify([...seenIds]));
     } catch (storageError) {
       console.error("Unable to save seen deposit receipt state:", storageError);
     }
-    setApprovedDeposit(null);
+    setDepositReceipt(null);
   };
 
   useEffect(() => {
@@ -328,9 +333,9 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
         {error && <p className="dashboard-deposit-error" role="alert">{error}</p>}
       </form>
       <DepositSuccessReceipt
-        deposit={approvedDeposit}
+        deposit={depositReceipt}
         onReturnToDashboard={() => {
-          dismissApprovedDeposit();
+          dismissDepositReceipt();
           onReturnToDashboard?.();
         }}
       />

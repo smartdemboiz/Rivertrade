@@ -3270,6 +3270,12 @@ body:has(.admin-shell) .health-line i {
   font-size: 25px;
   font-weight: 700;
 }
+.deposit-success-receipt.is-rejected .deposit-success-check {
+  background: #d94b5b;
+}
+.deposit-success-receipt.is-rejected .deposit-success-heading h3 {
+  color: #c83d4c;
+}
 .deposit-success-heading h3 {
   margin: 0;
   color: #159b77;
