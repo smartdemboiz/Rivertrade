@@ -33,7 +33,7 @@ export async function GET(request) {
 
   try {
     const userId = authData.user.id;
-    const [depositsResult, transactionsResult, fundsResult] = await Promise.all([
+    const [depositsResult, withdrawalsResult, transactionsResult, fundsResult] = await Promise.all([
       serviceClient
         .from("deposits")
         .select("id, amount, currency, method, network, reference, status, credited_amount, credited_currency, exchange_rate, exchange_rate_quoted_at, created_at")
@@ -41,8 +41,14 @@ export async function GET(request) {
         .order("created_at", { ascending: false })
         .limit(100),
       serviceClient
+        .from("withdrawals")
+        .select("id, amount, currency, method, asset, network, status, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      serviceClient
         .from("transactions")
-        .select("id, amount, type, status, currency, deposit_id, created_at")
+        .select("id, amount, type, status, currency, deposit_id, withdrawal_id, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(100),
@@ -53,7 +59,7 @@ export async function GET(request) {
         .eq("status", "available"),
     ]);
 
-    for (const result of [depositsResult, transactionsResult, fundsResult]) {
+    for (const result of [depositsResult, withdrawalsResult, transactionsResult, fundsResult]) {
       if (result.error) throw new Error(result.error.message || "Unable to load account history.");
     }
 
@@ -64,6 +70,11 @@ export async function GET(request) {
       (transactionsResult.data || [])
         .filter(transaction => transaction.type === "deposit" && transaction.deposit_id)
         .map(transaction => [transaction.deposit_id, transaction]),
+    );
+    const transactionsByWithdrawalId = new Map(
+      (transactionsResult.data || [])
+        .filter(transaction => transaction.type === "withdrawal" && transaction.withdrawal_id)
+        .map(transaction => [transaction.withdrawal_id, transaction]),
     );
     const deposits = (depositsResult.data || []).map(deposit => {
       const fund = fundsByDepositId.get(deposit.id);
@@ -85,7 +96,22 @@ export async function GET(request) {
         createdAt: deposit.created_at,
       };
     });
-    const transactions = (transactionsResult.data || []).filter(transaction => transaction.type !== "deposit").map(transaction => ({
+    const withdrawals = (withdrawalsResult.data || []).map(withdrawal => ({
+      id: `withdrawal-${withdrawal.id}`,
+      requestId: withdrawal.id,
+      transactionId: transactionsByWithdrawalId.get(withdrawal.id)?.id || null,
+      amount: withdrawal.amount,
+      currency: withdrawal.currency || "—",
+      method: withdrawal.method || "Withdrawal",
+      asset: withdrawal.asset || null,
+      network: withdrawal.network || null,
+      type: "withdrawal",
+      status: withdrawal.status,
+      createdAt: withdrawal.created_at,
+    }));
+    const transactions = (transactionsResult.data || [])
+      .filter(transaction => transaction.type !== "deposit" && transaction.type !== "withdrawal")
+      .map(transaction => ({
       id: transaction.id,
       amount: transaction.amount,
       currency: transaction.currency || "—",
@@ -94,7 +120,7 @@ export async function GET(request) {
       creditedAmount: transaction.type === "deposit" ? transaction.amount : null,
       creditedCurrency: transaction.type === "deposit" ? transaction.currency : null,
       createdAt: transaction.created_at,
-    }));
+      }));
     const funds = fundsResult.data || [];
     const availableBalancesByCurrency = funds.reduce((balances, fund) => {
       const amount = Number(fund.balance) || 0;
@@ -109,7 +135,7 @@ export async function GET(request) {
       .map(([currency, amount]) => ({ currency, amount }))
       .filter(balance => balance.amount !== 0)
       .sort((left, right) => left.currency.localeCompare(right.currency));
-    const data = [...deposits, ...transactions]
+    const data = [...deposits, ...withdrawals, ...transactions]
       .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
       .slice(0, 100);
 

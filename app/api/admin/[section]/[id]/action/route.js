@@ -22,6 +22,10 @@ export async function POST(request, { params }) {
       || error.message?.includes("already credited in a different")
       || error.message?.includes("missing a valid customer")
       || error.message?.includes("rejected deposit")
+      || error.message?.includes("rejected withdrawal")
+      || error.message?.includes("Withdrawal payout")
+      || error.message?.includes("Withdrawal amount")
+      || error.message?.includes("approved withdrawal cannot be rejected")
       || error.message?.includes("Only pending investments")
       || error.message?.includes("Investment cannot be moved")
       || error.message?.includes("Investment review action");

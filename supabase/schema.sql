@@ -53,6 +53,7 @@ create table if not exists public.user_funds (
   type text default 'deposit' check (type in ('deposit', 'withdrawal', 'bonus', 'investment', 'investment_refund')),
   status text default 'available' check (status in ('available', 'processing', 'pending', 'failed')),
   deposit_id uuid,
+  withdrawal_id uuid,
   investment_id uuid references public.investments(id) on delete restrict,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -89,6 +90,7 @@ create table if not exists public.transactions (
   status text default 'completed' check (status in ('pending', 'completed', 'failed')),
   currency text,
   deposit_id uuid,
+  withdrawal_id uuid,
   investment_id uuid references public.investments(id) on delete restrict,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
@@ -250,10 +252,20 @@ create table if not exists public.withdrawals (
   amount numeric default 0,
   currency text,
   method text,
+  asset text,
+  network text,
+  destination_details jsonb not null default '{}'::jsonb,
   status text default 'pending' check (status in ('pending', 'processing', 'approved', 'rejected')),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+create unique index if not exists transactions_withdrawal_id_unique
+  on public.transactions (withdrawal_id)
+  where withdrawal_id is not null;
+create unique index if not exists user_funds_withdrawal_id_unique
+  on public.user_funds (withdrawal_id)
+  where withdrawal_id is not null;
 
 -- 10) Crypto swaps
 create table if not exists public.swaps (

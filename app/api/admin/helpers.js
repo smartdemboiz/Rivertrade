@@ -322,6 +322,48 @@ export async function executeOperationalAction({ section, id, action, userId }) 
     return confirmed;
   }
 
+  if (section === "withdrawals" && action === "approve") {
+    const { data: approved, error: approvalError } = await supabase.rpc("confirm_withdrawal_payout", {
+      p_withdrawal_id: id,
+    });
+    if (approvalError) throw new Error(approvalError.message || "Unable to confirm that the manual withdrawal payout was sent.");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: {
+        previousStatus: current.status,
+        status: approved.status,
+        amount: current.amount,
+        currency: current.currency,
+        method: current.method,
+      },
+    });
+    return approved;
+  }
+
+  if (section === "withdrawals" && action === "reject") {
+    const { data: rejected, error: rejectionError } = await supabase.rpc("reject_withdrawal_request", {
+      p_withdrawal_id: id,
+    });
+    if (rejectionError) throw new Error(rejectionError.message || "Unable to reject this withdrawal request.");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: {
+        previousStatus: current.status,
+        status: rejected.status,
+        amount: current.amount,
+        currency: current.currency,
+        method: current.method,
+      },
+    });
+    return rejected;
+  }
+
   if (section === "investments") {
     const { data: reviewed, error: reviewError } = await supabase.rpc("review_funded_investment", {
       p_investment_id: id,
@@ -483,6 +525,29 @@ async function toAdminInvestmentRecords(records, supabase) {
   });
 }
 
+async function toAdminWithdrawalRecords(records, supabase) {
+  const userIds = [...new Set(records.map((record) => record.user_id).filter(Boolean))];
+  const profilesById = new Map();
+
+  if (userIds.length) {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, email, first_name, last_name")
+      .in("id", userIds);
+    if (error) throw new Error(error.message || "Unable to load customer details for withdrawal requests.");
+    for (const profile of profiles || []) profilesById.set(profile.id, profile);
+  }
+
+  return records.map((record) => {
+    const profile = profilesById.get(record.user_id);
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+    return {
+      ...record,
+      user: fullName || profile?.email || record.user_id || "-",
+    };
+  });
+}
+
 export async function fetchSupabaseRecords(section) {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
@@ -511,6 +576,7 @@ export async function fetchSupabaseRecords(section) {
       }
       if (section === "kyc") return toAdminKycRecords(filtered, supabase);
       if (section === "deposits") return toAdminDepositRecords(filtered, supabase);
+      if (section === "withdrawals") return toAdminWithdrawalRecords(filtered, supabase);
       if (section === "investments") return toAdminInvestmentRecords(filtered, supabase);
       return filtered;
     } catch {

@@ -70,7 +70,8 @@ export default function DashboardTransactions() {
                 <td>{transaction.currency}</td>
                 <td>{transaction.type === "deposit"
                   ? transaction.creditedAmount !== null ? formatAmount(transaction.creditedAmount, transaction.creditedCurrency) : transaction.status === "confirmed" ? "Awaiting credit" : "—"
-                  : transaction.status === "completed" ? formatAmount(transaction.amount, transaction.currency) : "—"}</td>
+                  : transaction.type === "withdrawal" && transaction.status === "approved" ? "Payout sent"
+                    : transaction.status === "completed" ? formatAmount(transaction.amount, transaction.currency) : "—"}</td>
                 <td>{transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</td>
               </tr>
             ))}

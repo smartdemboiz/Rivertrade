@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import WithdrawalReceipt from "@/components/WithdrawalReceipt";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 const currencies = [
   "Bitcoin (BTC)",
@@ -39,7 +41,17 @@ const networks = [
   "Other",
 ];
 
+function getSeenReceiptStages(storageKey) {
+  try {
+    const stages = JSON.parse(localStorage.getItem(storageKey) || "[]");
+    return Array.isArray(stages) ? stages.filter(stage => typeof stage === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function DashboardWithdraw() {
+  const { authenticated, ready, user } = useAuthSession();
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("");
   const [method, setMethod] = useState("");
@@ -53,8 +65,12 @@ export default function DashboardWithdraw() {
   const [payoutDetails, setPayoutDetails] = useState("");
   const [managedAccount, setManagedAccount] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [withdrawalReceipt, setWithdrawalReceipt] = useState(null);
   const [withdrawalMethods, setWithdrawalMethods] = useState([]);
   const [methodsLoaded, setMethodsLoaded] = useState(false);
+
+  const receiptStorageKey = user?.id ? `rivertrade-seen-withdrawal-receipts:${user.id}` : "";
 
   useEffect(() => {
     fetch("/api/withdrawal-settings")
@@ -63,6 +79,43 @@ export default function DashboardWithdraw() {
       .catch(() => setWithdrawalMethods([]))
       .finally(() => setMethodsLoaded(true));
   }, []);
+
+  useEffect(() => {
+    if (!ready || !authenticated || !user?.id || withdrawalReceipt) return undefined;
+
+    let active = true;
+    let checking = false;
+    async function checkWithdrawalStatus() {
+      if (checking) return;
+      checking = true;
+      try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch("/api/account/transactions", {
+          headers: { Authorization: `****** || ""}` },
+          cache: "no-store",
+        });
+        const body = await response.json();
+        if (!active) return;
+        if (!response.ok) throw new Error(body.error || "Unable to check withdrawal status.");
+
+        const latestWithdrawal = (body.data || []).find(item => item.type === "withdrawal");
+        if (!latestWithdrawal || !["pending", "approved", "rejected"].includes(latestWithdrawal.status)) return;
+        const stage = `${latestWithdrawal.requestId}:${latestWithdrawal.status}`;
+        if (!getSeenReceiptStages(receiptStorageKey).includes(stage)) setWithdrawalReceipt(latestWithdrawal);
+      } catch (statusError) {
+        if (active) setError(statusError.message || "Unable to check withdrawal status.");
+      } finally {
+        checking = false;
+      }
+    }
+
+    void checkWithdrawalStatus();
+    const timer = window.setInterval(() => { void checkWithdrawalStatus(); }, 10_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [authenticated, ready, receiptStorageKey, user?.id, withdrawalReceipt]);
 
   const changeMethod = (event) => {
     const selected = configuredMethods[Number(event.target.value)];
@@ -102,9 +155,74 @@ export default function DashboardWithdraw() {
     ? [withdrawalMethod.network, ...networks]
     : networks;
 
-  const submitWithdrawal = (event) => {
+  const submitWithdrawal = async (event) => {
     event.preventDefault();
-    setError("Withdrawal processing is not connected to a payout provider yet. No funds were moved.");
+    setSubmitting(true);
+    setError("");
+    const destinationDetails = isCryptoMethod
+      ? { walletAddress, asset: currency }
+      : isBankMethod
+        ? { accountName, accountNumber, routingNumber, bankName }
+        : isPayPalMethod
+          ? { paypalEmail }
+          : methodName === "RiverTrade managed account"
+            ? { managedAccount }
+            : { accountDetails: payoutDetails };
+
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await fetch("/api/withdrawals", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `****** || ""}`,
+        },
+        body: JSON.stringify({
+          amount,
+          method: methodName,
+          asset: assetName,
+          network,
+          destinationDetails,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Unable to submit your withdrawal request.");
+
+      const request = body.data;
+      setWithdrawalReceipt({
+        id: `withdrawal-${request.id}`,
+        requestId: request.id,
+        amount: request.amount,
+        currency: request.currency,
+        method: request.method,
+        asset: request.asset,
+        network: request.network,
+        status: request.status,
+        createdAt: request.created_at,
+      });
+      setAmount("");
+      setError("");
+    } catch (submitError) {
+      setError(submitError.message || "Unable to submit your withdrawal request.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const dismissWithdrawalReceipt = () => {
+    if (!receiptStorageKey || !withdrawalReceipt) {
+      setWithdrawalReceipt(null);
+      return;
+    }
+    try {
+      const stage = `${withdrawalReceipt.requestId}:${withdrawalReceipt.status}`;
+      const seen = new Set(getSeenReceiptStages(receiptStorageKey));
+      seen.add(stage);
+      localStorage.setItem(receiptStorageKey, JSON.stringify([...seen]));
+    } catch (storageError) {
+      console.error("Unable to save seen withdrawal receipt state:", storageError);
+    }
+    setWithdrawalReceipt(null);
   };
 
   if (!methodsLoaded || withdrawalMethods.length === 0) {
@@ -112,6 +230,7 @@ export default function DashboardWithdraw() {
       <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
         <h2 id="withdraw-title">Withdraw Funds</h2>
         <p role="status">{methodsLoaded ? "No withdrawal methods are currently available." : "Loading available withdrawal methods…"}</p>
+        <WithdrawalReceipt withdrawal={withdrawalReceipt} onClose={dismissWithdrawalReceipt} />
       </section>
     );
   }
@@ -119,9 +238,10 @@ export default function DashboardWithdraw() {
   return (
     <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
       <h2 id="withdraw-title">Withdraw Funds</h2>
-      <form className="dashboard-withdraw-form" onSubmit={submitWithdrawal}>
-        <label htmlFor="withdraw-amount">Amount</label>
+      <form className="dashboard-withdraw-form" onSubmit={submitWithdrawal} aria-busy={submitting}>
+        <label htmlFor="withdraw-amount">Amount (account currency)</label>
         <input id="withdraw-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />
+        <p className="dashboard-deposit-conversion-note">Pending requests reserve this amount from your available balance. Payouts are sent manually after admin review.</p>
 
         <label htmlFor="withdraw-method">Withdrawal Method</label>
         <select id="withdraw-method" value={method} onChange={changeMethod} required>
@@ -176,9 +296,10 @@ export default function DashboardWithdraw() {
 
         {withdrawalMethod && <div className="dashboard-deposit-details"><p>{methodOptionLabel(withdrawalMethod)}</p><small>{selectedInstructions || "Review the destination details before submitting your withdrawal request."}</small></div>}
 
-        <button type="submit">Withdraw</button>
+        <button type="submit" disabled={submitting}>{submitting ? "Submitting..." : "Withdraw"}</button>
         {error && <p className="dashboard-withdraw-error" role="alert">{error}</p>}
       </form>
+      <WithdrawalReceipt withdrawal={withdrawalReceipt} onClose={dismissWithdrawalReceipt} />
     </section>
   );
 }

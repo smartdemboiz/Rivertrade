@@ -3276,6 +3276,107 @@ body:has(.admin-shell) .health-line i {
 .deposit-success-receipt.is-rejected .deposit-success-heading h3 {
   color: #c83d4c;
 }
+.withdrawal-receipt-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(12, 20, 23, 0.62);
+}
+.withdrawal-receipt {
+  width: min(100%, 470px);
+  overflow: hidden;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 16px;
+  background: var(--dashboard-panel);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+  color: var(--dashboard-ink);
+}
+.withdrawal-receipt-heading {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 30px 24px 24px;
+  text-align: center;
+}
+.withdrawal-receipt-heading > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: #e5a83e;
+  color: white;
+  font-size: 25px;
+  font-weight: 700;
+}
+.withdrawal-receipt.is-successful .withdrawal-receipt-heading > span {
+  background: #27b58e;
+}
+.withdrawal-receipt.is-rejected .withdrawal-receipt-heading > span {
+  background: #d94b5b;
+}
+.withdrawal-receipt-heading h3 {
+  margin: 0;
+  color: #a56b0d;
+  font-size: 24px;
+}
+.withdrawal-receipt.is-successful .withdrawal-receipt-heading h3 {
+  color: #159b77;
+}
+.withdrawal-receipt.is-rejected .withdrawal-receipt-heading h3 {
+  color: #c83d4c;
+}
+.withdrawal-receipt-heading p {
+  margin: 0;
+  color: var(--dashboard-muted);
+  font-size: 14px;
+}
+.withdrawal-receipt-amount {
+  display: block;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--dashboard-border);
+  font-size: clamp(24px, 6vw, 34px);
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.withdrawal-receipt dl {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 24px;
+}
+.withdrawal-receipt dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 14px;
+  align-items: start;
+}
+.withdrawal-receipt dt {
+  color: var(--dashboard-muted);
+  font-size: 14px;
+}
+.withdrawal-receipt dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.withdrawal-receipt > button {
+  width: calc(100% - 48px);
+  min-height: 48px;
+  margin: 0 24px 24px;
+  border: 0;
+  border-radius: 8px;
+  background: #405be8;
+  color: #fff;
+  font-weight: 600;
+}
 .deposit-success-heading h3 {
   margin: 0;
   color: #159b77;
