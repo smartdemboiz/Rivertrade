@@ -28,7 +28,9 @@ export async function POST(request, { params }) {
       || error.message?.includes("approved withdrawal cannot be rejected")
       || error.message?.includes("Only pending investments")
       || error.message?.includes("Investment cannot be moved")
-      || error.message?.includes("Investment review action");
+      || error.message?.includes("Investment review action")
+      || error.message?.includes("Profit record")
+      || error.message?.includes("profit can only be credited");
     return Response.json({ error: error.message || "Unable to apply action" }, { status: clientError ? 400 : 500 });
   }
 }

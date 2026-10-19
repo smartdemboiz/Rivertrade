@@ -385,11 +385,31 @@ export async function executeOperationalAction({ section, id, action, userId }) 
     return reviewed;
   }
 
+  if (section === "profitHistory" && action === "settle") {
+    const { data: settled, error: settleError } = await supabase.rpc("settle_profit_history", {
+      p_profit_history_id: id,
+    });
+    if (settleError) throw new Error(settleError.message || "Unable to credit this profit to the customer's balance.");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: {
+        previousStatus: current.status,
+        status: settled.status,
+        amount: settled.profit,
+        currency: settled.currency,
+        customerId: settled.user_id,
+      },
+    });
+    return settled;
+  }
+
   const { data: updated, error: updateError } = await supabase.from(table).update({ status: targetStatus }).eq("id", id).eq("status", current.status).select().single();
   if (updateError) throw new Error(updateError.message || "Unable to apply operational action");
 
   if (section === "withdrawals" && action === "approve") await supabase.from("transactions").insert({ user_id: current.user_id, amount: current.amount, type: "withdrawal", status: "completed" });
-  if (section === "profitHistory" && action === "settle") await supabase.from("transactions").insert({ user_id: current.user_id, amount: current.profit, type: "bonus", status: "completed" });
 
   await logAdminEvent({ userId, action, section, recordId: id, metadata: { previousStatus: current.status, status: targetStatus } });
   return updated;
@@ -439,7 +459,7 @@ async function toAdminUserRecords(records, supabase) {
   if (userIds.length) {
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("id, email, first_name, last_name")
+      .select("id, email, first_name, last_name, currency")
       .in("id", userIds);
     if (error) throw new Error(error.message || "Unable to load customer details.");
     for (const profile of profiles || []) profilesById.set(profile.id, profile);
@@ -453,6 +473,7 @@ async function toAdminUserRecords(records, supabase) {
       ...record,
       user: userName,
       userName,
+      currency: record.currency || profile?.currency || null,
       ...(record.referrals_count !== undefined ? { referrals: record.referrals_count } : {}),
     };
   });
@@ -594,40 +615,40 @@ export async function fetchSupabaseRecords(section) {
   const expectedDestination = getSectionDestination(section);
 
   for (const table of candidates) {
-    try {
-      const { data, error } = await supabase.from(table).select("*");
+    const { data, error } = await supabase.from(table).select("*");
 
-      if (error) {
-        if (error.code === "PGRST205" || error.status === 404) continue;
-        continue;
-      }
-
-      const records = data ?? [];
-      const filtered = expectedDestination
-        ? records.filter((record) => String(record.destination || "").toLowerCase() === expectedDestination)
-        : records;
-
-      if (section === "customers") {
-        return filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record));
-      }
-      if (section === "profiles") return filtered.map((record) => toAdminRecord(section, record));
-      if (section === "kyc") return toAdminKycRecords(filtered, supabase);
-      if (section === "deposits") return toAdminDepositRecords(filtered, supabase);
-      if (section === "withdrawals") return toAdminWithdrawalRecords(filtered, supabase);
-      if (section === "investments") return toAdminInvestmentRecords(filtered, supabase);
-      if (["transactions", "userFunds", "swaps", "managedAccounts", "profitHistory", "referrals"].includes(section)) {
-        return toAdminUserRecords(filtered, supabase);
-      }
-      return filtered;
-    } catch {
-      continue;
+    if (error) {
+      if (error.code === "PGRST205" || error.status === 404) continue;
+      throw new Error(error.message || `Unable to load ${section} records.`);
     }
+
+    const records = data ?? [];
+    const filtered = expectedDestination
+      ? records.filter((record) => String(record.destination || "").toLowerCase() === expectedDestination)
+      : records;
+
+    if (section === "customers") {
+      return filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record));
+    }
+    if (section === "profiles") return filtered.map((record) => toAdminRecord(section, record));
+    if (section === "kyc") return toAdminKycRecords(filtered, supabase);
+    if (section === "deposits") return toAdminDepositRecords(filtered, supabase);
+    if (section === "withdrawals") return toAdminWithdrawalRecords(filtered, supabase);
+    if (section === "investments") return toAdminInvestmentRecords(filtered, supabase);
+    if (["transactions", "userFunds", "swaps", "managedAccounts", "profitHistory", "referrals"].includes(section)) {
+      return toAdminUserRecords(filtered, supabase);
+    }
+    return filtered;
   }
 
   return ["paymentSettings", "withdrawalSettings"].includes(section) ? fallbackData[section] || [] : [];
 }
 
 export async function insertSupabaseRecord(section, payload) {
+  if (section === "profitHistory") {
+    throw new Error("Use the profit credit workflow to select a customer and credit their balance.");
+  }
+
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
     return { ...payload, id: Date.now() };
@@ -648,6 +669,10 @@ export async function insertSupabaseRecord(section, payload) {
 }
 
 export async function updateSupabaseRecord(section, id, payload) {
+  if (section === "profitHistory") {
+    throw new Error("Profit records are financial ledger entries and cannot be edited.");
+  }
+
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) {
     return { ...payload, id };
@@ -764,4 +789,32 @@ export async function getAdminTransactions() {
   const { data, error } = await supabase.from("transactions").select("*");
   if (error) throw new Error(error.message || "Unable to load transactions.");
   return toAdminUserRecords(Array.isArray(data) ? data : [], supabase);
+}
+
+export async function createAdminProfitCredit({ userId, amount, period, requestId, adminId }) {
+  const supabase = getSupabaseClient({ useServiceRole: true });
+  if (!supabase) throw new Error("Profit credits are unavailable because Supabase is not configured.");
+
+  const { data, error } = await supabase.rpc("credit_investment_profit", {
+    p_user_id: userId,
+    p_amount: amount,
+    p_period: period,
+    p_request_id: requestId,
+  });
+  if (error) throw Object.assign(new Error(error.message || "Unable to credit investment profit."), { code: error.code });
+
+  await logAdminEvent({
+    userId: adminId,
+    action: "credit",
+    section: "profitHistory",
+    recordId: data.id,
+    metadata: {
+      customerId: userId,
+      amount: data.profit,
+      currency: data.currency,
+      period: data.period,
+      status: data.status,
+    },
+  });
+  return data;
 }

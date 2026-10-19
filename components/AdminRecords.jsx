@@ -21,7 +21,7 @@ const definitions = {
   swaps: { title: "Swap activity", description: "Track crypto swaps and settlement status for user orders.", columns: ["user", "fromAsset", "toAsset", "amount", "status"], labels: ["User", "From", "To", "Amount", "Status"] },
   managedAccounts: { title: "Managed accounts", description: "Manage assigned strategies, allocations, and active portfolio oversight.", columns: ["user", "strategy", "allocation", "status"], labels: ["User", "Strategy", "Allocation", "Status"] },
   investmentPlans: { title: "Investment plans", description: "Control plan ranges, ROI, and active strategies for all clients.", columns: ["name", "minimum", "maximum", "roi", "duration", "status"], labels: ["Plan", "Min", "Max", "ROI", "Duration", "Status"] },
-  profitHistory: { title: "Profit history", description: "Review generated profits, settled periods, and pending distributions.", columns: ["user", "period", "profit", "status"], labels: ["User", "Period", "Profit", "Status"] },
+  profitHistory: { title: "Profit history", description: "Credit investment profit directly to a customer's available balance and keep an auditable transaction record.", columns: ["user", "period", "profit", "currency", "status"], labels: ["User", "Period", "Profit", "Currency", "Status"] },
   profiles: { title: "Profile management", description: "Review personal details, verification status, and user account information.", columns: ["user", "fullName", "email", "phone", "country", "verified"], labels: ["User", "Full name", "Email", "Phone", "Country", "Verified"] },
   referrals: { title: "Referral program", description: "Track referrals, campaigns, and user reward performance.", columns: ["user", "code", "referrals", "earnings", "status"], labels: ["User", "Code", "Referrals", "Earnings", "Status"] },
   support: { title: "Support center", description: "Review customer requests, contact details, and resolution progress.", columns: ["name", "email", "subject", "message", "status", "priority"], labels: ["Name", "Email", "Subject", "Message", "Status", "Priority"] },
@@ -87,7 +87,7 @@ const operationalActions = {
   swaps: [["complete", "Complete"], ["fail", "Fail"]],
   managedAccounts: [["activate", "Activate"], ["review", "Review"], ["pause", "Pause"]],
   investments: [["activate", "Activate"], ["complete", "Complete"], ["cancel", "Cancel"]],
-  profitHistory: [["settle", "Settle"], ["reopen", "Reopen"]],
+  profitHistory: [["settle", "Credit profit"]],
   referrals: [["activate", "Activate"], ["deactivate", "Deactivate"]],
   support: [["resolve", "Resolve"], ["close", "Close"], ["reopen", "Reopen"]],
 };
@@ -107,6 +107,14 @@ export default function AdminRecords({ section }) {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [profitCustomers, setProfitCustomers] = useState([]);
+  const [profitFormOpen, setProfitFormOpen] = useState(false);
+  const [profitCustomerId, setProfitCustomerId] = useState("");
+  const [profitAmount, setProfitAmount] = useState("");
+  const [profitPeriod, setProfitPeriod] = useState("");
+  const [profitRequestId, setProfitRequestId] = useState("");
+  const [savingProfit, setSavingProfit] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -124,6 +132,72 @@ export default function AdminRecords({ section }) {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [section]);
+
+  useEffect(() => {
+    if (section !== "profitHistory") return undefined;
+    let active = true;
+    fetch(buildUrl("/api/admin/customers"), { headers: authHeaders() })
+      .then(async response => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Unable to load customers.");
+        if (active) setProfitCustomers((body.data || []).filter(customer => !customer.role || customer.role === "customer"));
+      })
+      .catch(loadError => {
+        if (active) setError(loadError.message || "Unable to load customers.");
+      });
+    return () => { active = false; };
+  }, [section]);
+
+  function openProfitForm() {
+    setProfitCustomerId("");
+    setProfitAmount("");
+    setProfitPeriod(new Date().toLocaleString(undefined, { month: "long", year: "numeric" }));
+    setProfitRequestId(window.crypto.randomUUID());
+    setProfitFormOpen(true);
+    setError("");
+    setNotice("");
+  }
+
+  async function creditProfit(event) {
+    event.preventDefault();
+    const customer = profitCustomers.find(profile => profile.id === profitCustomerId);
+    if (!customer) {
+      setError("Select a customer before crediting profit.");
+      return;
+    }
+    const customerName = [customer.firstName, customer.lastName].filter(Boolean).join(" ")
+      || customer.email
+      || customer.id;
+    const currency = String(customer.currency || "USD").toUpperCase();
+    if (!window.confirm(`Credit ${profitAmount} ${currency} to ${customerName}'s available balance? This will be recorded as paid profit and cannot be undone here.`)) return;
+
+    setSavingProfit(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch(buildUrl("/api/admin/profits"), {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: profitCustomerId,
+          amount: profitAmount,
+          period: profitPeriod,
+          requestId: profitRequestId,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Unable to credit investment profit.");
+      setProfitFormOpen(false);
+      setProfitAmount("");
+      setProfitRequestId("");
+      setNotice(`Credited ${body.data.profit} ${body.data.currency} to ${customerName}.`);
+      await load();
+    } catch (creditError) {
+      setError(creditError.message || "Unable to credit investment profit.");
+    } finally {
+      setSavingProfit(false);
+    }
+  }
 
   function openEditor(record = {}) {
     setEditing(record.id || "new");
@@ -182,6 +256,9 @@ export default function AdminRecords({ section }) {
   async function applyAction(id, action) {
     if (section === "withdrawals" && action === "approve"
       && !window.confirm("Confirm only after you have sent the payout outside RiverTrade. Mark this withdrawal as paid?")) return;
+    const profitRecord = section === "profitHistory" && records.find(record => record.id === id);
+    if (profitRecord && action === "settle"
+      && !window.confirm(`Credit ${profitRecord.profit} ${profitRecord.currency || "USD"} to ${profitRecord.user}'s available balance?`)) return;
     const response = await fetch(buildUrl(`/api/admin/${section}/${id}/action`), {
       method: "POST",
       headers: { ...authHeaders(), "Content-Type": "application/json" },
@@ -195,8 +272,9 @@ export default function AdminRecords({ section }) {
 
   return (
     <>
-      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section !== "customers" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
+      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section === "profitHistory" ? <button className="button" onClick={openProfitForm}><Plus size={16} /> Credit investment profit</button> : section !== "customers" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
       {error && <p className="form-message">{error}</p>}
+      {notice && <p className="form-message success" role="status">{notice}</p>}
       {editing && (section === "withdrawalSettings" ? (
         <form className="admin-editor withdrawal-method-editor" onSubmit={save}>
           <div className="withdrawal-method-heading">
@@ -229,7 +307,31 @@ export default function AdminRecords({ section }) {
           <div><button className="button" type="submit">Save</button><button className="text-link" type="button" onClick={() => setEditing(null)}>Cancel</button></div>
         </form>
       ))}
-      <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : column === "documentUrl" && section === "kyc" ? record.documentUrl ? <a href={record.documentUrl} target="_blank" rel="noreferrer">View document</a> : "Unavailable" : column === "message" && section === "support" ? <details><summary>View message</summary><p>{displayValue(record[column])}</p></details> : column === "destination_details" && section === "withdrawals" ? Object.entries(record.destination_details || {}).map(([key, value]) => `${key}: ${value}`).join(", ") || "Unavailable" : column === "creditedAmount" && record.isCredited ? `${displayValue(record[column])} ${displayValue(record.creditedCurrency)}` : column === "exchange_rate" && record.exchange_rate ? `1 ${displayValue(record.currency)} = ${displayValue(record.exchange_rate)} ${displayValue(record.creditedCurrency)}` : displayValue(record[column])}</td>)}<td><span className="row-actions">{section !== "kyc" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && <button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>}{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).filter(([action]) => section === "deposits" ? (action === "confirm" ? record.status !== "rejected" && !record.isCredited : record.status === "pending") : section === "withdrawals" ? (["pending", "processing"].includes(record.status) && action !== "process" || record.status === "pending" && action === "process") : section === "investments" ? (record.status === "pending" ? action === "activate" || action === "cancel" : record.status === "active" && action === "complete") : true).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{section === "deposits" && action === "confirm" ? record.status === "confirmed" ? "Credit deposit" : "Confirm + credit" : section === "withdrawals" && action === "approve" ? "Mark payout sent" : label}</button>)}{section !== "customers" && section !== "kyc" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
+      {section === "profitHistory" && profitFormOpen && (
+        <form className="admin-editor" onSubmit={creditProfit}>
+          <label>Customer
+            <select required value={profitCustomerId} onChange={event => setProfitCustomerId(event.target.value)}>
+              <option value="">Choose a customer</option>
+              {profitCustomers.map(customer => {
+                const name = [customer.firstName, customer.lastName].filter(Boolean).join(" ") || customer.email;
+                return <option key={customer.id} value={customer.id}>{name} · {customer.email} · {String(customer.currency || "USD").toUpperCase()}</option>;
+              })}
+            </select>
+          </label>
+          <label>Profit amount
+            <input required type="number" min="0.00000001" step="0.00000001" value={profitAmount} onChange={event => setProfitAmount(event.target.value)} />
+          </label>
+          <label>Period or note
+            <input required maxLength={80} value={profitPeriod} onChange={event => setProfitPeriod(event.target.value)} />
+          </label>
+          <p className="profit-credit-note">Profit is credited immediately to the selected customer’s available account balance and recorded in transaction history.</p>
+          <div>
+            <button className="button" type="submit" disabled={savingProfit || profitCustomers.length === 0}>{savingProfit ? "Crediting..." : "Confirm profit credit"}</button>
+            <button className="text-link" type="button" onClick={() => { setProfitFormOpen(false); setProfitRequestId(""); }} disabled={savingProfit}>Cancel</button>
+          </div>
+        </form>
+      )}
+      <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : column === "documentUrl" && section === "kyc" ? record.documentUrl ? <a href={record.documentUrl} target="_blank" rel="noreferrer">View document</a> : "Unavailable" : column === "message" && section === "support" ? <details><summary>View message</summary><p>{displayValue(record[column])}</p></details> : column === "destination_details" && section === "withdrawals" ? Object.entries(record.destination_details || {}).map(([key, value]) => `${key}: ${value}`).join(", ") || "Unavailable" : column === "creditedAmount" && record.isCredited ? `${displayValue(record[column])} ${displayValue(record.creditedCurrency)}` : column === "exchange_rate" && record.exchange_rate ? `1 ${displayValue(record.currency)} = ${displayValue(record.exchange_rate)} ${displayValue(record.creditedCurrency)}` : displayValue(record[column])}</td>)}<td><span className="row-actions">{section !== "kyc" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "profitHistory" && <button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>}{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).filter(([action]) => section === "deposits" ? (action === "confirm" ? record.status !== "rejected" && !record.isCredited : record.status === "pending") : section === "withdrawals" ? (["pending", "processing"].includes(record.status) && action !== "process" || record.status === "pending" && action === "process") : section === "investments" ? (record.status === "pending" ? action === "activate" || action === "cancel" : record.status === "active" && action === "complete") : section === "profitHistory" ? record.status === "pending" && action === "settle" : true).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{section === "deposits" && action === "confirm" ? record.status === "confirmed" ? "Credit deposit" : "Confirm + credit" : section === "withdrawals" && action === "approve" ? "Mark payout sent" : label}</button>)}{section !== "customers" && section !== "kyc" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "profitHistory" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
     </>
   );
 }
