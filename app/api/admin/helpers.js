@@ -410,6 +410,22 @@ export async function executeOperationalAction({ section, id, action, userId }) 
     return settled;
   }
 
+  if (section === "swaps") {
+    const { data: reviewed, error: reviewError } = await supabase.rpc("review_customer_wallet_swap", {
+      p_swap_id: id,
+      p_action: action,
+    });
+    if (reviewError) throw new Error(reviewError.message || "Unable to review this wallet swap.");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: { previousStatus: current.status, status: reviewed.status, txHash: current.tx_hash },
+    });
+    return reviewed;
+  }
+
   const updatePayload = section === "managedAccounts" && ["activate", "review"].includes(action)
     ? { status: targetStatus, review_requested_at: null }
     : { status: targetStatus };
@@ -481,6 +497,13 @@ async function toAdminUserRecords(records, supabase) {
       user: userName,
       userName,
       currency: record.currency || profile?.currency || null,
+      ...(record.from_asset !== undefined ? { fromAsset: record.from_asset } : {}),
+      ...(record.to_asset !== undefined ? { toAsset: record.to_asset } : {}),
+      ...(record.tx_hash !== undefined ? { txHash: record.tx_hash } : {}),
+      ...(record.from_chain_id !== undefined ? { fromChainId: record.from_chain_id } : {}),
+      ...(record.to_chain_id !== undefined ? { toChainId: record.to_chain_id } : {}),
+      ...(record.from_amount !== undefined ? { fromAmount: record.from_amount } : {}),
+      ...(record.to_amount !== undefined ? { toAmount: record.to_amount } : {}),
       ...(record.referrals_count !== undefined ? { referrals: record.referrals_count } : {}),
     };
   });

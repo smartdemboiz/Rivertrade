@@ -8,6 +8,7 @@ const allowedSubjects = new Set([
   "General Inquiry",
   "Account Support",
   "Technical Support",
+  "Deposit Question",
   "Withdrawal Question",
 ]);
 
@@ -117,9 +118,27 @@ export async function POST(request) {
   }
 
   try {
+    let userId = null;
+    const authorization = request.headers.get("authorization") || "";
+    const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7).trim() : "";
+    if (accessToken) {
+      const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env;
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return Response.json({ error: "Support ticket authentication is not configured." }, { status: 503 });
+      }
+      const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+      const { data: authData, error: authError } = await authClient.auth.getUser(accessToken);
+      if (authError || !authData.user) {
+        return Response.json({ error: "Your session is invalid or expired. Sign in again." }, { status: 401 });
+      }
+      userId = authData.user.id;
+    }
+
     const { data, error } = await supabase
       .from("support_tickets")
-      .insert({ ...ticket, status: "open", priority: "medium" })
+      .insert({ ...ticket, user_id: userId, status: "open", priority: "medium" })
       .select("id")
       .single();
 

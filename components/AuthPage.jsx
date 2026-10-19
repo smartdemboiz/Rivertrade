@@ -36,13 +36,27 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
       const response = await fetch(signup ? "/api/auth/register" : "/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email, password, country, countryCode, phone, currency }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          country,
+          countryCode,
+          phone,
+          currency,
+          referralCode: signup ? new URLSearchParams(window.location.search).get("ref") || "" : "",
+        }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || "Authentication failed.");
       if (result.requiresEmailVerification || !result.token) {
         setNotice(result.message || "Check your email to verify your account before signing in.");
+        if (signup && result.referralLinked === false) setNotice(current => `${current} Referral tracking could not be linked.`);
         return;
+      }
+      if (signup && result.referralLinked === false) {
+        setNotice("Your account was created, but the referral could not be linked.");
       }
       onSuccess({
         token: result.token,

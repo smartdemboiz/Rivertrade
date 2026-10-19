@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/crypto-swap/lib/server/redis.js";
-import { logAdminEvent } from "../../admin/helpers";
+import { getSupabaseClient, logAdminEvent } from "../../admin/helpers";
 
 const getSupabaseAuthConfig = () => {
   const url = process.env.SUPABASE_URL;
@@ -40,8 +40,30 @@ export async function POST(request) {
       return Response.json({ error: "Country, country code, and phone are required" }, { status: 400 });
     }
 
+    const referralCode = typeof body.referralCode === "string"
+      ? body.referralCode.trim().toUpperCase()
+      : "";
+    if (referralCode && (referralCode.length > 32 || !/^[A-Z0-9-]+$/.test(referralCode))) {
+      return Response.json({ error: "Enter a valid referral code." }, { status: 400 });
+    }
+
     try {
       const { url, anonKey } = getSupabaseAuthConfig();
+      const serviceClient = getSupabaseClient();
+      if (referralCode) {
+        if (!serviceClient) {
+          return Response.json({ error: "Referral signup is temporarily unavailable. Try again without a referral code." }, { status: 503 });
+        }
+        const { data: referral, error: referralError } = await serviceClient
+          .from("referrals")
+          .select("user_id")
+          .eq("code", referralCode)
+          .eq("status", "active")
+          .maybeSingle();
+        if (referralError) throw new Error(referralError.message || "Unable to validate the referral code.");
+        if (!referral) return Response.json({ error: "This referral code is invalid or inactive." }, { status: 400 });
+      }
+
       const supabase = createClient(url, anonKey, {
         auth: {
           persistSession: false,
@@ -62,6 +84,7 @@ export async function POST(request) {
             country_code: countryCode,
             phone,
             currency: currency || "USD",
+            referral_code: referralCode || null,
           },
         },
       });
@@ -71,6 +94,35 @@ export async function POST(request) {
           { error: error.message || "Registration failed" },
           { status: 400 },
         );
+      }
+
+      let referralLinked = !referralCode;
+      if (data?.user?.id && serviceClient) {
+        const { error: profileError } = await serviceClient
+          .from("profiles")
+          .upsert({
+            id: data.user.id,
+            email: data.user.email || email,
+            first_name: firstName,
+            last_name: lastName,
+            country,
+            country_code: countryCode,
+            phone,
+            currency: currency || "USD",
+          }, { onConflict: "id" });
+        if (profileError) {
+          console.error("Signup succeeded but the customer profile could not be synchronized:", profileError.message);
+        } else if (referralCode) {
+          const { error: attributionError } = await serviceClient.rpc("record_customer_referral_signup", {
+            p_customer_id: data.user.id,
+            p_referral_code: referralCode,
+          });
+          if (attributionError) {
+            console.error("Signup succeeded but referral attribution could not be recorded:", attributionError.message);
+          } else {
+            referralLinked = true;
+          }
+        }
       }
 
       if (data?.user?.id) {
@@ -83,6 +135,7 @@ export async function POST(request) {
         message: emailVerified ? "Registration successful" : "Registration successful. Check your email to verify your account.",
         emailVerified,
         requiresEmailVerification: !emailVerified,
+        referralLinked,
         token: data?.session?.access_token || null,
         refreshToken: data?.session?.refresh_token || null,
         expiresAt: data?.session?.expires_at || null,

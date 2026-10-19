@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { startTransition, useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowLeftRight,
@@ -279,6 +279,28 @@ export default function DashboardPage() {
     setAccountData(current => ({ ...current, ...data }));
     setAccountError("");
   }, []);
+  const allocationByPlan = useMemo(() => {
+    const totals = new Map();
+    for (const investment of accountData.investments) {
+      if (investment.status !== "pending" && investment.status !== "active") continue;
+      const plan = investment.plan || "Investment";
+      totals.set(plan, (totals.get(plan) || 0) + (Number(investment.amount) || 0));
+    }
+    const total = [...totals.values()].reduce((sum, amount) => sum + amount, 0);
+    return [...totals.entries()]
+      .map(([plan, amount]) => ({ plan, amount, percentage: total ? amount / total * 100 : 0 }))
+      .sort((left, right) => right.amount - left.amount);
+  }, [accountData.investments]);
+  const allocationColors = ["#14b8a6", "#3b82f6", "#f59e0b", "#8b5cf6", "#ef4444"];
+  const allocationTotal = allocationByPlan.reduce((total, item) => total + item.amount, 0);
+  let allocationStart = 0;
+  const allocationGradient = allocationByPlan.length
+    ? `conic-gradient(${allocationByPlan.map((item, index) => {
+        const start = allocationStart;
+        allocationStart += item.percentage;
+        return `${allocationColors[index % allocationColors.length]} ${start}% ${allocationStart}%`;
+      }).join(", ")})`
+    : "#e5e7eb";
 
   useEffect(() => {
     localStorage.setItem("rivertrade-dashboard-theme", theme);
@@ -475,7 +497,7 @@ export default function DashboardPage() {
 
           <div className="dash-grid">
             <div>
-              <div className="dash-section-head"><h2>Account overview</h2><button className="text-link">This month</button></div>
+              <div className="dash-section-head"><h2>Account overview</h2></div>
               <div className="stat-grid">
                 <StatCard
                   label="Available balance"
@@ -502,11 +524,17 @@ export default function DashboardPage() {
               </div>
 
               <div className="allocation">
-                <div className="dash-section-head"><h2>Portfolio allocation</h2><button className="text-link">Details</button></div>
+                <div className="dash-section-head"><h2>Investment allocation by plan</h2><button className="text-link" onClick={() => setActiveSection("My investments")}>Details</button></div>
                 <div className="allocation-body">
-                  <div className="donut" />
+                  <div className="donut" style={{ background: allocationGradient }} aria-label="Investment allocation by plan" />
                   <div className="legend">
-                    <span>No portfolio allocation yet</span>
+                    {accountError ? <span>{accountError}</span> : allocationByPlan.length ? allocationByPlan.map((item, index) => (
+                      <span key={item.plan}>
+                        <i style={{ backgroundColor: allocationColors[index % allocationColors.length] }} />
+                        {item.plan} · {item.percentage.toFixed(1)}% ({formatUsd(item.amount)})
+                      </span>
+                    )) : <span>No active or pending investments yet</span>}
+                    {!accountError && allocationByPlan.length > 0 && <small>Total allocated: {formatUsd(allocationTotal)}</small>}
                   </div>
                 </div>
               </div>

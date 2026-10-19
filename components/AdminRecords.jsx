@@ -18,7 +18,7 @@ const definitions = {
   notifications: { title: "Notifications", description: "Review messages sent to customers.", columns: ["recipient", "subject", "status"], labels: ["Recipient", "Subject", "Status"] },
   deposits: { title: "Deposit operations", description: "Verify payment receipt, then confirm to credit a standard deposit or managed-account funding request.", columns: ["user", "amount", "currency", "status", "purpose", "method", "network", "reference", "creditedAmount", "creditedCurrency", "exchange_rate"], labels: ["User", "Amount", "Deposit currency", "Status", "Purpose", "Method", "Network", "Payment reference", "Credited amount", "Credit currency", "Exchange rate"] },
   withdrawals: { title: "Withdrawal operations", description: "Review payout details. Send the payout outside RiverTrade before marking it as sent.", columns: ["user", "amount", "currency", "status", "method", "asset", "network", "destination_details"], labels: ["User", "Amount", "Currency", "Status", "Method", "Payout asset", "Network", "Payout details"] },
-  swaps: { title: "Swap activity", description: "Track crypto swaps and settlement status for user orders.", columns: ["user", "fromAsset", "toAsset", "amount", "status"], labels: ["User", "From", "To", "Amount", "Status"] },
+  swaps: { title: "Wallet swap activity", description: "Verify source-chain transactions and cross-chain destination settlement before completing or failing a swap record.", columns: ["user", "fromAsset", "fromAmount", "toAsset", "toAmount", "fromChainId", "toChainId", "txHash", "route_provider", "status"], labels: ["User", "From", "Sent", "To", "Estimated receive", "Source chain", "Destination chain", "Transaction hash", "Route", "Settlement status"] },
   managedAccounts: { title: "Managed accounts", description: "Manage account setup, assigned strategy, risk profile, reported returns, and portfolio reviews.", columns: ["user", "strategy", "allocation", "risk_profile", "account_value", "account_currency", "total_return", "monthly_return", "management_fee", "next_review_at", "review_requested_at", "status"], labels: ["User", "Strategy", "Allocation", "Risk profile", "Account value", "Currency", "Total return", "Monthly return %", "Management fee %", "Next review", "Review requested", "Status"] },
   investmentPlans: { title: "Investment plans", description: "Control plan ranges, ROI, and active strategies for all clients.", columns: ["name", "minimum", "maximum", "roi", "duration", "status"], labels: ["Plan", "Min", "Max", "ROI", "Duration", "Status"] },
   profitHistory: { title: "Profit history", description: "Credit investment profit directly to a customer's available balance and keep an auditable transaction record.", columns: ["user", "period", "profit", "currency", "status"], labels: ["User", "Period", "Profit", "Currency", "Status"] },
@@ -349,7 +349,74 @@ export default function AdminRecords({ section }) {
           </div>
         </form>
       )}
-      <section className="admin-panel transaction-panel"><div className="admin-panel-head"><h2>{loading ? "Loading..." : `${records.length} records`}</h2><button className="text-link" onClick={load}>Refresh</button></div><div className="table-scroll"><table><thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead><tbody>{records.length ? records.map(record => <tr key={record.id}>{definition.columns.map(column => <td key={column}>{column === "status" && section === "kyc" ? <span className="health">{displayValue(record[column] || "pending")}</span> : column === "documentUrl" && section === "kyc" ? record.documentUrl ? <a href={record.documentUrl} target="_blank" rel="noreferrer">View document</a> : "Unavailable" : column === "message" && section === "support" ? <details><summary>View message</summary><p>{displayValue(record[column])}</p></details> : column === "destination_details" && section === "withdrawals" ? Object.entries(record.destination_details || {}).map(([key, value]) => `${key}: ${value}`).join(", ") || "Unavailable" : column === "creditedAmount" && record.isCredited ? `${displayValue(record[column])} ${displayValue(record.creditedCurrency)}` : column === "exchange_rate" && record.exchange_rate ? `1 ${displayValue(record.currency)} = ${displayValue(record.exchange_rate)} ${displayValue(record.creditedCurrency)}` : displayValue(record[column])}</td>)}<td><span className="row-actions">{section !== "kyc" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "profitHistory" && <button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>}{section === "kyc" && <><button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button><button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button></>}{(operationalActions[section] || []).filter(([action]) => section === "deposits" ? (action === "confirm" ? record.status !== "rejected" && !record.isCredited : record.status === "pending") : section === "withdrawals" ? (["pending", "processing"].includes(record.status) && action !== "process" || record.status === "pending" && action === "process") : section === "investments" ? (record.status === "pending" ? action === "activate" || action === "cancel" : record.status === "active" && action === "complete") : section === "profitHistory" ? record.status === "pending" && action === "settle" : true).map(([action, label]) => <button type="button" key={action} onClick={() => applyAction(record.id, action)}>{section === "deposits" && action === "confirm" ? record.status === "confirmed" ? "Credit deposit" : "Confirm + credit" : section === "withdrawals" && action === "approve" ? "Mark payout sent" : label}</button>)}{section !== "customers" && section !== "kyc" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "profitHistory" && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}{section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}</span></td></tr>) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}</tbody></table></div></section>
+      <section className="admin-panel transaction-panel">
+        <div className="admin-panel-head">
+          <h2>{loading ? "Loading..." : `${records.length} records`}</h2>
+          <button className="text-link" onClick={load}>Refresh</button>
+        </div>
+        <div className="table-scroll">
+          <table>
+            <thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead>
+            <tbody>
+              {records.length ? records.map(record => {
+                const canEdit = !["kyc", "deposits", "investments", "withdrawals", "profitHistory", "swaps"].includes(section);
+                const canDelete = section !== "customers" && !["kyc", "deposits", "investments", "withdrawals", "profitHistory", "swaps"].includes(section);
+                const actions = (operationalActions[section] || []).filter(([action]) => (
+                  section === "deposits"
+                    ? action === "confirm" ? record.status !== "rejected" && !record.isCredited : record.status === "pending"
+                    : section === "withdrawals"
+                      ? ["pending", "processing"].includes(record.status) && action !== "process" || record.status === "pending" && action === "process"
+                      : section === "investments"
+                        ? record.status === "pending" ? action === "activate" || action === "cancel" : record.status === "active" && action === "complete"
+                        : section === "profitHistory"
+                          ? record.status === "pending" && action === "settle"
+                          : section === "swaps"
+                            ? record.status === "pending"
+                            : true
+                ));
+
+                return (
+                  <tr key={record.id}>
+                    {definition.columns.map(column => (
+                      <td key={column}>
+                        {column === "status" && section === "kyc"
+                          ? <span className="health">{displayValue(record[column] || "pending")}</span>
+                          : column === "documentUrl" && section === "kyc"
+                            ? record.documentUrl ? <a href={record.documentUrl} target="_blank" rel="noreferrer">View document</a> : "Unavailable"
+                            : column === "message" && section === "support"
+                              ? <details><summary>View message</summary><p>{displayValue(record[column])}</p></details>
+                              : column === "destination_details" && section === "withdrawals"
+                                ? Object.entries(record.destination_details || {}).map(([key, value]) => `${key}: ${value}`).join(", ") || "Unavailable"
+                                : column === "creditedAmount" && record.isCredited
+                                  ? `${displayValue(record[column])} ${displayValue(record.creditedCurrency)}`
+                                  : column === "exchange_rate" && record.exchange_rate
+                                    ? `1 ${displayValue(record.currency)} = ${displayValue(record.exchange_rate)} ${displayValue(record.creditedCurrency)}`
+                                    : displayValue(record[column])}
+                      </td>
+                    ))}
+                    <td>
+                      <span className="row-actions">
+                        {canEdit && <button type="button" aria-label="Edit record" onClick={() => openEditor(record)}><Pencil size={14} /></button>}
+                        {section === "kyc" && <>
+                          <button type="button" aria-label="Approve KYC" onClick={() => updateKyc(record.id, "approved")}><Check size={14} /></button>
+                          <button type="button" aria-label="Reject KYC" onClick={() => updateKyc(record.id, "rejected")}><X size={14} /></button>
+                        </>}
+                        {actions.map(([action, label]) => (
+                          <button type="button" key={action} onClick={() => applyAction(record.id, action)}>
+                            {section === "deposits" && action === "confirm" ? record.status === "confirmed" ? "Credit deposit" : "Confirm + credit" : section === "withdrawals" && action === "approve" ? "Mark payout sent" : label}
+                          </button>
+                        ))}
+                        {canDelete && <button type="button" aria-label="Delete record" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}
+                        {section === "customers" && <button type="button" aria-label="Anonymize customer account" onClick={() => remove(record.id)}><Trash2 size={14} /></button>}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              }) : <tr><td colSpan={definition.columns.length + 1}>{loading ? "Loading records..." : "No records available yet."}</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </>
   );
 }
