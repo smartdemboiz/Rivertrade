@@ -20,7 +20,7 @@ function authHeaders() {
   return token ? { Authorization: "Bearer " + token } : {};
 }
 
-export default function DashboardInvestmentPlans() {
+export default function DashboardInvestmentPlans({ onAccountDataUpdate }) {
   const [plans, setPlans] = useState([]);
   const [availableBalances, setAvailableBalances] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -194,6 +194,16 @@ export default function DashboardInvestmentPlans() {
       });
       closePlan();
       await refreshOptions();
+      const token = localStorage.getItem("authToken");
+      if (token && onAccountDataUpdate) {
+        const accountResponse = await fetch("/api/account/transactions", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+        const accountBody = await accountResponse.json();
+        if (!accountResponse.ok) throw new Error(accountBody.error || "Investment submitted, but account totals could not be refreshed.");
+        onAccountDataUpdate(accountBody);
+      }
     } catch (error) {
       setPageError(error.message || "Unable to submit this investment.");
       if (/expired|already been used|no longer active|insufficient/i.test(error.message || "")) {

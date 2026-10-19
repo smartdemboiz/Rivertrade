@@ -33,7 +33,7 @@ export async function GET(request) {
 
   try {
     const userId = authData.user.id;
-    const [depositsResult, withdrawalsResult, transactionsResult, fundsResult] = await Promise.all([
+    const [depositsResult, withdrawalsResult, transactionsResult, fundsResult, profitsResult, investmentsResult] = await Promise.all([
       serviceClient
         .from("deposits")
         .select("id, amount, currency, method, network, reference, status, credited_amount, credited_currency, exchange_rate, exchange_rate_quoted_at, created_at")
@@ -57,11 +57,75 @@ export async function GET(request) {
         .select("balance, currency, type, status, deposit_id")
         .eq("user_id", userId)
         .eq("status", "available"),
+      serviceClient
+        .from("profit_history")
+        .select("id, period, profit, currency, status, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      serviceClient
+        .from("investments")
+        .select("id, plan_id, plan, amount, status, created_at, updated_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
     ]);
 
-    for (const result of [depositsResult, withdrawalsResult, transactionsResult, fundsResult]) {
+    for (const result of [depositsResult, withdrawalsResult, transactionsResult, fundsResult, profitsResult, investmentsResult]) {
       if (result.error) throw new Error(result.error.message || "Unable to load account history.");
     }
+
+    const planIds = [...new Set((investmentsResult.data || []).map(investment => investment.plan_id).filter(Boolean))];
+    let plansById = new Map();
+    if (planIds.length) {
+      const { data: plans, error: plansError } = await serviceClient
+        .from("investment_plans")
+        .select("id, roi, duration_days")
+        .in("id", planIds);
+      if (plansError) throw new Error(plansError.message || "Unable to load investment plan details.");
+      plansById = new Map((plans || []).map(plan => [plan.id, plan]));
+    }
+
+    const profitHistory = (profitsResult.data || []).map(profit => ({
+      id: profit.id,
+      period: profit.period || "Investment profit",
+      profit: Number(profit.profit) || 0,
+      currency: String(profit.currency || "USD").trim().toUpperCase(),
+      status: profit.status || "pending",
+      createdAt: profit.created_at,
+    }));
+    const profitByCurrency = new Map();
+    for (const profit of profitHistory) {
+      if (profit.status !== "settled") continue;
+      profitByCurrency.set(profit.currency, (profitByCurrency.get(profit.currency) || 0) + profit.profit);
+    }
+    const investmentProfit = [...profitByCurrency.entries()]
+      .map(([currency, amount]) => ({ currency, amount }))
+      .sort((left, right) => left.currency.localeCompare(right.currency));
+    const investments = (investmentsResult.data || []).map(investment => {
+      const plan = plansById.get(investment.plan_id);
+      const durationDays = Number(plan?.duration_days) || 0;
+      const createdAt = investment.created_at;
+      const startDate = String(investment.status || "").toLowerCase() === "active"
+        ? investment.updated_at || createdAt
+        : createdAt;
+      const maturityDate = startDate && durationDays > 0
+        ? new Date(new Date(startDate).getTime() + durationDays * 24 * 60 * 60 * 1000).toISOString()
+        : null;
+      return {
+        id: investment.id,
+        plan: investment.plan || "Investment",
+        amount: Number(investment.amount) || 0,
+        status: String(investment.status || "pending").toLowerCase(),
+        roi: Number(plan?.roi) || 0,
+        createdAt,
+        maturityDate,
+      };
+    });
+    const lockedBalanceUsd = investments
+      .filter(investment => investment.status === "pending" || investment.status === "active")
+      .reduce((total, investment) => total + investment.amount, 0);
+    const nextPayout = investments
+      .filter(investment => investment.status === "active" && investment.maturityDate)
+      .sort((left, right) => new Date(left.maturityDate).getTime() - new Date(right.maturityDate).getTime())[0]?.maturityDate || null;
 
     const fundsByDepositId = new Map(
       (fundsResult.data || []).filter(fund => fund.deposit_id).map(fund => [fund.deposit_id, fund]),
@@ -140,7 +204,7 @@ export async function GET(request) {
       .slice(0, 100);
 
     return Response.json(
-      { data, availableBalances },
+      { data, availableBalances, investmentProfit, profitHistory, investments, lockedBalanceUsd, nextPayout },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

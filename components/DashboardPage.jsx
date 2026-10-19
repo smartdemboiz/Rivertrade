@@ -72,10 +72,10 @@ const sectionContent = {
   Support: ["Support", "How can we help?", "Contact the RiverTrade support team for assistance."],
 };
 
-function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard }) {
+function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard, accountData, accountError }) {
   if (section === "KYC verification") return <DashboardKyc />;
   if (section === "Support") return <DashboardSupport />;
-  if (section === "Investment plans") return <DashboardInvestmentPlans />;
+  if (section === "Investment plans") return <DashboardInvestmentPlans onAccountDataUpdate={onAccountDataUpdate} />;
   if (section === "Withdraw") return <DashboardWithdraw />;
   if (section === "Deposit") {
     return (
@@ -88,9 +88,13 @@ function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard })
   if (section === "Swap crypto") return <DashboardSwapCrypto />;
   if (section === "Referrals") return <DashboardReferrals />;
   if (section === "Transactions") return <DashboardTransactions />;
-  if (section === "My investments") return <DashboardActivePositions />;
+  if (section === "My investments") return <DashboardActivePositions investments={accountData.investments} error={accountError} />;
   if (section === "Managed account") return <DashboardManagedAccount />;
-  if (section === "Profit history") return <DashboardProfitHistory />;
+  if (section === "Profit history") return <DashboardProfitHistory
+    profitHistory={accountData.profitHistory}
+    investmentProfit={accountData.investmentProfit}
+    error={accountError}
+  />;
   if (section === "Profile") return <DashboardProfile />;
 
   const [title, metric, description] = sectionContent[section] || [section, "Dashboard section", "Manage this area of your RiverTrade account."];
@@ -237,6 +241,12 @@ function AssetBalanceList({ balances }) {
   ));
 }
 
+function formatProfitValue(balances) {
+  if (!balances.length) return formatUsd(0);
+  if (balances.length === 1 && balances[0].currency === "USD") return formatUsd(balances[0].amount);
+  return <AssetBalanceList balances={balances} />;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { language, setLanguage, t } = useLanguage();
@@ -248,7 +258,15 @@ export default function DashboardPage() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState("");
   const [greeting, setGreeting] = useState("");
-  const [accountData, setAccountData] = useState({ data: [], availableBalances: [] });
+  const [accountData, setAccountData] = useState({
+    data: [],
+    availableBalances: [],
+    investmentProfit: [],
+    profitHistory: [],
+    investments: [],
+    lockedBalanceUsd: 0,
+    nextPayout: null,
+  });
   const [accountError, setAccountError] = useState("");
   const [theme, setTheme] = useState(() => {
     if (typeof window === "undefined") return "light";
@@ -256,10 +274,8 @@ export default function DashboardPage() {
     return savedTheme === "dark" || savedTheme === "light" ? savedTheme : "light";
   });
   const updateAccountData = useCallback((data) => {
-    setAccountData({
-      data: data.data || [],
-      availableBalances: data.availableBalances || [],
-    });
+    setAccountData(current => ({ ...current, ...data }));
+    setAccountError("");
   }, []);
 
   useEffect(() => {
@@ -294,6 +310,11 @@ export default function DashboardPage() {
           setAccountData({
             data: body.data || [],
             availableBalances: body.availableBalances || [],
+            investmentProfit: body.investmentProfit || [],
+            profitHistory: body.profitHistory || [],
+            investments: body.investments || [],
+            lockedBalanceUsd: Number(body.lockedBalanceUsd) || 0,
+            nextPayout: body.nextPayout || null,
           });
           setAccountError("");
         }
@@ -302,8 +323,15 @@ export default function DashboardPage() {
       }
     }
 
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") loadAccountData();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     loadAccountData();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, [authenticated]);
 
   useEffect(() => {
@@ -420,6 +448,8 @@ export default function DashboardPage() {
             section={activeSection}
             onAccountDataUpdate={updateAccountData}
             onReturnToDashboard={() => setActiveSection("Overview")}
+            accountData={accountData}
+            accountError={accountError}
           />}
           {activeSection === "Overview" && <>
           <section className="balance-banner">
@@ -445,9 +475,23 @@ export default function DashboardPage() {
                   value={visible ? accountError ? "Unavailable" : <AssetBalanceList balances={accountData.availableBalances} /> : "••••••"}
                   detail={accountError || "Available funds are shown separately by currency"}
                 />
-                <StatCard label="Investment profit" value={visible ? "$0.00" : "••••••"} detail="No profit recorded yet" />
-                <StatCard label="Locked balance" value={visible ? "$0.00" : "••••••"} detail="No active positions" />
-                <StatCard label="Next payout" value="-" detail="No payout scheduled" />
+                <StatCard
+                  label="Investment profit"
+                  value={visible ? accountError ? "Unavailable" : formatProfitValue(accountData.investmentProfit) : "••••••"}
+                  detail={accountError || (accountData.investmentProfit.length ? "Total settled investment profit" : "No profit recorded yet")}
+                />
+                <StatCard
+                  label="Locked balance"
+                  value={visible ? accountError ? "Unavailable" : formatUsd(accountData.lockedBalanceUsd) : "••••••"}
+                  detail={accountError || (accountData.investments.some(investment => investment.status === "pending" || investment.status === "active")
+                    ? "Reserved in pending or active positions"
+                    : "No active positions")}
+                />
+                <StatCard
+                  label="Next payout"
+                  value={accountError ? "Unavailable" : accountData.nextPayout ? new Date(accountData.nextPayout).toLocaleDateString() : "-"}
+                  detail={accountError || (accountData.nextPayout ? "Expected maturity of your next active position" : "No payout scheduled")}
+                />
               </div>
 
               <div className="allocation">
