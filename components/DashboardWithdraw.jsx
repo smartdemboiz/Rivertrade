@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import WithdrawalReceipt from "@/components/WithdrawalReceipt";
-import { useAuthSession } from "@/hooks/useAuthSession";
+import { getAuthToken, useAuthSession } from "@/hooks/useAuthSession";
 
 const currencies = [
   "Bitcoin (BTC)",
@@ -89,9 +89,10 @@ export default function DashboardWithdraw() {
       if (checking) return;
       checking = true;
       try {
-        const token = localStorage.getItem("authToken");
+        const token = await getAuthToken();
+        if (!token) throw new Error("Sign in before checking withdrawal status.");
         const response = await fetch("/api/account/transactions", {
-          headers: { Authorization: `Bearer ${token || ""}` },
+          headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
         const body = await response.json();
@@ -173,12 +174,13 @@ export default function DashboardWithdraw() {
             : { accountDetails: payoutDetails };
 
     try {
-      const token = localStorage.getItem("authToken");
+      const token = await getAuthToken();
+      if (!token) throw new Error("Sign in before submitting a withdrawal request.");
       const response = await fetch("/api/withdrawals", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token || ""}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           amount,

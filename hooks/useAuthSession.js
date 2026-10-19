@@ -85,6 +85,18 @@ async function refreshAuthSession() {
   return refreshRequest;
 }
 
+export async function getAuthToken() {
+  const token = localStorage.getItem('authToken');
+  const expiresAt = Number(localStorage.getItem('authTokenExpiresAt') || 0);
+  const needsRefresh = !token || (expiresAt && expiresAt <= Math.floor(Date.now() / 1000) + 60);
+
+  if (needsRefresh && localStorage.getItem('refreshToken')) {
+    await refreshAuthSession();
+  }
+
+  return localStorage.getItem('authToken');
+}
+
 export function useAuthSession() {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const ready = useSyncExternalStore(
@@ -98,16 +110,17 @@ export function useAuthSession() {
   }, []);
 
   useEffect(() => {
-    if (!ready || !snapshot.slice(0, snapshot.indexOf('\0'))) return undefined;
+    if (!ready) return undefined;
 
-    const refreshIfNeeded = () => {
+    const refreshIfNeeded = async () => {
       const expiresAt = Number(localStorage.getItem('authTokenExpiresAt') || 0);
-      if (expiresAt && expiresAt <= Math.floor(Date.now() / 1000) + 60) {
-        void refreshAuthSession();
+      if (!localStorage.getItem('authToken')
+        || (expiresAt && expiresAt <= Math.floor(Date.now() / 1000) + 60)) {
+        await refreshAuthSession();
       }
     };
 
-    refreshIfNeeded();
+    void refreshIfNeeded();
     const timer = window.setInterval(refreshIfNeeded, 30_000);
     return () => window.clearInterval(timer);
   }, [ready, snapshot]);

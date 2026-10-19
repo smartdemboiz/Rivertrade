@@ -39,7 +39,7 @@ import DashboardProfitHistory from "@/components/DashboardProfitHistory";
 import DashboardProfile from "@/components/DashboardProfile";
 import DashboardKyc from "@/components/DashboardKyc";
 import DashboardActivePositions from "@/components/DashboardActivePositions";
-import { clearAuthSession, useAuthSession } from "@/hooks/useAuthSession";
+import { clearAuthSession, getAuthToken, useAuthSession } from "@/hooks/useAuthSession";
 
 const nav = [
   [LayoutDashboard, "Overview"],
@@ -282,9 +282,10 @@ export default function DashboardPage() {
     let cancelled = false;
     async function loadAccountData() {
       try {
-        const token = localStorage.getItem("authToken");
+        const token = await getAuthToken();
+        if (!token) return;
         const response = await fetch("/api/account/transactions", {
-          headers: { Authorization: `Bearer ${token || ""}` },
+          headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
         const body = await response.json();
