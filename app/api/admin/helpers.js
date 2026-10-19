@@ -414,12 +414,48 @@ function toDatabasePayload(section, payload) {
 }
 
 function toAdminRecord(section, record) {
-  if (section !== "customers") return record;
-  return {
-    ...record,
-    firstName: record.first_name || "",
-    lastName: record.last_name || "",
-  };
+  if (section === "customers") {
+    return {
+      ...record,
+      firstName: record.first_name || "",
+      lastName: record.last_name || "",
+    };
+  }
+  if (section === "profiles") {
+    const fullName = [record.first_name, record.last_name].filter(Boolean).join(" ");
+    return {
+      ...record,
+      user: fullName || record.email || record.id || "-",
+      fullName,
+    };
+  }
+  return record;
+}
+
+async function toAdminUserRecords(records, supabase) {
+  const userIds = [...new Set(records.map((record) => record.user_id).filter(Boolean))];
+  const profilesById = new Map();
+
+  if (userIds.length) {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, email, first_name, last_name")
+      .in("id", userIds);
+    if (error) throw new Error(error.message || "Unable to load customer details.");
+    for (const profile of profiles || []) profilesById.set(profile.id, profile);
+  }
+
+  return records.map((record) => {
+    const profile = profilesById.get(record.user_id);
+    const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ");
+    const userName = fullName || profile?.email || record.user_id || "-";
+    return {
+      ...record,
+      user: userName,
+      userName,
+      ...(record.referrals_count !== undefined ? { referrals: record.referrals_count } : {}),
+    };
+  });
 }
 
 async function toAdminKycRecords(records, supabase) {
@@ -574,10 +610,14 @@ export async function fetchSupabaseRecords(section) {
       if (section === "customers") {
         return filtered.filter((record) => record.role !== "deleted").map((record) => toAdminRecord(section, record));
       }
+      if (section === "profiles") return filtered.map((record) => toAdminRecord(section, record));
       if (section === "kyc") return toAdminKycRecords(filtered, supabase);
       if (section === "deposits") return toAdminDepositRecords(filtered, supabase);
       if (section === "withdrawals") return toAdminWithdrawalRecords(filtered, supabase);
       if (section === "investments") return toAdminInvestmentRecords(filtered, supabase);
+      if (["transactions", "userFunds", "swaps", "managedAccounts", "profitHistory", "referrals"].includes(section)) {
+        return toAdminUserRecords(filtered, supabase);
+      }
       return filtered;
     } catch {
       continue;
@@ -721,11 +761,7 @@ export async function getAdminTransactions() {
   const supabase = getSupabaseClient({ useServiceRole: true });
   if (!supabase) return [];
 
-  try {
-    const { data, error } = await supabase.from("transactions").select("*");
-    if (error) throw error;
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
+  const { data, error } = await supabase.from("transactions").select("*");
+  if (error) throw new Error(error.message || "Unable to load transactions.");
+  return toAdminUserRecords(Array.isArray(data) ? data : [], supabase);
 }
