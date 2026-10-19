@@ -458,7 +458,7 @@ export default function DashboardPage() {
               <strong className="balance-banner-amounts">
                 {visible ? accountError ? "Unavailable" : <AssetBalanceList balances={accountData.availableBalances} /> : "••••••••"}
               </strong>
-              <small>{accountError || "Each balance is held and displayed in its recorded currency; no conversion is applied."}</small>
+              {accountError && <small>{accountError}</small>}
             </div>
             <button className="icon-button light" onClick={() => setVisible(!visible)} aria-label="Toggle balance visibility">
               {visible ? <Eye /> : <EyeOff />}
@@ -473,24 +473,24 @@ export default function DashboardPage() {
                 <StatCard
                   label="Available balance"
                   value={visible ? accountError ? "Unavailable" : <AssetBalanceList balances={accountData.availableBalances} /> : "••••••"}
-                  detail={accountError || "Available funds are shown separately by currency"}
+                  detail={accountError}
                 />
                 <StatCard
                   label="Investment profit"
                   value={visible ? accountError ? "Unavailable" : formatProfitValue(accountData.investmentProfit) : "••••••"}
-                  detail={accountError || (accountData.investmentProfit.length ? "Total settled investment profit" : "No profit recorded yet")}
+                  detail={accountError || (accountData.investmentProfit.length ? "" : "No profit recorded yet")}
                 />
                 <StatCard
                   label="Locked balance"
                   value={visible ? accountError ? "Unavailable" : formatUsd(accountData.lockedBalanceUsd) : "••••••"}
                   detail={accountError || (accountData.investments.some(investment => investment.status === "pending" || investment.status === "active")
-                    ? "Reserved in pending or active positions"
+                    ? ""
                     : "No active positions")}
                 />
                 <StatCard
                   label="Next payout"
                   value={accountError ? "Unavailable" : accountData.nextPayout ? new Date(accountData.nextPayout).toLocaleDateString() : "-"}
-                  detail={accountError || (accountData.nextPayout ? "Expected maturity of your next active position" : "No payout scheduled")}
+                  detail={accountError || (accountData.nextPayout ? "" : "No payout scheduled")}
                 />
               </div>
 
