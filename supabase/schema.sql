@@ -50,11 +50,12 @@ create table if not exists public.user_funds (
   user_id uuid references public.profiles(id) on delete cascade,
   balance numeric default 0,
   currency text,
-  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'bonus', 'investment', 'investment_refund')),
+  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'bonus', 'investment', 'investment_refund', 'managed_account')),
   status text default 'available' check (status in ('available', 'processing', 'pending', 'failed')),
   deposit_id uuid,
   withdrawal_id uuid,
   investment_id uuid references public.investments(id) on delete restrict,
+  managed_account_id uuid,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
@@ -86,7 +87,7 @@ create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles(id) on delete set null,
   amount numeric default 0,
-  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'investment', 'investment_refund', 'bonus')),
+  type text default 'deposit' check (type in ('deposit', 'withdrawal', 'investment', 'investment_refund', 'bonus', 'managed_account')),
   status text default 'completed' check (status in ('pending', 'completed', 'failed')),
   currency text,
   deposit_id uuid,
@@ -108,6 +109,8 @@ create table if not exists public.deposits (
   credit_amount_usd numeric check (credit_amount_usd is null or credit_amount_usd > 0),
   credited_amount numeric check (credited_amount is null or credited_amount > 0),
   credited_currency text,
+  purpose text not null default 'standard',
+  managed_account_id uuid,
   exchange_rate numeric check (exchange_rate is null or exchange_rate > 0),
   exchange_rate_quoted_at timestamptz,
   status text default 'pending' check (status in ('pending', 'confirmed', 'rejected')),
@@ -286,9 +289,41 @@ create table if not exists public.managed_accounts (
   strategy text,
   allocation text,
   status text default 'active' check (status in ('active', 'review', 'paused')),
+  risk_profile text not null default 'Balanced' check (risk_profile in ('Conservative', 'Balanced', 'Aggressive')),
+  account_value numeric not null default 0 check (account_value >= 0),
+  account_currency text,
+  total_return numeric,
+  monthly_return numeric,
+  management_fee numeric,
+  next_review_at date,
+  review_requested_at timestamptz,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conrelid = 'public.deposits'::regclass and conname = 'deposits_purpose_check') then
+    alter table public.deposits add constraint deposits_purpose_check
+      check (purpose in ('standard', 'managed_account'));
+  end if;
+  if not exists (select 1 from pg_constraint where conrelid = 'public.deposits'::regclass and conname = 'deposits_managed_account_reference_check') then
+    alter table public.deposits add constraint deposits_managed_account_reference_check
+      check (
+        (purpose = 'standard' and managed_account_id is null)
+        or (purpose = 'managed_account' and managed_account_id is not null)
+      );
+  end if;
+  if not exists (select 1 from pg_constraint where conrelid = 'public.deposits'::regclass and conname = 'deposits_managed_account_id_fkey') then
+    alter table public.deposits add constraint deposits_managed_account_id_fkey
+      foreign key (managed_account_id) references public.managed_accounts(id) on delete restrict;
+  end if;
+  if not exists (select 1 from pg_constraint where conrelid = 'public.user_funds'::regclass and conname = 'user_funds_managed_account_id_fkey') then
+    alter table public.user_funds add constraint user_funds_managed_account_id_fkey
+      foreign key (managed_account_id) references public.managed_accounts(id) on delete restrict;
+  end if;
+end;
+$$;
 
 -- 12) Profit history
 create table if not exists public.profit_history (

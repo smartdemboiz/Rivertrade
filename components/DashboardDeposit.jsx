@@ -20,7 +20,7 @@ function getSeenDepositIds(userId) {
   }
 }
 
-export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashboard }) {
+export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashboard, purpose = "standard" }) {
   const { authenticated, ready, user } = useAuthSession();
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
@@ -32,6 +32,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
   const [paypalDetailsCopied, setPaypalDetailsCopied] = useState(false);
   const [bankDetailsCopied, setBankDetailsCopied] = useState(false);
   const [error, setError] = useState("");
+  const [submittedRequest, setSubmittedRequest] = useState(false);
   const [depositReceipt, setDepositReceipt] = useState(null);
   const [approvalError, setApprovalError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -163,6 +164,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
     }
     setSubmitting(true);
     setError("");
+    setSubmittedRequest(false);
     try {
       const token = localStorage.getItem("authToken");
       const response = await fetch("/api/deposits", {
@@ -177,6 +179,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
           asset: paymentMethod === "Cryptocurrency" ? cryptocurrency : "",
           network: paymentMethod === "Cryptocurrency" ? network : "",
           reference: paymentMethod === "PayPal" ? paypalReference : "",
+          purpose,
         }),
       });
       const body = await response.json();
@@ -189,6 +192,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
       setPaymentWindowExpiresAt(0);
       sessionStorage.removeItem(CRYPTO_PAYMENT_WINDOW_KEY);
       setPaypalReference("");
+      setSubmittedRequest(true);
     } catch (submitError) {
       setError(submitError.message || "Unable to submit your deposit request.");
     } finally {
@@ -219,7 +223,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
   if (!settingsLoaded || paymentSettings.length === 0) {
     return (
       <section className="dashboard-deposit" aria-labelledby="deposit-title">
-        <h2 id="deposit-title">Deposit Funds</h2>
+        <h2 id="deposit-title">{purpose === "managed_account" ? "Add Funds to Managed Account" : "Deposit Funds"}</h2>
         <p role={settingsError ? "alert" : "status"}>{settingsError || (settingsLoaded ? "No deposit methods are currently available." : "Loading available deposit methods…")}</p>
       </section>
     );
@@ -227,7 +231,13 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
 
   return (
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
-      <h2 id="deposit-title">Deposit Funds</h2>
+      <h2 id="deposit-title">{purpose === "managed_account" ? "Add Funds to Managed Account" : "Deposit Funds"}</h2>
+      {purpose === "managed_account" && <p>After you send the payment, the investment team must verify and approve it before it is added to your managed account.</p>}
+      {submittedRequest && <p className="managed-account-success" role="status">
+        {purpose === "managed_account"
+          ? "Your managed-account funding request was submitted. It will be added to the account after admin confirmation."
+          : "Your deposit request was submitted."}
+      </p>}
       <form className="dashboard-deposit-form" onSubmit={submitDeposit} aria-busy={submitting}>
         {approvalError && <p className="dashboard-deposit-error" role="status">{approvalError}</p>}
         <label htmlFor="deposit-amount">Amount {paymentMethod === "Cryptocurrency" ? cryptocurrency && `(${cryptocurrency})` : "(USD)"}</label>

@@ -51,6 +51,10 @@ export async function POST(request) {
   const asset = typeof body.asset === "string" ? body.asset.trim() : "";
   const network = typeof body.network === "string" ? body.network.trim() : "";
   const reference = typeof body.reference === "string" ? body.reference.trim() : "";
+  const purpose = body.purpose === undefined ? "standard" : body.purpose;
+  if (!["standard", "managed_account"].includes(purpose)) {
+    return Response.json({ error: "Choose a valid deposit purpose." }, { status: 400 });
+  }
 
   if (!/^\d+(?:\.\d+)?$/.test(amount) || !Number.isFinite(Number(amount)) || Number(amount) <= 0 || amount.length > 32) {
     return Response.json({ error: "Enter a valid amount greater than zero." }, { status: 400 });
@@ -74,7 +78,23 @@ export async function POST(request) {
     return Response.json({ error: "The payment reference is too long." }, { status: 400 });
   }
 
+  let managedAccountId = null;
   try {
+    if (purpose === "managed_account") {
+      const { data: managedAccount, error: managedAccountError } = await serviceClient
+        .from("managed_accounts")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (managedAccountError) throw new Error(managedAccountError.message || "Unable to verify your managed account.");
+      if (!managedAccount || managedAccount.status !== "active") {
+        return Response.json({ error: "An active managed account is required before requesting managed-account funding." }, { status: 409 });
+      }
+      managedAccountId = managedAccount.id;
+    }
+
     const { data: paymentMethods, error: methodsError } = await serviceClient
       .from("payment_methods")
       .select("method, asset, network")
@@ -119,9 +139,11 @@ export async function POST(request) {
         method,
         network: method === "Cryptocurrency" ? network : null,
         reference: reference || null,
+        purpose,
+        managed_account_id: managedAccountId,
         status: "pending",
       })
-      .select("id, amount, currency, method, network, status, created_at")
+      .select("id, amount, currency, method, network, purpose, status, created_at")
       .single();
 
     if (insertError) throw new Error(insertError.message || "Unable to save your deposit request.");

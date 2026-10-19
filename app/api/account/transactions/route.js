@@ -36,7 +36,7 @@ export async function GET(request) {
     const [depositsResult, withdrawalsResult, transactionsResult, fundsResult, profitsResult, investmentsResult] = await Promise.all([
       serviceClient
         .from("deposits")
-        .select("id, amount, currency, method, network, reference, status, credited_amount, credited_currency, exchange_rate, exchange_rate_quoted_at, created_at")
+        .select("id, amount, currency, method, network, reference, purpose, status, credited_amount, credited_currency, exchange_rate, exchange_rate_quoted_at, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(100),
@@ -151,6 +151,7 @@ export async function GET(request) {
         method: deposit.method || "Deposit",
         network: deposit.network || null,
         reference: deposit.reference || null,
+        purpose: deposit.purpose || "standard",
         type: "deposit",
         status: deposit.status,
         creditedAmount: deposit.credited_amount ?? fund?.balance ?? null,

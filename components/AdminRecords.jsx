@@ -16,10 +16,10 @@ const definitions = {
   schemas: { title: "Investment schemas", description: "Configure investment ranges and expected returns.", columns: ["name", "minAmount", "maxAmount", "returnRate", "duration"], labels: ["Name", "Minimum", "Maximum", "Return %", "Duration"] },
   crowdSchemas: { title: "Crowd schemas", description: "Configure collective investment opportunities.", columns: ["name", "participants", "targetAmount", "status"], labels: ["Name", "Participants", "Target amount", "Status"] },
   notifications: { title: "Notifications", description: "Review messages sent to customers.", columns: ["recipient", "subject", "status"], labels: ["Recipient", "Subject", "Status"] },
-  deposits: { title: "Deposit operations", description: "Verify payment receipt, then confirm to convert the deposit into the customer's account currency using a live rate.", columns: ["user", "amount", "currency", "status", "method", "network", "reference", "creditedAmount", "creditedCurrency", "exchange_rate"], labels: ["User", "Amount", "Deposit currency", "Status", "Method", "Network", "Payment reference", "Credited amount", "Credit currency", "Exchange rate"] },
+  deposits: { title: "Deposit operations", description: "Verify payment receipt, then confirm to credit a standard deposit or managed-account funding request.", columns: ["user", "amount", "currency", "status", "purpose", "method", "network", "reference", "creditedAmount", "creditedCurrency", "exchange_rate"], labels: ["User", "Amount", "Deposit currency", "Status", "Purpose", "Method", "Network", "Payment reference", "Credited amount", "Credit currency", "Exchange rate"] },
   withdrawals: { title: "Withdrawal operations", description: "Review payout details. Send the payout outside RiverTrade before marking it as sent.", columns: ["user", "amount", "currency", "status", "method", "asset", "network", "destination_details"], labels: ["User", "Amount", "Currency", "Status", "Method", "Payout asset", "Network", "Payout details"] },
   swaps: { title: "Swap activity", description: "Track crypto swaps and settlement status for user orders.", columns: ["user", "fromAsset", "toAsset", "amount", "status"], labels: ["User", "From", "To", "Amount", "Status"] },
-  managedAccounts: { title: "Managed accounts", description: "Manage assigned strategies, allocations, and active portfolio oversight.", columns: ["user", "strategy", "allocation", "status"], labels: ["User", "Strategy", "Allocation", "Status"] },
+  managedAccounts: { title: "Managed accounts", description: "Manage account setup, assigned strategy, risk profile, reported returns, and portfolio reviews.", columns: ["user", "strategy", "allocation", "risk_profile", "account_value", "account_currency", "total_return", "monthly_return", "management_fee", "next_review_at", "review_requested_at", "status"], labels: ["User", "Strategy", "Allocation", "Risk profile", "Account value", "Currency", "Total return", "Monthly return %", "Management fee %", "Next review", "Review requested", "Status"] },
   investmentPlans: { title: "Investment plans", description: "Control plan ranges, ROI, and active strategies for all clients.", columns: ["name", "minimum", "maximum", "roi", "duration", "status"], labels: ["Plan", "Min", "Max", "ROI", "Duration", "Status"] },
   profitHistory: { title: "Profit history", description: "Credit investment profit directly to a customer's available balance and keep an auditable transaction record.", columns: ["user", "period", "profit", "currency", "status"], labels: ["User", "Period", "Profit", "Currency", "Status"] },
   profiles: { title: "Profile management", description: "Review personal details, verification status, and user account information.", columns: ["user", "fullName", "email", "phone", "country", "verified"], labels: ["User", "Full name", "Email", "Phone", "Country", "Verified"] },
@@ -218,7 +218,17 @@ export default function AdminRecords({ section }) {
   async function save(event) {
     event.preventDefault();
     const isNew = editing === "new";
-    const payload = section === "withdrawalSettings"
+    const managedAccountFields = section === "managedAccounts"
+      ? Object.fromEntries(Object.entries(form).filter(([key]) => !["user", "userName"].includes(key)))
+      : form;
+    const payload = section === "managedAccounts"
+      ? Object.fromEntries(Object.entries(managedAccountFields).map(([key, value]) => [
+          key,
+          value === "" && ["total_return", "monthly_return", "management_fee", "next_review_at"].includes(key)
+            ? null
+            : value,
+        ]))
+      : section === "withdrawalSettings"
       ? {
           ...form,
           label: form.method,
@@ -272,7 +282,7 @@ export default function AdminRecords({ section }) {
 
   return (
     <>
-      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section === "profitHistory" ? <button className="button" onClick={openProfitForm}><Plus size={16} /> Credit investment profit</button> : section !== "customers" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
+      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section === "profitHistory" ? <button className="button" onClick={openProfitForm}><Plus size={16} /> Credit investment profit</button> : section !== "customers" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "managedAccounts" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
       {error && <p className="form-message">{error}</p>}
       {notice && <p className="form-message success" role="status">{notice}</p>}
       {editing && (section === "withdrawalSettings" ? (
@@ -299,7 +309,15 @@ export default function AdminRecords({ section }) {
                 ? <textarea required={column === "value"} rows="4" value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />
                 : section === "paymentSettings" && column === "destination"
                   ? <select value={form[column] || "deposit"} onChange={event => setForm({ ...form, [column]: event.target.value })}><option value="deposit">Deposit only</option><option value="withdrawal">Withdrawal only</option></select>
-                  : column === "enabled"
+                  : section === "managedAccounts" && ["account_value", "total_return", "monthly_return", "management_fee"].includes(column)
+                    ? <input type="number" step="any" required={column === "account_value"} value={form[column] ?? ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />
+                    : section === "managedAccounts" && column === "next_review_at"
+                      ? <input type="date" value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />
+                      : section === "managedAccounts" && column === "risk_profile"
+                        ? <select value={form[column] || "Balanced"} onChange={event => setForm({ ...form, [column]: event.target.value })}><option>Conservative</option><option>Balanced</option><option>Aggressive</option></select>
+                        : section === "managedAccounts" && ["user", "review_requested_at"].includes(column)
+                        ? <input readOnly value={form[column] || ""} />
+                        : column === "enabled"
                     ? <select value={form[column] !== undefined ? String(form[column]) : "true"} onChange={event => setForm({ ...form, [column]: event.target.value === "true" })}><option value="true">Enabled</option><option value="false">Disabled</option></select>
                     : <input required={column !== "description"} readOnly={section === "customers" && column === "email"} value={form[column] || ""} onChange={event => setForm({ ...form, [column]: event.target.value })} />}
             </label>

@@ -72,7 +72,7 @@ const sectionContent = {
   Support: ["Support", "How can we help?", "Contact the RiverTrade support team for assistance."],
 };
 
-function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard, accountData, accountError }) {
+function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard, onStartManagedFunding, depositPurpose, accountData, accountError }) {
   if (section === "KYC verification") return <DashboardKyc />;
   if (section === "Support") return <DashboardSupport />;
   if (section === "Investment plans") return <DashboardInvestmentPlans onAccountDataUpdate={onAccountDataUpdate} />;
@@ -82,6 +82,7 @@ function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard, a
       <DashboardDeposit
         onAccountDataUpdate={onAccountDataUpdate}
         onReturnToDashboard={onReturnToDashboard}
+        purpose={depositPurpose}
       />
     );
   }
@@ -89,7 +90,7 @@ function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard, a
   if (section === "Referrals") return <DashboardReferrals />;
   if (section === "Transactions") return <DashboardTransactions />;
   if (section === "My investments") return <DashboardActivePositions investments={accountData.investments} error={accountError} />;
-  if (section === "Managed account") return <DashboardManagedAccount />;
+  if (section === "Managed account") return <DashboardManagedAccount onStartFunding={onStartManagedFunding} />;
   if (section === "Profit history") return <DashboardProfitHistory
     profitHistory={accountData.profitHistory}
     investmentProfit={accountData.investmentProfit}
@@ -254,6 +255,7 @@ export default function DashboardPage() {
   const [visible, setVisible] = useState(true);
   const [sidebar, setSidebar] = useState(false);
   const [activeSection, setActiveSection] = useState("Overview");
+  const [depositPurpose, setDepositPurpose] = useState("standard");
   const [mobileMenuSection, setMobileMenuSection] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState("");
@@ -397,7 +399,7 @@ export default function DashboardPage() {
         </Link>
         <nav>
           {nav.map(([Icon, label]) => (
-            <button className={activeSection === label ? "active" : ""} onClick={() => { setActiveSection(label); setMobileMenuSection(label); setSidebar(false); }} key={label}>
+            <button className={activeSection === label ? "active" : ""} onClick={() => { if (label === "Deposit") setDepositPurpose("standard"); setActiveSection(label); setMobileMenuSection(label); setSidebar(false); }} key={label}>
               <Icon size={17} />{label}
             </button>
           ))}
@@ -447,7 +449,12 @@ export default function DashboardPage() {
           {activeSection !== "Overview" && <DashboardSection
             section={activeSection}
             onAccountDataUpdate={updateAccountData}
-            onReturnToDashboard={() => setActiveSection("Overview")}
+            onReturnToDashboard={() => setActiveSection(depositPurpose === "managed_account" ? "Managed account" : "Overview")}
+            onStartManagedFunding={() => {
+              setDepositPurpose("managed_account");
+              setActiveSection("Deposit");
+            }}
+            depositPurpose={depositPurpose}
             accountData={accountData}
             accountError={accountError}
           />}
@@ -527,7 +534,7 @@ export default function DashboardPage() {
 
       <nav className="mobile-dashboard-nav" aria-label="Mobile dashboard navigation">
         <button type="button" onClick={() => openMobileSection("Profit history")}><History size={18} /><span>History</span></button>
-        <button type="button" onClick={() => openMobileSection("Deposit")}><Wallet size={18} /><span>Deposit</span></button>
+        <button type="button" onClick={() => { setDepositPurpose("standard"); openMobileSection("Deposit"); }}><Wallet size={18} /><span>Deposit</span></button>
         <button type="button" className="mobile-dashboard-home" onClick={() => openMobileSection("Overview")} aria-label="Dashboard home"><Home size={20} /></button>
         <button type="button" onClick={() => openMobileSection("Withdraw")}><ArrowDownToLine size={18} /><span>Withdraw</span></button>
         <button type="button" onClick={toggleMobileMenu} aria-label={sidebar ? "Close dashboard menu" : "Open dashboard menu"}><Menu size={19} /><span>Menu</span></button>

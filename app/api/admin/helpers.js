@@ -295,7 +295,10 @@ export async function executeOperationalAction({ section, id, action, userId }) 
       rateQuotedAt = quote.quotedAt;
     }
 
-    const { data: confirmed, error: confirmError } = await supabase.rpc("confirm_deposit", {
+    const confirmFunction = current.purpose === "managed_account"
+      ? "confirm_managed_account_deposit"
+      : "confirm_deposit";
+    const { data: confirmed, error: confirmError } = await supabase.rpc(confirmFunction, {
       p_deposit_id: id,
       p_credited_amount: creditAmount,
       p_credited_currency: creditCurrency,
@@ -310,13 +313,14 @@ export async function executeOperationalAction({ section, id, action, userId }) 
       recordId: id,
       metadata: {
         previousStatus: current.status,
-        status: targetStatus,
+        status: confirmed.status,
         amount: current.amount,
         currency: current.currency,
         creditedAmount: creditAmount,
         creditedCurrency: creditCurrency,
         exchangeRate,
         rateQuotedAt,
+        purpose: current.purpose || "standard",
       },
     });
     return confirmed;
@@ -406,7 +410,10 @@ export async function executeOperationalAction({ section, id, action, userId }) 
     return settled;
   }
 
-  const { data: updated, error: updateError } = await supabase.from(table).update({ status: targetStatus }).eq("id", id).eq("status", current.status).select().single();
+  const updatePayload = section === "managedAccounts" && ["activate", "review"].includes(action)
+    ? { status: targetStatus, review_requested_at: null }
+    : { status: targetStatus };
+  const { data: updated, error: updateError } = await supabase.from(table).update(updatePayload).eq("id", id).eq("status", current.status).select().single();
   if (updateError) throw new Error(updateError.message || "Unable to apply operational action");
 
   if (section === "withdrawals" && action === "approve") await supabase.from("transactions").insert({ user_id: current.user_id, amount: current.amount, type: "withdrawal", status: "completed" });
