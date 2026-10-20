@@ -415,8 +415,8 @@ begin
   into profile_role
   from public.profiles
   where id = p_user_id;
-  if not found or profile_role <> 'customer' then
-    raise exception 'Customer profile not found' using errcode = 'P0002';
+  if not found or profile_role not in ('customer', 'admin') then
+    raise exception 'Customer or admin profile not found' using errcode = 'P0002';
   end if;
 
   select *
@@ -431,7 +431,7 @@ begin
   end if;
 
   for attempt in 1..5 loop
-    referral_code := 'RT' || upper(encode(gen_random_bytes(5), 'hex'));
+    referral_code := 'RT' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 10));
     begin
       if referral_row.id is null then
         insert into public.referrals (user_id, code, referrals_count, earnings, status)
@@ -439,7 +439,7 @@ begin
         returning * into referral_row;
       else
         update public.referrals
-        set code = referral_code, updated_at = now()
+        set code = referral_code
         where id = referral_row.id
         returning * into referral_row;
       end if;

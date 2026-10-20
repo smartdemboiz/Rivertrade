@@ -137,6 +137,15 @@ export default function DashboardSwapCrypto() {
   const formattedMinimumToAmount = quote?.estimate?.toAmountMin
     ? fromTokenUnits(quote.estimate.toAmountMin, toToken.decimals)
     : "";
+  const swapDisabledReason = !walletAddress
+    ? "Connect an EVM wallet to get a live LI.FI quote and enable swapping."
+    : !pairValid
+      ? "Choose two different supported assets."
+      : quoteLoading
+        ? "Waiting for a live LI.FI route quote…"
+        : !quote
+          ? quoteError || "Enter an amount to request a live LI.FI route quote."
+          : "";
 
   const refreshWalletBalance = useCallback(async () => {
     if (!walletAddress || !fromToken || !window.ethereum) {
@@ -434,7 +443,7 @@ export default function DashboardSwapCrypto() {
   return (
     <section className="dashboard-swap" aria-labelledby="swap-title">
       <h2 id="swap-title">Wallet Swap</h2>
-      <p>Trade from your connected EVM wallet. Supported networks: Ethereum, Base, and Arbitrum. RiverTrade does not custody these wallet funds.</p>
+      <p>Powered by LI.FI live routing and quotes. Connect an EVM wallet to trade on Ethereum, Base, or Arbitrum. RiverTrade does not custody these wallet funds.</p>
       <div className="dashboard-swap-balances">
         <div className="dashboard-swap-available">
           <span>Connected wallet</span>
@@ -498,6 +507,7 @@ export default function DashboardSwapCrypto() {
         <button className="dashboard-swap-submit" type="submit" disabled={!walletAddress || !pairValid || !quote || quoteLoading || executing}>
           {executing ? "Processing wallet transaction…" : "Review and Execute Swap"}
         </button>
+        {!executing && swapDisabledReason && <p role="status">{swapDisabledReason}</p>}
       </form>
 
       <div className="dashboard-recent-swaps">

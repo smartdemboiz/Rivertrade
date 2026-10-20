@@ -25,6 +25,17 @@ export async function GET(request) {
   }
 
   try {
+    const { data: profile, error: profileError } = await serviceClient
+      .from("profiles")
+      .select("role")
+      .eq("id", authData.user.id)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message || "Unable to verify the customer profile.");
+    if (!profile) return Response.json({ error: "Customer profile not found." }, { status: 404 });
+    if (!["customer", "admin"].includes(profile.role)) {
+      return Response.json({ error: "Referral links are available to customer and admin accounts." }, { status: 403 });
+    }
+
     const { data: referralData, error: referralError } = await serviceClient.rpc(
       "ensure_customer_referral",
       { p_user_id: authData.user.id },
