@@ -30,6 +30,8 @@ export async function POST(request, { params }) {
       || error.message?.includes("Investment cannot be moved")
       || error.message?.includes("Investment review action")
       || error.message?.includes("Profit record")
+      || error.message?.includes("Referral commission")
+      || error.message?.includes("administrator profile")
       || error.message?.includes("profit can only be credited")
       || error.message?.includes("managed account");
     return Response.json({ error: error.message || "Unable to apply action" }, { status: clientError ? 400 : 500 });

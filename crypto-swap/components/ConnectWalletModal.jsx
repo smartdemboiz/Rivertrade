@@ -37,7 +37,13 @@ import BraveWalletModal from './BraveWalletModal';
 import AmbireWalletModal from './AmbireWalletModal';
 import XDEFIWalletModal from './XDEFIWalletModal';
 
-export default function ConnectWalletModal({ onClose, onConnect }) {
+export default function ConnectWalletModal({
+  onClose,
+  onConnect,
+  providerOnly = false,
+  retainProvider = false,
+  additionalRpc,
+}) {
   const [showAll, setShowAll] = useState(false);
   const [search, setSearch] = useState('');
   const [showMetaMaskWallet, setShowMetaMaskWallet] = useState(false);
@@ -85,6 +91,8 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
     if (wallet.id === 'injected') {
       if (window.ethereum?.request) {
         connectBrowserWallet();
+      } else if (providerOnly) {
+        setConnectionError('Install a browser wallet extension to connect securely.');
       } else {
         setShowMetaMaskWallet(true);
       }
@@ -112,7 +120,7 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
     try {
       const accounts = await provider.request({ method: 'eth_requestAccounts' });
       if (!accounts?.[0]) throw new Error('No account was returned.');
-      onConnect('MetaMask', accounts[0]);
+      onConnect('MetaMask', accounts[0], provider);
       onClose();
     } catch (error) {
       setConnectionError(error?.code === 4001
@@ -626,6 +634,8 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
         onClose={onClose}
         onConnect={onConnect}
         onBack={() => setWalletModalType(null)}
+        retainProvider={retainProvider}
+        additionalRpc={additionalRpc}
       />
     );
   }
@@ -640,7 +650,9 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
           </div>
           <div className="modal-body">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-              {walletConnectors.map((wallet) => (
+              {walletConnectors
+                .filter(wallet => !providerOnly || ['injected', 'walletConnect'].includes(wallet.id))
+                .map((wallet) => (
                 <button key={wallet.id} onClick={() => selectSupportedWallet(wallet)} className="wallet-connector-row">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <Image src={wallet.icon} alt="" width={42} height={42} className="wallet-icon-img" />
@@ -651,10 +663,12 @@ export default function ConnectWalletModal({ onClose, onConnect }) {
               ))}
               {connectionError && <p role="alert" className="wallet-connection-error">{connectionError}</p>}
             </div>
-            <button type="button" className="wallet-all-cta" onClick={() => setShowAll(true)}>
-              <span><Sparkles size={20} />All Wallets</span>
-              <span className="wallet-all-count">{allWalletsList.length}+</span>
-            </button>
+            {!providerOnly && (
+              <button type="button" className="wallet-all-cta" onClick={() => setShowAll(true)}>
+                <span><Sparkles size={20} />All Wallets</span>
+                <span className="wallet-all-count">{allWalletsList.length}+</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

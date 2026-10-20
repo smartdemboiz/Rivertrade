@@ -23,8 +23,8 @@ export async function POST(request, { params }) {
     if (section === "investments") {
       return Response.json({ error: "Investments must be submitted by customers using an active plan and available balance." }, { status: 400 });
     }
-    if (section === "profitHistory") {
-      return Response.json({ error: "Use the profit credit workflow to select a customer and credit their balance." }, { status: 400 });
+    if (["profitHistory", "referralCommissions"].includes(section)) {
+      return Response.json({ error: "Financial records can only be created through their audited workflows." }, { status: 400 });
     }
     if (section === "customers") {
       return Response.json({ error: "Customer accounts must be created through signup or an Auth invite." }, { status: 400 });

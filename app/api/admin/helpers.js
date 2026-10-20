@@ -107,6 +107,7 @@ export const tableMap = {
   swaps: ["swaps", "crypto_swaps"],
   managedAccounts: ["managed_accounts", "portfolio_managed_accounts"],
   investmentPlans: ["investment_plans", "plans"],
+  referralCommissions: ["referral_commissions"],
   profitHistory: ["profit_history", "user_profit_history"],
   profiles: ["profiles", "user_profiles"],
   referrals: ["referrals", "user_referrals"],
@@ -179,6 +180,7 @@ const workflowStatuses = {
   swaps: ["pending", "completed", "failed"],
   managedAccounts: ["active", "review", "paused"],
   support: ["open", "pending", "resolved", "closed"],
+  referralCommissions: ["pending", "approved", "rejected"],
 };
 
 export function validateAdminPayload(section, payload) {
@@ -234,6 +236,7 @@ const operationalActions = {
   investments: { activate: "active", complete: "completed", cancel: "cancelled" },
   profitHistory: { settle: "settled", reopen: "pending" },
   referrals: { activate: "active", deactivate: "inactive" },
+  referralCommissions: { approve: "approved", reject: "rejected" },
   support: { resolve: "resolved", close: "closed", reopen: "open" },
 };
 
@@ -254,6 +257,30 @@ export async function executeOperationalAction({ section, id, action, userId }) 
   const { data: current, error: readError } = await supabase.from(table).select("*").eq("id", id).maybeSingle();
   if (readError) throw new Error(readError.message || "Unable to load operational record");
   if (!current) throw new Error("Operational record not found");
+
+  if (section === "referralCommissions") {
+    const { data: reviewed, error: reviewError } = await supabase.rpc("review_referral_commission", {
+      p_commission_id: id,
+      p_action: action,
+      p_admin_id: userId,
+    });
+    if (reviewError) throw new Error(reviewError.message || "Unable to review this referral commission.");
+    await logAdminEvent({
+      userId,
+      action,
+      section,
+      recordId: id,
+      metadata: {
+        previousStatus: current.status,
+        status: reviewed.status,
+        amount: current.amount,
+        currency: current.currency,
+        referrerId: current.referrer_id,
+        referredUserId: current.referred_user_id,
+      },
+    });
+    return reviewed;
+  }
 
   const terminalStatuses = ["approved", "confirmed", "completed", "cancelled", "rejected", "failed", "settled", "closed"];
   if (!(section === "deposits" && action === "confirm" && current.status === "confirmed")
@@ -612,6 +639,71 @@ async function toAdminInvestmentRecords(records, supabase) {
   });
 }
 
+async function toAdminReferralCommissionRecords(records, supabase) {
+  const profileIds = [...new Set(records.flatMap(record => [record.referrer_id, record.referred_user_id]).filter(Boolean))];
+  const profilesById = new Map();
+
+  if (profileIds.length) {
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("id, email, first_name, last_name")
+      .in("id", profileIds);
+    if (error) throw new Error(error.message || "Unable to load referral commission customers.");
+    for (const profile of profiles || []) profilesById.set(profile.id, profile);
+  }
+
+  const nameFor = id => {
+    const profile = profilesById.get(id);
+    return [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || profile?.email || id || "-";
+  };
+  return records.map(record => ({
+    ...record,
+    user: nameFor(record.referrer_id),
+    referredUser: nameFor(record.referred_user_id),
+    depositId: record.deposit_id,
+  }));
+}
+
+async function toAdminReferralRecords(records, supabase) {
+  const mappedRecords = await toAdminUserRecords(records, supabase);
+  const referrerIds = [...new Set(records.map(record => record.user_id).filter(Boolean))];
+  if (!referrerIds.length) return mappedRecords;
+
+  const [{ data: referredProfiles, error: referredError }, { data: commissions, error: commissionsError }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("referred_by")
+      .in("referred_by", referrerIds),
+    supabase
+      .from("referral_commissions")
+      .select("referrer_id, amount, currency")
+      .in("referrer_id", referrerIds)
+      .eq("status", "approved"),
+  ]);
+  if (referredError) throw new Error(referredError.message || "Unable to load referral signup counts.");
+  if (commissionsError) throw new Error(commissionsError.message || "Unable to load approved referral earnings.");
+
+  const counts = new Map();
+  for (const profile of referredProfiles || []) {
+    counts.set(profile.referred_by, (counts.get(profile.referred_by) || 0) + 1);
+  }
+  const earnings = new Map();
+  for (const commission of commissions || []) {
+    const currency = String(commission.currency || "USD").toUpperCase();
+    const totals = earnings.get(commission.referrer_id) || new Map();
+    totals.set(currency, (totals.get(currency) || 0) + Number(commission.amount || 0));
+    earnings.set(commission.referrer_id, totals);
+  }
+
+  return mappedRecords.map(record => ({
+    ...record,
+    referrals: counts.get(record.user_id) || 0,
+    earnings: [...(earnings.get(record.user_id) || new Map())]
+      .map(([currency, amount]) => `${amount.toLocaleString(undefined, { maximumFractionDigits: 8 })} ${currency}`)
+      .join(", ") || "0",
+  }));
+}
+
 async function toAdminWithdrawalRecords(records, supabase) {
   const userIds = [...new Set(records.map((record) => record.user_id).filter(Boolean))];
   const profilesById = new Map();
@@ -665,6 +757,8 @@ export async function fetchSupabaseRecords(section) {
     if (section === "deposits") return toAdminDepositRecords(filtered, supabase);
     if (section === "withdrawals") return toAdminWithdrawalRecords(filtered, supabase);
     if (section === "investments") return toAdminInvestmentRecords(filtered, supabase);
+    if (section === "referralCommissions") return toAdminReferralCommissionRecords(filtered, supabase);
+    if (section === "referrals") return toAdminReferralRecords(filtered, supabase);
     if (["transactions", "userFunds", "swaps", "managedAccounts", "profitHistory", "referrals"].includes(section)) {
       return toAdminUserRecords(filtered, supabase);
     }
@@ -675,8 +769,8 @@ export async function fetchSupabaseRecords(section) {
 }
 
 export async function insertSupabaseRecord(section, payload) {
-  if (section === "profitHistory") {
-    throw new Error("Use the profit credit workflow to select a customer and credit their balance.");
+  if (["profitHistory", "referralCommissions"].includes(section)) {
+    throw new Error("Financial records can only be created through their audited workflows.");
   }
 
   const supabase = getSupabaseClient({ useServiceRole: true });
@@ -699,8 +793,8 @@ export async function insertSupabaseRecord(section, payload) {
 }
 
 export async function updateSupabaseRecord(section, id, payload) {
-  if (section === "profitHistory") {
-    throw new Error("Profit records are financial ledger entries and cannot be edited.");
+  if (["profitHistory", "referralCommissions"].includes(section)) {
+    throw new Error("Financial records cannot be edited.");
   }
 
   const supabase = getSupabaseClient({ useServiceRole: true });

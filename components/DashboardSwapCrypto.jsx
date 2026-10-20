@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeftRight } from "lucide-react";
 import { tokens } from "@/crypto-swap/lib/data";
+import ConnectWalletModal from "@/crypto-swap/components/ConnectWalletModal";
 import { getAuthToken } from "@/hooks/useAuthSession";
 
 const supportedChains = new Map([
@@ -13,6 +14,7 @@ const supportedChains = new Map([
 const supportedTokens = tokens.filter(token => supportedChains.has(Number(token.chainId)));
 const nativeTokenAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
 const supportedChainIds = new Set(supportedChains.keys());
+const walletConnectRpc = { 8453: "https://mainnet.base.org" };
 const explorerUrls = {
   1: "https://etherscan.io/tx/",
   8453: "https://basescan.org/tx/",
@@ -109,6 +111,9 @@ export default function DashboardSwapCrypto() {
   const [toTokenId, setToTokenId] = useState("usdc-base");
   const [amount, setAmount] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [walletName, setWalletName] = useState("");
+  const [walletProvider, setWalletProvider] = useState(null);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletChainId, setWalletChainId] = useState(null);
   const [walletBalance, setWalletBalance] = useState("");
   const [walletBalanceLoading, setWalletBalanceLoading] = useState(false);
@@ -137,35 +142,33 @@ export default function DashboardSwapCrypto() {
   const formattedMinimumToAmount = quote?.estimate?.toAmountMin
     ? fromTokenUnits(quote.estimate.toAmountMin, toToken.decimals)
     : "";
-  const swapDisabledReason = !walletAddress
-    ? "Connect an EVM wallet to get a live LI.FI quote and enable swapping."
-    : !pairValid
-      ? "Choose two different supported assets."
-      : quoteLoading
-        ? "Waiting for a live LI.FI route quote…"
-        : !quote
-          ? quoteError || "Enter an amount to request a live LI.FI route quote."
-          : "";
+  const swapDisabledReason = !pairValid
+    ? "Choose two different supported assets."
+    : quoteLoading
+      ? "Waiting for a live LI.FI route quote…"
+      : !quote
+        ? quoteError || "Enter an amount to request a live LI.FI route quote."
+        : "";
 
   const refreshWalletBalance = useCallback(async () => {
-    if (!walletAddress || !fromToken || !window.ethereum) {
+    if (!walletAddress || !fromToken || !walletProvider?.request) {
       setWalletBalance("");
       return;
     }
     setWalletBalanceLoading(true);
     try {
-      const chainId = Number.parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16);
+      const chainId = Number.parseInt(await walletProvider.request({ method: "eth_chainId" }), 16);
       setWalletChainId(chainId);
       if (chainId !== Number(fromToken.chainId)) {
         setWalletBalance("");
         return;
       }
       const balance = isNativeToken(fromToken)
-        ? await window.ethereum.request({
+        ? await walletProvider.request({
             method: "eth_getBalance",
             params: [walletAddress, "latest"],
           })
-        : await window.ethereum.request({
+        : await walletProvider.request({
             method: "eth_call",
             params: [{
               to: fromToken.address,
@@ -179,18 +182,29 @@ export default function DashboardSwapCrypto() {
     } finally {
       setWalletBalanceLoading(false);
     }
-  }, [fromToken, walletAddress]);
+  }, [fromToken, walletAddress, walletProvider]);
 
   const loadSwapHistory = useCallback(async () => {
     try {
       const token = await getAuthToken();
-      if (!token) throw new Error("Sign in to load your swap history.");
+      if (!token) {
+        setSwaps([]);
+        setHistoryError("");
+        return;
+      }
       const response = await fetch("/api/account/swaps", {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error || "Unable to load recent swaps.");
+      if (!response.ok) {
+        if (response.status === 401) {
+          setSwaps([]);
+          setHistoryError("");
+          return;
+        }
+        throw new Error(body.error || "Unable to load recent swaps.");
+      }
       setSwaps(body.data || []);
       setHistoryError("");
     } catch (error) {
@@ -234,16 +248,38 @@ export default function DashboardSwapCrypto() {
   }, [loadSwapHistory]);
 
   useEffect(() => {
-    if (!window.ethereum) return undefined;
+    const provider = window.ethereum;
+    if (!provider?.request) return undefined;
     let active = true;
-    window.ethereum.request({ method: "eth_accounts" }).then(accounts => {
+    provider.request({ method: "eth_accounts" }).then(accounts => {
+      if (active && accounts?.[0]) {
+        setWalletName("Browser wallet");
+        setWalletProvider(provider);
+        setWalletAddress(accounts[0]);
+      }
+    }).catch(() => {});
+    provider.request({ method: "eth_chainId" }).then(chainId => {
+      if (active) setWalletChainId(Number.parseInt(chainId, 16));
+    }).catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!walletProvider?.request) return undefined;
+    let active = true;
+    walletProvider.request({ method: "eth_accounts" }).then(accounts => {
       if (active && accounts?.[0]) setWalletAddress(accounts[0]);
     }).catch(() => {});
-    window.ethereum.request({ method: "eth_chainId" }).then(chainId => {
+    walletProvider.request({ method: "eth_chainId" }).then(chainId => {
       if (active) setWalletChainId(Number.parseInt(chainId, 16));
     }).catch(() => {});
     const handleAccounts = accounts => {
       setWalletAddress(accounts?.[0] || "");
+      if (!accounts?.[0]) {
+        setWalletProvider(null);
+        setWalletName("");
+        setWalletChainId(null);
+      }
       setQuote(null);
       setQuoteError("");
       setQuoteLoading(false);
@@ -252,37 +288,65 @@ export default function DashboardSwapCrypto() {
       setWalletChainId(Number.parseInt(chainId, 16));
       setQuote(null);
     };
-    window.ethereum.on?.("accountsChanged", handleAccounts);
-    window.ethereum.on?.("chainChanged", handleChain);
+    const handleDisconnect = () => {
+      setWalletAddress("");
+      setWalletName("");
+      setWalletProvider(null);
+      setWalletChainId(null);
+      setWalletBalance("");
+      setQuote(null);
+    };
+    walletProvider.on?.("accountsChanged", handleAccounts);
+    walletProvider.on?.("chainChanged", handleChain);
+    walletProvider.on?.("disconnect", handleDisconnect);
     return () => {
       active = false;
-      window.ethereum.removeListener?.("accountsChanged", handleAccounts);
-      window.ethereum.removeListener?.("chainChanged", handleChain);
+      walletProvider.removeListener?.("accountsChanged", handleAccounts);
+      walletProvider.removeListener?.("chainChanged", handleChain);
+      walletProvider.removeListener?.("disconnect", handleDisconnect);
     };
-  }, []);
+  }, [walletProvider]);
 
-  async function connectWallet() {
-    setSwapError("");
-    if (!window.ethereum?.request) {
-      setSwapError("Install an EVM browser wallet such as MetaMask to swap from your wallet.");
+  const handleWalletConnect = useCallback((name, address, provider) => {
+    if (typeof address !== "string" || !/^0x[a-f0-9]{40}$/i.test(address)
+      || !provider?.request) {
+      setSwapError("This wallet connection cannot sign EVM transactions. Choose a supported EVM wallet.");
       return;
     }
-    try {
-      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-      if (!accounts?.[0]) throw new Error("The wallet did not return an account.");
-      setWalletAddress(accounts[0]);
-      const chainId = Number.parseInt(await window.ethereum.request({ method: "eth_chainId" }), 16);
-      setWalletChainId(chainId);
-    } catch (error) {
-      setSwapError(error.message || "Unable to connect the wallet.");
+    setWalletName(name || "EVM wallet");
+    setWalletProvider(provider);
+    setWalletAddress(address);
+    setWalletModalOpen(false);
+    setSwapError("");
+    setQuote(null);
+    setQuoteError("");
+    setSwapStatus("");
+  }, []);
+
+  async function disconnectWallet() {
+    if (walletName === "WalletConnect") {
+      try {
+        await walletProvider?.disconnect?.();
+      } catch (error) {
+        setSwapError(error.message || "Unable to disconnect this wallet session.");
+        return;
+      }
     }
+    setWalletAddress("");
+    setWalletName("");
+    setWalletProvider(null);
+    setWalletChainId(null);
+    setWalletBalance("");
+    setQuote(null);
+    setSwapError("");
+    setSwapStatus("");
   }
 
   async function switchToSourceNetwork() {
-    if (!window.ethereum?.request || !fromToken) return;
+    if (!walletProvider?.request || !fromToken) return;
     setSwapError("");
     try {
-      await window.ethereum.request({
+      await walletProvider.request({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: `0x${Number(fromToken.chainId).toString(16)}` }],
       });
@@ -312,8 +376,8 @@ export default function DashboardSwapCrypto() {
     setSwapError("");
     setSwapStatus("");
     try {
-      const provider = window.ethereum;
-      if (!provider?.request) throw new Error("Connect an EVM browser wallet before swapping.");
+      const provider = walletProvider;
+      if (!provider?.request) throw new Error("Connect an EVM wallet before swapping.");
 
       let currentChainId = Number.parseInt(await provider.request({ method: "eth_chainId" }), 16);
       if (currentChainId !== Number(fromToken.chainId)) {
@@ -443,7 +507,6 @@ export default function DashboardSwapCrypto() {
   return (
     <section className="dashboard-swap" aria-labelledby="swap-title">
       <h2 id="swap-title">Wallet Swap</h2>
-      <p>Powered by LI.FI live routing and quotes. Connect an EVM wallet to trade on Ethereum, Base, or Arbitrum. RiverTrade does not custody these wallet funds.</p>
       <div className="dashboard-swap-balances">
         <div className="dashboard-swap-available">
           <span>Connected wallet</span>
@@ -458,7 +521,9 @@ export default function DashboardSwapCrypto() {
                 : `Switch wallet to ${supportedChains.get(Number(fromToken.chainId))} to view ${fromToken.sym} balance`}
           </span>
         )}
-        {!walletAddress && <button type="button" onClick={connectWallet}>Connect wallet</button>}
+        {walletAddress && <span>{walletName}</span>}
+        {!walletAddress && <button type="button" onClick={() => setWalletModalOpen(true)}>Connect wallet</button>}
+        {walletAddress && <button type="button" onClick={disconnectWallet}>Disconnect</button>}
       </div>
 
       <form onSubmit={submitSwap}>
@@ -507,7 +572,7 @@ export default function DashboardSwapCrypto() {
         <button className="dashboard-swap-submit" type="submit" disabled={!walletAddress || !pairValid || !quote || quoteLoading || executing}>
           {executing ? "Processing wallet transaction…" : "Review and Execute Swap"}
         </button>
-        {!executing && swapDisabledReason && <p role="status">{swapDisabledReason}</p>}
+        {walletAddress && !executing && swapDisabledReason && <p role="status">{swapDisabledReason}</p>}
       </form>
 
       <div className="dashboard-recent-swaps">
@@ -525,6 +590,15 @@ export default function DashboardSwapCrypto() {
           </ul>
         ) : !historyError && <p>No wallet swaps recorded yet.</p>}
       </div>
+      {walletModalOpen && (
+        <ConnectWalletModal
+          providerOnly
+          retainProvider
+          additionalRpc={walletConnectRpc}
+          onClose={() => setWalletModalOpen(false)}
+          onConnect={handleWalletConnect}
+        />
+      )}
     </section>
   );
 }

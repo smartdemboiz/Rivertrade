@@ -39,6 +39,9 @@ export default function DashboardReferrals() {
   const referralLink = referralData?.code
     ? `${typeof window === "undefined" ? "" : window.location.origin}/?ref=${encodeURIComponent(referralData.code)}`
     : "";
+  const formatCommissionTotals = totals => Object.entries(totals || {})
+    .map(([currency, amount]) => `${Number(amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} ${currency}`)
+    .join(", ") || "0";
 
   const copyLink = async () => {
     try {
@@ -59,8 +62,14 @@ export default function DashboardReferrals() {
       <div className="dashboard-referral-stats">
         <article><span>Total referrals</span><strong>{loading ? "…" : referralData?.total ?? "Unavailable"}</strong></article>
         <article><span>Active referrals</span><strong>{loading ? "…" : referralData?.active ?? "Unavailable"}</strong></article>
-        <article><span>Commission</span><strong>{referralData ? "Not enabled" : loading ? "…" : "Unavailable"}</strong></article>
+        <article><span>Commission rate</span><strong>{loading ? "…" : referralData?.commissionsEnabled ? `${referralData.commissionRate}%` : "Disabled"}</strong></article>
       </div>
+      {referralData?.commissionsEnabled && (
+        <div className="dashboard-referral-stats">
+          <article><span>Pending review</span><strong>{formatCommissionTotals(referralData.pendingCommissions)}</strong></article>
+          <article><span>Approved rewards</span><strong>{formatCommissionTotals(referralData.earnings)}</strong></article>
+        </div>
+      )}
       <div className="dashboard-referral-link-card">
         <h3>Your Referral Link</h3>
         <div className="dashboard-referral-link-row">
@@ -68,7 +77,11 @@ export default function DashboardReferrals() {
           <button type="button" onClick={copyLink} disabled={!referralLink}>{copied ? "Copied" : "Copy Link"}</button>
         </div>
         {copyError && <p role="alert">{copyError}</p>}
-        {referralData && <small>Referral signups are tracked. Commission rewards are not configured yet.</small>}
+        {referralData && <small>
+          {referralData.commissionsEnabled
+            ? `Earn ${referralData.commissionRate}% on a referred customer's first confirmed deposit. Commissions remain pending until an administrator approves them.`
+            : "Referral signups are tracked. Commission rewards are currently disabled."}
+        </small>}
       </div>
       <div className="dashboard-referral-list">
         <h3>Your Referrals</h3>

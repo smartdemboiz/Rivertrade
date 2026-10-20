@@ -56,14 +56,50 @@ export async function GET(request) {
       joinedAt: profile.created_at,
       status: profile.role === "customer" ? "active" : "inactive",
     }));
+    const [
+      { data: commissionSettings, error: settingsError },
+      { data: commissionRows, error: commissionsError },
+    ] = await Promise.all([
+      serviceClient
+        .from("referral_commission_settings")
+        .select("enabled, commission_rate, qualifying_activity, approval_required")
+        .eq("singleton", true)
+        .maybeSingle(),
+      serviceClient
+        .from("referral_commissions")
+        .select("id, referred_user_id, deposit_id, amount, currency, commission_rate, status, created_at, reviewed_at")
+        .eq("referrer_id", authData.user.id)
+        .order("created_at", { ascending: false }),
+    ]);
+    if (settingsError) throw new Error(settingsError.message || "Unable to load referral commission settings.");
+    if (commissionsError) throw new Error(commissionsError.message || "Unable to load referral commissions.");
+
+    const commissionTotals = (status) => (commissionRows || [])
+      .filter(commission => commission.status === status)
+      .reduce((totals, commission) => {
+        const currency = String(commission.currency || "USD").toUpperCase();
+        totals[currency] = (totals[currency] || 0) + Number(commission.amount || 0);
+        return totals;
+      }, {});
+    const settings = commissionSettings || {
+      enabled: false,
+      commission_rate: 0,
+      qualifying_activity: "first_confirmed_deposit",
+      approval_required: true,
+    };
     return Response.json({
       data: {
         code: referral.code,
         total: referrals.length,
         active: referrals.filter(referralRecord => referralRecord.status === "active").length,
         referrals,
-        commissionsEnabled: false,
-        earnings: 0,
+        commissionsEnabled: settings.enabled,
+        commissionRate: Number(settings.commission_rate),
+        qualifyingActivity: settings.qualifying_activity,
+        approvalRequired: settings.approval_required,
+        earnings: commissionTotals("approved"),
+        pendingCommissions: commissionTotals("pending"),
+        commissions: commissionRows || [],
       },
     }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

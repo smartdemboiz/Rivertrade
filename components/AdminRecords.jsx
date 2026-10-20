@@ -24,6 +24,7 @@ const definitions = {
   profitHistory: { title: "Profit history", description: "Credit investment profit directly to a customer's available balance and keep an auditable transaction record.", columns: ["user", "period", "profit", "currency", "status"], labels: ["User", "Period", "Profit", "Currency", "Status"] },
   profiles: { title: "Profile management", description: "Review personal details, verification status, and user account information.", columns: ["user", "fullName", "email", "phone", "country", "verified"], labels: ["User", "Full name", "Email", "Phone", "Country", "Verified"] },
   referrals: { title: "Referral program", description: "Track referrals, campaigns, and user reward performance.", columns: ["user", "code", "referrals", "earnings", "status"], labels: ["User", "Code", "Referrals", "Earnings", "Status"] },
+  referralCommissions: { title: "Referral commissions", description: "Review 1% commissions on referred customers' first confirmed deposits. Approval credits the referrer's available balance.", columns: ["user", "referredUser", "amount", "currency", "commission_rate", "depositId", "status"], labels: ["Referrer", "Referred customer", "Commission", "Currency", "Rate %", "Deposit ID", "Status"] },
   support: { title: "Support center", description: "Review customer requests, contact details, and resolution progress.", columns: ["name", "email", "subject", "message", "status", "priority"], labels: ["Name", "Email", "Subject", "Message", "Status", "Priority"] },
   settings: { title: "Platform settings", description: "Manage business configuration, withdrawals, branding, and compliance rules.", columns: ["key", "value", "category"], labels: ["Key", "Value", "Category"] },
   paymentSettings: { title: "Payment details", description: "Manage wallet addresses and payment instructions for deposits.", columns: ["method", "asset", "network", "label", "value", "instructions", "destination", "enabled"], labels: ["Method", "Asset", "Network", "Label", "Details", "Instructions", "Destination", "Enabled"] },
@@ -89,6 +90,7 @@ const operationalActions = {
   investments: [["activate", "Activate"], ["complete", "Complete"], ["cancel", "Cancel"]],
   profitHistory: [["settle", "Credit profit"]],
   referrals: [["activate", "Activate"], ["deactivate", "Deactivate"]],
+  referralCommissions: [["approve", "Approve & credit"], ["reject", "Reject"]],
   support: [["resolve", "Resolve"], ["close", "Close"], ["reopen", "Reopen"]],
 };
 
@@ -264,6 +266,11 @@ export default function AdminRecords({ section }) {
   }
 
   async function applyAction(id, action) {
+    const commission = section === "referralCommissions" && records.find(record => record.id === id);
+    if (commission && action === "approve"
+      && !window.confirm(`Approve and credit ${commission.amount} ${commission.currency} to ${commission.user}'s available balance?`)) return;
+    if (commission && action === "reject"
+      && !window.confirm(`Reject the ${commission.amount} ${commission.currency} referral commission for ${commission.user}?`)) return;
     if (section === "withdrawals" && action === "approve"
       && !window.confirm("Confirm only after you have sent the payout outside RiverTrade. Mark this withdrawal as paid?")) return;
     const profitRecord = section === "profitHistory" && records.find(record => record.id === id);
@@ -282,7 +289,7 @@ export default function AdminRecords({ section }) {
 
   return (
     <>
-      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section === "profitHistory" ? <button className="button" onClick={openProfitForm}><Plus size={16} /> Credit investment profit</button> : section !== "customers" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "managedAccounts" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
+      <div className="admin-intro"><div><p className="eyebrow">Workspace section</p><h2>{definition.title}</h2><p>{definition.description}</p></div>{section === "profitHistory" ? <button className="button" onClick={openProfitForm}><Plus size={16} /> Credit investment profit</button>       : section !== "customers" && section !== "deposits" && section !== "investments" && section !== "withdrawals" && section !== "managedAccounts" && section !== "referralCommissions" && <button className="button" onClick={() => openEditor()}><Plus size={16} /> Add new</button>}</div>
       {error && <p className="form-message">{error}</p>}
       {notice && <p className="form-message success" role="status">{notice}</p>}
       {editing && (section === "withdrawalSettings" ? (
@@ -359,8 +366,8 @@ export default function AdminRecords({ section }) {
             <thead><tr>{definition.labels.map(label => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead>
             <tbody>
               {records.length ? records.map(record => {
-                const canEdit = !["kyc", "deposits", "investments", "withdrawals", "profitHistory", "swaps"].includes(section);
-                const canDelete = section !== "customers" && !["kyc", "deposits", "investments", "withdrawals", "profitHistory", "swaps"].includes(section);
+                const canEdit = !["kyc", "deposits", "investments", "withdrawals", "profitHistory", "referralCommissions", "swaps"].includes(section);
+                const canDelete = section !== "customers" && !["kyc", "deposits", "investments", "withdrawals", "profitHistory", "referralCommissions", "swaps"].includes(section);
                 const actions = (operationalActions[section] || []).filter(([action]) => (
                   section === "deposits"
                     ? action === "confirm" ? record.status !== "rejected" && !record.isCredited : record.status === "pending"
@@ -370,6 +377,8 @@ export default function AdminRecords({ section }) {
                         ? record.status === "pending" ? action === "activate" || action === "cancel" : record.status === "active" && action === "complete"
                         : section === "profitHistory"
                           ? record.status === "pending" && action === "settle"
+                          : section === "referralCommissions"
+                            ? record.status === "pending"
                           : section === "swaps"
                             ? record.status === "pending"
                             : true

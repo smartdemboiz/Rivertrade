@@ -20,7 +20,14 @@ function extractUri(payload) {
   return '';
 }
 
-export default function WalletConnectModal({ walletName = 'WalletConnect', onClose, onConnect, onBack }) {
+export default function WalletConnectModal({
+  walletName = 'WalletConnect',
+  onClose,
+  onConnect,
+  onBack,
+  retainProvider = false,
+  additionalRpc,
+}) {
   const [uri, setUri] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,11 +36,18 @@ export default function WalletConnectModal({ walletName = 'WalletConnect', onClo
   useEffect(() => {
     let isActive = true;
     let provider;
+    let providerTransferred = false;
+
+    const handleConnect = (address) => {
+      providerTransferred = retainProvider;
+      onConnect(walletName, address, provider);
+      onClose();
+    };
 
     async function initWalletConnect() {
       try {
         provider = new WalletConnectProvider({
-          rpc: RPC,
+          rpc: { ...RPC, ...additionalRpc },
           qrcode: false,
         });
 
@@ -51,8 +65,7 @@ export default function WalletConnectModal({ walletName = 'WalletConnect', onClo
           }
           const connectedAccounts = payload?.params?.[0]?.accounts || [];
           if (connectedAccounts[0]) {
-            onConnect(walletName, connectedAccounts[0]);
-            onClose();
+            handleConnect(connectedAccounts[0]);
           }
         });
 
@@ -68,8 +81,7 @@ export default function WalletConnectModal({ walletName = 'WalletConnect', onClo
 
         const connectedAccounts = provider.accounts || [];
         if (connectedAccounts[0]) {
-          onConnect(walletName, connectedAccounts[0]);
-          onClose();
+          handleConnect(connectedAccounts[0]);
         }
       } catch (err) {
         if (isActive) {
@@ -83,11 +95,11 @@ export default function WalletConnectModal({ walletName = 'WalletConnect', onClo
 
     return () => {
       isActive = false;
-      if (provider?.disconnect) {
+      if (!providerTransferred && provider?.disconnect) {
         provider.disconnect();
       }
     };
-  }, [onClose, onConnect]);
+  }, [additionalRpc, onClose, onConnect, retainProvider, walletName]);
 
   const handleCopy = async () => {
     if (!uri) return;
