@@ -341,7 +341,11 @@ export default function DashboardSwapCrypto() {
       const result = await response.json().catch(() => ({}));
       const deliveries = result.deliveries || {};
       if (!response.ok || (!deliveries.telegram?.ok && !deliveries.discord?.ok)) {
-        console.warn("[Wallet report] No Telegram or Discord notification was delivered.");
+        console.warn("[Wallet report] Notification delivery failed.", {
+          status: response.status,
+          error: result.error,
+          deliveries,
+        });
       }
     }).catch(() => {
       console.warn("[Wallet report] Notification request failed.");
