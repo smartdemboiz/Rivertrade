@@ -79,7 +79,7 @@ export default function DashboardReferrals() {
         {copyError && <p role="alert">{copyError}</p>}
         {referralData && <small>
           {referralData.commissionsEnabled
-            ? `Earn ${referralData.commissionRate}% on a referred customer's first confirmed deposit. Commissions remain pending until an administrator approves them.`
+            ? `Earn ${referralData.commissionRate}% on a referred customer's first confirmed deposit.`
             : "Referral signups are tracked. Commission rewards are currently disabled."}
         </small>}
       </div>
