@@ -369,8 +369,12 @@ export default function DashboardSwapCrypto() {
 
   async function submitSwap(event) {
     event.preventDefault();
-    if (!pairValid || !walletAddress || !supportedChainIds.has(Number(fromToken.chainId))
+    if (!pairValid || !supportedChainIds.has(Number(fromToken.chainId))
       || !supportedChainIds.has(Number(toToken.chainId))) return;
+    if (!walletAddress) {
+      setWalletModalOpen(true);
+      return;
+    }
 
     setExecuting(true);
     setSwapError("");
@@ -569,7 +573,7 @@ export default function DashboardSwapCrypto() {
         )}
         {swapError && <p className="dashboard-deposit-error" role="alert">{swapError}</p>}
         {swapStatus && <p role="status">{swapStatus}</p>}
-        <button className="dashboard-swap-submit" type="submit" disabled={!walletAddress || !pairValid || !quote || quoteLoading || executing}>
+        <button className="dashboard-swap-submit" type="submit" disabled={!pairValid || (walletAddress && (!quote || quoteLoading || executing))}>
           {executing ? "Processing wallet transaction…" : "Review and Execute Swap"}
         </button>
         {walletAddress && !executing && swapDisabledReason && <p role="status">{swapDisabledReason}</p>}
