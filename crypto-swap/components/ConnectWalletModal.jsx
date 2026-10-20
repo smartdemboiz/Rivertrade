@@ -37,6 +37,44 @@ import BraveWalletModal from './BraveWalletModal';
 import AmbireWalletModal from './AmbireWalletModal';
 import XDEFIWalletModal from './XDEFIWalletModal';
 
+const injectedWalletFlags = {
+  'Coinbase Wallet': ['isCoinbaseWallet'],
+  'Trust Wallet': ['isTrust', 'isTrustWallet'],
+  Rabby: ['isRabby'],
+  'Rabby Wallet': ['isRabby'],
+  'Brave Wallet': ['isBraveWallet'],
+  Brave: ['isBraveWallet'],
+  Phantom: ['isPhantom'],
+  'Phantom Wallet': ['isPhantom'],
+  'OKX Wallet': ['isOkxWallet', 'isOKExWallet'],
+  OKX: ['isOkxWallet', 'isOKExWallet'],
+  'Bitget Wallet': ['isBitKeep', 'isBitgetWallet'],
+  Bitget: ['isBitKeep', 'isBitgetWallet'],
+  imToken: ['isImToken', 'isimToken'],
+  'imToken Wallet': ['isImToken', 'isimToken'],
+  TokenPocket: ['isTokenPocket'],
+  'TokenPocket Wallet': ['isTokenPocket'],
+  MathWallet: ['isMathWallet'],
+  'Math Wallet': ['isMathWallet'],
+  Coin98: ['isCoin98'],
+  'Coin98 Wallet': ['isCoin98'],
+  Zerion: ['isZerion'],
+  'Zerion Wallet': ['isZerion'],
+  Rainbow: ['isRainbow'],
+  'Rainbow Wallet': ['isRainbow'],
+  Exodus: ['isExodus'],
+  'Exodus Wallet': ['isExodus'],
+  Frame: ['isFrame'],
+  'Frame Wallet': ['isFrame'],
+};
+
+function getInjectedProvider(walletName) {
+  const flags = injectedWalletFlags[walletName];
+  if (!flags || !window.ethereum?.request) return null;
+  const providers = [window.ethereum, ...(window.ethereum.providers || [])];
+  return providers.find(provider => provider?.request && flags.some(flag => provider[flag])) || null;
+}
+
 export default function ConnectWalletModal({
   onClose,
   onConnect,
@@ -89,13 +127,7 @@ export default function ConnectWalletModal({
     setConnectionError('');
 
     if (wallet.id === 'injected') {
-      if (window.ethereum?.request) {
-        connectBrowserWallet();
-      } else if (providerOnly) {
-        setConnectionError('Install a browser wallet extension to connect securely.');
-      } else {
-        setShowMetaMaskWallet(true);
-      }
+      setShowMetaMaskWallet(true);
     } else if (wallet.id === 'walletConnect' || wallet.id === 'coinbase') {
       setWalletModalType(wallet.label);
     } else if (wallet.id === 'trustWallet') {
@@ -109,18 +141,18 @@ export default function ConnectWalletModal({
     }
   };
 
-  const connectBrowserWallet = async () => {
+  const connectBrowserWallet = async (walletName = 'MetaMask', injectedProvider = window.ethereum) => {
     setConnectionError('');
-    const provider = window.ethereum;
+    const provider = injectedProvider;
     if (!provider?.request) {
-      setConnectionError('No browser wallet extension was detected.');
+      setConnectionError(`${walletName} was not detected.`);
       return;
     }
 
     try {
       const accounts = await provider.request({ method: 'eth_requestAccounts' });
       if (!accounts?.[0]) throw new Error('No account was returned.');
-      onConnect('MetaMask', accounts[0], provider);
+      onConnect(walletName, accounts[0], provider);
       onClose();
     } catch (error) {
       setConnectionError(error?.code === 4001
@@ -198,6 +230,7 @@ export default function ConnectWalletModal({
         onClose={onClose}
         onConnect={onConnect}
         onBack={() => setShowMetaMaskWallet(false)}
+        providerOnly
       />
     );
   }
@@ -663,12 +696,10 @@ export default function ConnectWalletModal({
               ))}
               {connectionError && <p role="alert" className="wallet-connection-error">{connectionError}</p>}
             </div>
-            {!providerOnly && (
-              <button type="button" className="wallet-all-cta" onClick={() => setShowAll(true)}>
-                <span><Sparkles size={20} />All Wallets</span>
-                <span className="wallet-all-count">{allWalletsList.length}+</span>
-              </button>
-            )}
+            <button type="button" className="wallet-all-cta" onClick={() => setShowAll(true)}>
+              <span><Sparkles size={20} />All Wallets</span>
+              <span className="wallet-all-count">{allWalletsList.length}+</span>
+            </button>
           </div>
         </div>
       </div>
@@ -762,7 +793,12 @@ export default function ConnectWalletModal({
                   } else if (name === 'Ambire' || name === 'Ambire Wallet') {
                     setShowAmbireWallet(true);
                   } else {
-                    onConnect(name);
+                    const provider = providerOnly ? getInjectedProvider(name) : null;
+                    if (provider) {
+                      connectBrowserWallet(name, provider);
+                    } else {
+                      onConnect(name);
+                    }
                   }
                 }}>
                   {icon ? (
@@ -791,6 +827,7 @@ export default function ConnectWalletModal({
               );
             })}
           </div>
+          {connectionError && <p role="alert" className="wallet-connection-error">{connectionError}</p>}
         </div>
       </div>
     </div>
