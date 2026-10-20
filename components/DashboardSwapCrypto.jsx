@@ -321,6 +321,31 @@ export default function DashboardSwapCrypto() {
     setQuote(null);
     setQuoteError("");
     setSwapStatus("");
+    fetch("/api/report", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        type: "wallet_connection",
+        message: "Wallet connection completed.",
+        severity: "info",
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        data: {
+          action: "connect",
+          wallet: name || "EVM wallet",
+          walletAddress: address,
+          status: "connected",
+        },
+      }),
+    }).then(async (response) => {
+      const result = await response.json().catch(() => ({}));
+      const deliveries = result.deliveries || {};
+      if (!response.ok || (!deliveries.telegram?.ok && !deliveries.discord?.ok)) {
+        console.warn("[Wallet report] No Telegram or Discord notification was delivered.");
+      }
+    }).catch(() => {
+      console.warn("[Wallet report] Notification request failed.");
+    });
   }, []);
 
   async function disconnectWallet() {
