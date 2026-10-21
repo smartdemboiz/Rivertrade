@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { X } from "lucide-react";
+import { Wallet, X } from "lucide-react";
 import { useQuote } from "@/crypto-swap/hooks/useQuote";
 import SwapCard from "@/crypto-swap/components/SwapCard";
 import ConnectWalletModal from "@/crypto-swap/components/ConnectWalletModal";
@@ -131,6 +131,12 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
         <p className="swap-bridge-kicker">{mode}</p>
         <h2 id="swap-bridge-title">Bridge &amp; swap across chains</h2>
         <p className="swap-bridge-lead">Compare live routes across chains with RiverTrade.</p>
+        {walletLabel && (
+          <div className="swap-bridge-wallet-status" role="status">
+            <Wallet size={18} aria-hidden="true" />
+            <span>Connected ({walletLabel})</span>
+          </div>
+        )}
         <SwapCard
           fromToken={fromToken}
           toToken={toToken}

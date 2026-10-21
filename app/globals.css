@@ -5079,6 +5079,22 @@ body:has(.admin-shell) .health-line i {
   font-weight: 700;
 }
 
+.swap-bridge-wallet-status {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: -16px auto 24px;
+  padding: 12px 24px;
+  border: 1px solid rgba(108, 249, 216, 0.45);
+  border-radius: 999px;
+  background: rgba(16, 27, 29, 0.9);
+  color: #6cf9d8;
+  font-size: 16px;
+  font-weight: 700;
+}
+
 .swap-bridge-card {
   position: relative;
   padding: 30px;
