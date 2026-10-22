@@ -77,9 +77,9 @@ const testimonials = [
 export function LandingPage({ data = { coins: [], global: null }, authenticated = false, onDashboard, onLogin, onSignup }) {
   const { t } = useLanguage();
   const btc = data.coins.find((coin) => coin.id === "bitcoin");
-  const testimonialTrackRef = useRef(null);
   const [amount, setAmount] = useState("1");
   const [currency, setCurrency] = useState("USD");
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [swapBridgeOpen, setSwapBridgeOpen] = useState(false);
   const [tradePairIndex, setTradePairIndex] = useState(0);
   const [tradePairState, setTradePairState] = useState("ready");
@@ -139,6 +139,13 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
       pairTransitionTimersRef.current.forEach((timer) => clearTimeout(timer));
     };
   }, [advanceTradePair]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTestimonialIndex((current) => (current + 1) % testimonials.length);
+    }, 12000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     let disposed = false;
@@ -291,19 +298,16 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
           </div>
         </section>
         <section className="Customertestimonials">
-          <div className="legacy-heading centered">
+          <div className="legacy-heading">
             <span>{t("clientStories")}</span>
-            <h2>{t("trustedPeople")}</h2>
           </div>
-          <div className="testimonialtrack" ref={testimonialTrackRef}>
-            {testimonials.concat(testimonials).map(([image, name, quote], index) => (
-              <article className="customertext" key={`${name}-${index}`}>
-                <img src={`/Image/${encodeURIComponent(image)}`} alt={name} />
-                <p>{quote}</p>
-                <strong>{name}</strong>
-                <div className="stars" aria-label="5 out of 5 stars">★★★★★</div>
-              </article>
-            ))}
+          <div className="testimonial-carousel">
+            <article className="customertext" key={testimonialIndex} aria-live="polite">
+              <Image src={`/Image/${encodeURIComponent(testimonials[testimonialIndex][0])}`} alt="" width={70} height={70} />
+              <p>{testimonials[testimonialIndex][2]}</p>
+              <strong>{testimonials[testimonialIndex][1]}</strong>
+              <div className="stars" aria-label="5 out of 5 stars">★★★★★</div>
+            </article>
           </div>
         </section>
         <footer className="relative left-1/2 mt-16 w-screen -translate-x-1/2 border-t-2 border-brand bg-surface-strong px-6 py-9 text-background sm:px-10 lg:px-16">

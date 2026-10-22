@@ -7749,17 +7749,20 @@ html[data-admin-theme="dark"] .admin-notification-menu {
   width: 100vw;
   margin-left: -50vw;
   background: var(--surface-strong);
-  padding: 64px 0 80px;
-  overflow: hidden;
+  padding: 64px max(24px, calc((100vw - 1120px) / 2)) 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
 }
 .Customertestimonials .legacy-heading {
   position: relative;
   z-index: 1;
-  max-width: 720px;
-  margin: 0 auto 28px;
-  padding: 0 20px;
+  max-width: 560px;
+  margin: 0;
+  padding: 0;
   color: var(--background);
-  text-align: center;
+  text-align: left;
 }
 .Customertestimonials .legacy-heading span {
   color: var(--brand);
@@ -7772,35 +7775,21 @@ html[data-admin-theme="dark"] .admin-notification-menu {
   font-size: clamp(28px, 4vw, 48px);
   line-height: 1.05;
 }
-.testimonialtrack {
-  display: flex;
-  gap: 24px;
-  width: max-content;
-  max-width: none;
-  padding: 8px 4px 14px;
-  animation: testimonialScroll 30s linear infinite;
-  will-change: transform;
-}
-.testimonialtrack:hover {
-  animation-play-state: paused;
-}
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .testimonialtrack {
-    animation-duration: 52s;
-  }
+.testimonial-carousel {
+  width: 100%;
+  max-width: 560px;
 }
 
 .customertext {
   display: flex;
-  flex: 0 0 352px;
   flex-direction: column;
-  height: 412px;
-  padding: 24px 18px 28px;
+  min-height: 340px;
+  padding: 32px 28px;
   border-radius: 14px;
   background: var(--background);
   color: var(--foreground);
   box-shadow: inset 0 0 0 1px rgba(21, 21, 24, 0.08);
+  animation: testimonialFade 700ms ease both;
 }
 .customertext img {
   display: block;
@@ -7836,28 +7825,24 @@ html[data-admin-theme="dark"] .admin-notification-menu {
   text-align: center;
 }
 
-@keyframes testimonialScroll {
+@keyframes testimonialFade {
   from {
-    transform: translateX(0);
+    opacity: 0;
   }
-  to {
-    transform: translateX(-50%);
-  }
+  to { opacity: 1; }
 }
 
 @media (max-width: 768px) {
   .Customertestimonials {
     padding: 48px 0 60px;
-  }
-
-  .testimonialtrack {
-    animation-duration: 72s;
+    padding-right: 20px;
+    padding-left: 20px;
+    gap: 28px;
   }
 
   .customertext {
-    flex-basis: min(86vw, 352px);
-    height: 380px;
-    padding: 20px 16px 24px;
+    min-height: 320px;
+    padding: 24px 20px;
   }
 }
 :root {
