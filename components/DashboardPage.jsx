@@ -31,7 +31,7 @@ import DashboardSupport from "@/components/DashboardSupport";
 import DashboardInvestmentPlans from "@/components/DashboardInvestmentPlans";
 import DashboardWithdraw from "@/components/DashboardWithdraw";
 import DashboardDeposit from "@/components/DashboardDeposit";
-import DashboardSwapCrypto from "@/components/DashboardSwapCrypto";
+import DashboardSwapBridge from "@/components/DashboardSwapBridge";
 import DashboardReferrals from "@/components/DashboardReferrals";
 import DashboardTransactions from "@/components/DashboardTransactions";
 import DashboardManagedAccount from "@/components/DashboardManagedAccount";
@@ -45,7 +45,7 @@ const nav = [
   [LayoutDashboard, "Overview"],
   [BriefcaseBusiness, "My investments"],
   [Receipt, "Transactions"],
-  [ArrowLeftRight, "Swap crypto"],
+  [ArrowLeftRight, "Swapbridge"],
   [BriefcaseBusiness, "Managed account"],
   [Wallet, "Deposit"],
   [ArrowDownToLine, "Withdraw"],
@@ -60,7 +60,7 @@ const nav = [
 const sectionContent = {
   "My investments": ["Active positions", "3 active investments", "Review allocation and current investment performance."],
   Transactions: ["Transaction history", "24 completed transactions", "Review deposits, withdrawals, and investment activity."],
-  "Swap crypto": ["Swap crypto", "Trade supported assets", "Choose the assets and amount you want to exchange."],
+  Swapbridge: ["Swapbridge", "Cross-chain crypto swaps", "Compare routes and swap supported assets across chains."],
   "Managed account": ["Managed account", "Account management", "Review your managed account status and assigned strategy."],
   Deposit: ["Deposit funds", "Add funds to your account", "Choose a supported asset and follow the deposit instructions."],
   Withdraw: ["Withdraw funds", "Move funds securely", "Choose a destination and submit a withdrawal request."],
@@ -86,7 +86,7 @@ function DashboardSection({ section, onAccountDataUpdate, onReturnToDashboard, o
       />
     );
   }
-  if (section === "Swap crypto") return <DashboardSwapCrypto />;
+  if (section === "Swapbridge") return <DashboardSwapBridge />;
   if (section === "Referrals") return <DashboardReferrals />;
   if (section === "Transactions") return <DashboardTransactions />;
   if (section === "My investments") return <DashboardActivePositions investments={accountData.investments} error={accountError} />;
@@ -435,7 +435,7 @@ export default function DashboardPage() {
       {sidebar && <button className="dashboard-drawer-backdrop" type="button" aria-label="Close dashboard menu" onClick={() => setSidebar(false)} />}
 
       <div className="dashboard-main">
-        {!['Support', 'Investment plans', 'Withdraw', 'Deposit', 'Swap crypto', 'Referrals', 'Transactions', 'Managed account', 'Profit history', 'Profile', 'KYC verification', 'My investments'].includes(activeSection) && <header className="dash-header">
+        {!['Support', 'Investment plans', 'Withdraw', 'Deposit', 'Swapbridge', 'Referrals', 'Transactions', 'Managed account', 'Profit history', 'Profile', 'KYC verification', 'My investments'].includes(activeSection) && <header className="dash-header">
           <div>
             <p className="eyebrow">{currentDate}</p>
             <h1>{greeting}{user?.firstName ? `, ${user.firstName}` : ""}.</h1>
