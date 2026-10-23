@@ -201,16 +201,20 @@ function TradingViewChart({ symbol, title, theme }) {
 }
 
 function TradingViewMarketBoard({ theme }) {
-  const [filter, setFilter] = useState("all");
-  const visibleMarkets = filter === "all" ? chartMarkets : filter === "top" ? chartMarkets.slice(0, 3) : chartMarkets.filter(([code]) => code === filter);
+  const [filter, setFilter] = useState("none");
+  const visibleMarkets = filter === "none"
+    ? []
+    : filter === "all"
+      ? chartMarkets
+      : chartMarkets.filter(([code]) => code === filter);
 
   return (
     <section className="market-chart-board">
       <div className="market-chart-filter">
         <label htmlFor="chart-filter">Filter charts:</label>
         <select id="chart-filter" value={filter} onChange={(event) => setFilter(event.target.value)}>
+          <option value="none">None</option>
           <option value="all">Show All</option>
-          <option value="top">Top 3</option>
           {chartMarkets.map(([code]) => <option key={code} value={code}>{code}</option>)}
         </select>
       </div>
