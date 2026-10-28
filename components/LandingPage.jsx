@@ -301,13 +301,22 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
           <div className="legacy-heading">
             <span>{t("clientStories")}</span>
           </div>
-          <div className="testimonial-carousel">
-            <article className="customertext" key={testimonialIndex} aria-live="polite">
-              <Image src={`/Image/${encodeURIComponent(testimonials[testimonialIndex][0])}`} alt="" width={70} height={70} />
-              <p>{testimonials[testimonialIndex][2]}</p>
-              <strong>{testimonials[testimonialIndex][1]}</strong>
-              <div className="stars" aria-label="5 out of 5 stars">★★★★★</div>
-            </article>
+          <div className="testimonial-content">
+            <div className="testimonial-carousel">
+              <article className="customertext" key={testimonialIndex} aria-live="polite">
+                <Image src={`/Image/${encodeURIComponent(testimonials[testimonialIndex][0])}`} alt="" width={70} height={70} />
+                <p>{testimonials[testimonialIndex][2]}</p>
+                <strong>{testimonials[testimonialIndex][1]}</strong>
+                <div className="stars" aria-label="5 out of 5 stars">★★★★★</div>
+              </article>
+            </div>
+            <div className="testimonial-media">
+              <div className="testimonial-media-card">
+                <video autoPlay loop muted playsInline preload="auto" aria-label="Rivertrade homepage video">
+                  <source src="/Image/mobile/rivertrade_Homepage.webm" type="video/webm" />
+                </video>
+              </div>
+            </div>
           </div>
         </section>
         <footer className="relative left-1/2 mt-16 w-screen -translate-x-1/2 border-t-2 border-brand bg-surface-strong px-6 py-9 text-background sm:px-10 lg:px-16">
