@@ -313,6 +313,7 @@ export function LandingPage({ data = { coins: [], global: null }, authenticated 
             <div className="testimonial-media">
               <div className="testimonial-media-card">
                 <video autoPlay loop muted playsInline preload="auto" aria-label="Rivertrade homepage video">
+                  <source src="/Image/mobile/rivertrade_Homepage.mp4" type="video/mp4" />
                   <source src="/Image/mobile/rivertrade_Homepage.webm" type="video/webm" />
                 </video>
               </div>
