@@ -1,3 +1,8 @@
+"use client";
+
+import { useRef } from "react";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
+
 function formatReceiptAmount(value, currency) {
   const formatted = new Intl.NumberFormat(undefined, {
     minimumFractionDigits: currency === "USD" ? 2 : 0,
@@ -16,6 +21,8 @@ function formatExchangeRate(rate, sourceCurrency, targetCurrency) {
 }
 
 export default function DepositSuccessReceipt({ deposit, onReturnToDashboard }) {
+  const dialogRef = useRef(null);
+  useDialogFocus(dialogRef, onReturnToDashboard, Boolean(deposit));
   if (!deposit) return null;
   const rejected = deposit.status === "rejected";
   const receiptTitle = rejected ? "Payment rejected" : "Payment successful";
@@ -23,7 +30,7 @@ export default function DepositSuccessReceipt({ deposit, onReturnToDashboard }) 
 
   return (
     <div className="deposit-success-backdrop">
-      <section className={`deposit-success-receipt${rejected ? " is-rejected" : ""}`} role="dialog" aria-modal="true" aria-labelledby="deposit-success-title">
+      <section ref={dialogRef} className={`deposit-success-receipt${rejected ? " is-rejected" : ""}`} role="dialog" aria-modal="true" aria-labelledby="deposit-success-title">
         <div className="deposit-success-heading">
           <span className="deposit-success-check" aria-hidden="true">{rejected ? "×" : "✓"}</span>
           <h3 id="deposit-success-title">{receiptTitle}</h3>

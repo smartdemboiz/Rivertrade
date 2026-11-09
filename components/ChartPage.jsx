@@ -20,7 +20,7 @@ export function ChartPage({ chartType }) {
         onSignup={() => router.push("/auth")}
         data={data}
       />
-      <main className="min-h-screen bg-background px-5 py-10 text-foreground sm:py-16">
+      <main className="chart-page min-h-screen bg-background px-5 py-10 text-foreground sm:py-16">
         <div className="mx-auto max-w-7xl">
           <Link href="/" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-olive hover:underline">
             <span aria-hidden="true">←</span> Back to markets

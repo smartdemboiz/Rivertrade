@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
 
 const supportedCurrencies = new Set(["USD", "BTC", "ETH", "USDT", "BNB", "XRP", "DOGE"]);
 
@@ -21,6 +22,7 @@ function authHeaders() {
 }
 
 export default function DashboardInvestmentPlans({ onAccountDataUpdate }) {
+  const dialogRef = useRef(null);
   const [plans, setPlans] = useState([]);
   const [availableBalances, setAvailableBalances] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -166,6 +168,7 @@ export default function DashboardInvestmentPlans({ onAccountDataUpdate }) {
     setQuote(null);
     setQuoteError("");
   };
+  useDialogFocus(dialogRef, closePlan, Boolean(selectedPlan));
 
   async function submitInvestment(event) {
     event.preventDefault();
@@ -243,7 +246,7 @@ export default function DashboardInvestmentPlans({ onAccountDataUpdate }) {
 
       {selectedPlan && (
         <div className="dashboard-investment-modal-overlay">
-          <div className="dashboard-investment-modal" role="dialog" aria-modal="true" aria-labelledby="investment-modal-title">
+          <div ref={dialogRef} className="dashboard-investment-modal" role="dialog" aria-modal="true" aria-labelledby="investment-modal-title">
             <div className="dashboard-investment-header">
               <div>
                 <span className="dashboard-investment-kicker">Selected plan</span>

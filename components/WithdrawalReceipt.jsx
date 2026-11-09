@@ -1,3 +1,8 @@
+"use client";
+
+import { useRef } from "react";
+import { useDialogFocus } from "@/hooks/useDialogFocus";
+
 function formatWithdrawalAmount(value, currency) {
   const amount = new Intl.NumberFormat(undefined, {
     minimumFractionDigits: currency === "USD" ? 2 : 0,
@@ -7,6 +12,8 @@ function formatWithdrawalAmount(value, currency) {
 }
 
 export default function WithdrawalReceipt({ withdrawal, onClose }) {
+  const dialogRef = useRef(null);
+  useDialogFocus(dialogRef, onClose, Boolean(withdrawal));
   if (!withdrawal) return null;
 
   const status = withdrawal.status;
@@ -29,6 +36,7 @@ export default function WithdrawalReceipt({ withdrawal, onClose }) {
   return (
     <div className="withdrawal-receipt-backdrop">
       <section
+        ref={dialogRef}
         className={`withdrawal-receipt${successful ? " is-successful" : ""}${rejected ? " is-rejected" : ""}${processing ? " is-processing" : ""}`}
         role="dialog"
         aria-modal="true"

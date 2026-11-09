@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useLanguage } from "@/components/LanguageProvider";
 
-const languages = ["EN", "ES", "FR"];
+const languages = ["en", "es", "fr", "de", "pt", "ja", "zh"];
 
 export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   const signup = mode === "signup";
+  const { language, setLanguage, t } = useLanguage();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,12 +22,11 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("EN");
 
   const submit = async (event) => {
     event.preventDefault();
     if (!email || !password || (signup && (!firstName || !lastName || !country || !phone || !currency || !accepted))) {
-      setError(signup ? "Complete the required fields and accept the policies." : "Enter your email and password to continue.");
+      setError(signup ? t("authRequiredSignupError") : t("authRequiredLoginError"));
       return;
     }
     setError("");
@@ -72,37 +73,37 @@ export function AuthPage({ mode, onBack, onSuccess, onSwitchMode }) {
   };
 
   return (
-    <main className="min-h-screen bg-[#101b1d] pt-[97px] text-[#101b1d]">
+    <main className="auth-page-shell min-h-screen bg-[#101b1d] pt-[97px] text-[#101b1d]">
       <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between border-b border-white/10 bg-[#101b1d] px-6 py-5">
         <button onClick={onBack} className="shrink-0" aria-label="RiverTrade home"><Image src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" width={1800} height={700} className="h-14 w-auto" /></button>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <button onClick={() => setLanguageOpen((open) => !open)} className="flex items-center gap-2 rounded-xl border border-white/15 bg-[#202024] px-3 py-2 text-sm font-bold text-[#E0F3FF]" aria-label="Choose language" aria-expanded={languageOpen}>
-              <span className="text-[#6CF9D8]">◐</span>{selectedLanguage}<span className="text-xs text-[#829697]">⌄</span>
+            <button type="button" onClick={() => setLanguageOpen((open) => !open)} className="flex min-h-11 items-center gap-2 rounded-xl border border-white/15 bg-[#202024] px-3 py-2 text-sm font-bold text-[#E0F3FF]" aria-label={t("language")} aria-expanded={languageOpen}>
+              <span className="text-[#6CF9D8]" aria-hidden="true">◐</span>{language.toUpperCase()}<span className="text-xs text-[#829697]" aria-hidden="true">⌄</span>
             </button>
-            {languageOpen && <div className="absolute right-0 top-12 z-20 min-w-20 rounded-xl border border-white/10 bg-[#202024] p-1 shadow-xl">{languages.map((language) => <button key={language} onClick={() => { setSelectedLanguage(language); setLanguageOpen(false); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs font-bold text-[#E0F3FF] hover:bg-white/10">{language}</button>)}</div>}
+            {languageOpen && <div className="absolute right-0 top-12 z-20 min-w-20 rounded-xl border border-white/10 bg-[#202024] p-1 shadow-xl">{languages.map((option) => <button type="button" key={option} onClick={() => { setLanguage(option); setLanguageOpen(false); }} className="block w-full rounded-lg px-3 py-2 text-left text-xs font-bold text-[#E0F3FF] hover:bg-white/10">{option.toUpperCase()}</button>)}</div>}
           </div>
-          <button onClick={onBack} className="text-2xl text-white" aria-label="Close authentication">×</button>
+          <button type="button" onClick={onBack} className="min-h-11 min-w-11 text-2xl text-white" aria-label="Close authentication">×</button>
         </div>
       </header>
-      <form onSubmit={submit} className="mx-auto max-w-2xl bg-[#E0F3FF] px-6 py-14 sm:my-8 sm:rounded-2xl sm:px-12 sm:shadow-2xl">
-        <h1 className="text-4xl font-medium">{signup ? "Open your account" : "Welcome back"}</h1>
-        <p className="mt-4 text-[#536367]">{signup ? "Start with the essentials. You can complete your profile later." : "Sign in to view your portfolio and market workspace."}</p>
+      <form onSubmit={submit} className="auth-form-panel mx-auto max-w-2xl bg-[#E0F3FF] px-6 py-14 sm:my-8 sm:rounded-2xl sm:px-12 sm:shadow-2xl">
+        <h1 className="text-4xl font-medium">{signup ? t("authOpenAccount") : t("authWelcomeBack")}</h1>
+        <p className="mt-4 text-[#536367]">{signup ? t("authSignupLead") : t("authSignInLead")}</p>
         {signup && <>
-          <div className="grid gap-4 sm:grid-cols-2"><Field label="First name" value={firstName} onChange={setFirstName} required /><Field label="Last name" value={lastName} onChange={setLastName} required /></div>
-          <Field label="Country" placeholder="United States" value={country} onChange={setCountry} required />
-          <div className="grid gap-4 sm:grid-cols-[1fr_2fr]"><Field label="Country code" value={countryCode} onChange={setCountryCode} required /><Field label="Phone number" type="tel" value={phone} onChange={setPhone} required /></div>
+          <div className="grid gap-4 sm:grid-cols-2"><Field label={t("authFirstName")} value={firstName} onChange={setFirstName} required /><Field label={t("authLastName")} value={lastName} onChange={setLastName} required /></div>
+          <Field label={t("authCountry")} placeholder="United States" value={country} onChange={setCountry} required />
+          <div className="grid gap-4 sm:grid-cols-[1fr_2fr]"><Field label={t("authCountryCode")} value={countryCode} onChange={setCountryCode} required /><Field label={t("authPhone")} type="tel" value={phone} onChange={setPhone} required /></div>
         </>}
-        <Field label="Email address" type="email" value={email} onChange={setEmail} required />
-        <Field label="Password" type="password" value={password} onChange={setPassword} required />
+        <Field label={t("authEmail")} type="email" value={email} onChange={setEmail} required />
+        <Field label={t("authPassword")} type="password" value={password} onChange={setPassword} required />
         {signup && <>
-          <label className="mt-5 block text-sm text-[#536367]">Main currency<select value={currency} onChange={(event) => setCurrency(event.target.value)} required className="mt-2 w-full rounded-lg border border-black/20 bg-transparent p-3 text-[#101b1d] outline-none focus:border-[#6CF9D8]"><option value="">Select currency</option><option value="USD">USD - US Dollar</option><option value="EUR">EUR - Euro</option><option value="GBP">GBP - Pound Sterling</option></select></label>
-          <label className="mt-5 flex items-center gap-3 text-sm text-[#536367]"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="h-4 w-4 accent-[#6CF9D8]" />I accept the client and privacy policies.</label>
+          <label className="mt-5 block text-sm text-[#536367]">{t("authMainCurrency")}<select value={currency} onChange={(event) => setCurrency(event.target.value)} required className="mt-2 w-full rounded-lg border border-black/20 bg-transparent p-3 text-[#101b1d] outline-none focus:border-[#6CF9D8]"><option value="">{t("authSelectCurrency")}</option><option value="USD">USD - US Dollar</option><option value="EUR">EUR - Euro</option><option value="GBP">GBP - Pound Sterling</option></select></label>
+          <label className="mt-5 flex items-center gap-3 text-sm text-[#536367]"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} className="h-4 w-4 accent-[#6CF9D8]" />{t("authAcceptPolicies")}</label>
         </>}
         {error && <p className="mt-4 text-sm text-[#b42318]">{error}</p>}
         {notice && <p className="mt-4 text-sm text-[#126e57]" role="status">{notice}</p>}
-        <button disabled={submitting} className="mt-7 w-full rounded-lg bg-[#6CF9D8] py-4 font-black disabled:cursor-wait disabled:opacity-60">{submitting ? "Please wait..." : signup ? "Create account ↗" : "Sign in ↗"}</button>
-        <p className="mt-6 text-center text-sm text-[#536367]">{signup ? "Already have an account?" : "New to Rivertrade?"} <button type="button" onClick={onSwitchMode} className="font-black text-[#101b1d]">{signup ? "Sign in" : "Create an account"}</button></p>
+        <button disabled={submitting} className="mt-7 min-h-12 w-full rounded-lg bg-[#6CF9D8] py-4 font-black disabled:cursor-wait disabled:opacity-60">{submitting ? t("authSubmitting") : signup ? t("authCreateAccount") : t("authSignIn")}</button>
+        <p className="mt-6 text-center text-sm text-[#536367]">{signup ? t("authAlreadyHaveAccount") : t("authNewToRivertrade")} <button type="button" onClick={onSwitchMode} className="font-black text-[#101b1d]">{signup ? t("authSignIn") : t("authCreateAccount")}</button></p>
       </form>
     </main>
   );

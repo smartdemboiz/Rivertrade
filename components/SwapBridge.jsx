@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { Wallet, X } from "lucide-react";
 import { useQuote } from "@/crypto-swap/hooks/useQuote";
@@ -12,6 +12,9 @@ import { tokens } from "@/crypto-swap/lib/data";
 
 const defaultFromToken = tokens.find((token) => token.id === "usdc-base") || tokens[0];
 const defaultToToken = tokens.find((token) => token.id === "usdc-arb") || tokens[1];
+const subscribeToMount = () => () => {};
+const getClientMountSnapshot = () => true;
+const getServerMountSnapshot = () => false;
 
 export default function SwapBridge({ mode = "Crypto swap", onClose }) {
   const [fromToken, setFromToken] = useState(defaultFromToken);
@@ -31,6 +34,11 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
     exchangesEnabled: true,
   });
   const [executionState, setExecutionState] = useState("");
+  const isMounted = useSyncExternalStore(
+    subscribeToMount,
+    getClientMountSnapshot,
+    getServerMountSnapshot,
+  );
 
   useEffect(() => {
     const handleEscape = (event) => {
@@ -124,10 +132,12 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
     });
   };
 
-  return (
+  if (!isMounted) return null;
+
+  return createPortal(
     <div className="swap-bridge-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
       <section className="swap-bridge swap-bridge-feature" role="dialog" aria-modal="true" aria-labelledby="swap-bridge-title">
-      <button className="swap-bridge-close" type="button" onClick={() => onClose?.()} aria-label="Close swap bridge"><X size={18} /></button>
+        <button className="swap-bridge-close" type="button" onClick={() => onClose?.()} aria-label="Close swap bridge"><X size={18} /></button>
         <p className="swap-bridge-kicker">{mode}</p>
         <h2 id="swap-bridge-title">Bridge &amp; swap across chains</h2>
         <p className="swap-bridge-lead">Compare live routes across chains with RiverTrade.</p>
@@ -171,6 +181,7 @@ export default function SwapBridge({ mode = "Crypto swap", onClose }) {
           document.body,
         )}
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 }

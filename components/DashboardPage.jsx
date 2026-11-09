@@ -493,7 +493,13 @@ export default function DashboardPage() {
               </strong>
               {accountError && <small>{accountError}</small>}
             </div>
-            <button className="icon-button light" onClick={() => setVisible(!visible)} aria-label="Toggle balance visibility">
+            <button
+              className="icon-button light"
+              type="button"
+              onClick={() => setVisible((current) => !current)}
+              aria-label={visible ? "Hide balances" : "Show balances"}
+              aria-pressed={!visible}
+            >
               {visible ? <Eye /> : <EyeOff />}
             </button>
             <div className="balance-line" />

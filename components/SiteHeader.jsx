@@ -34,7 +34,68 @@ function SearchOverlay({ data, onClose, onSelectMarket }) {
   const live = data.coins.map((coin) => ({ id: coin.id, name: coin.name, symbol: coin.symbol.toUpperCase(), detail: coin.symbol.toUpperCase(), price: formatMoney(coin.current_price, 2).replace("$", ""), change: formatPercent(coin.price_change_percentage_24h), image: coin.image, color: coinColors[coin.id] })).filter((market) => !normalized || `${market.name} ${market.symbol} ${market.detail}`.toLowerCase().includes(normalized));
   const staticMatches = staticMarkets.filter((market) => !normalized || `${market.name} ${market.symbol} ${market.detail}`.toLowerCase().includes(normalized));
   const markets = [...live, ...staticMatches].slice(0, 8);
-  return <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-2xl border border-white/10 bg-[#202024] p-4 text-[#E0F3FF] shadow-2xl sm:p-5"><div className="flex items-center gap-3 border-b border-white/10 pb-4"><span className="text-2xl text-[#959bad]">⌕</span><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find your next trade" className="min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-[#959bad]" /><button type="button" onClick={onClose} className="rounded-xl bg-[#151518] px-3 py-2 text-xs font-bold text-[#E0F3FF]">Esc</button></div><div className="mt-5 flex items-center justify-between text-sm text-[#959bad]"><span>Most popular global markets</span><strong className="text-[#6CF9D8]">LIVE</strong></div><div className="mt-2">{markets.map((market, index) => <button type="button" key={market.id} onClick={() => onSelectMarket(market)} className={`flex w-full items-center gap-4 rounded-xl px-2 py-3 text-left ${index === 1 ? "bg-[#26272B]" : ""}`}><Icon market={market} /><span className="min-w-0 flex-1"><strong className="block truncate">{market.name}</strong><span className="block truncate text-sm text-[#959bad]">{market.detail}</span></span><strong className="text-right">{market.price} <small className="font-normal text-[#959bad]">USD</small></strong></button>)}</div><section className="mt-5 border-t border-white/10 pt-5"><h2 className="text-sm text-[#959bad]">Newly listed crypto</h2><div className="mt-3 grid gap-3 sm:grid-cols-3">{["CHEEMS", "COQ", "DEGEN"].map((name, index) => <div key={name} className="rounded-xl border border-white/10 p-4"><Icon market={{ id: ["bitcoin", "ripple", "solana"][index] }} /><strong className="mt-4 block">{name}</strong><span className="mt-1 block text-sm text-[#959bad]">{name === "COQ" ? "Coq Inu" : name[0] + name.slice(1).toLowerCase()}</span><b className="mt-4 block">0.00011</b><span className="text-sm text-[#6CF9D8]">+0.000011</span></div>)}</div></section><section className="mt-5 border-t border-white/10 pt-5"><h2 className="text-sm text-[#959bad]">Categories</h2><div className="mt-2">{categories.map(([name, count, total], index) => <div key={name} className="flex items-center gap-3 py-2"><div className="flex -space-x-2"><Icon market={{ id: ["ethereum", "solana", "bitcoin", "ripple", "tether"][index] }} size="h-7 w-7" /><Icon market={{ id: ["ripple", "ethereum", "tether", "solana", "bitcoin"][index] }} size="h-6 w-6" /></div><div className="min-w-0 flex-1"><strong className="block truncate">{name}</strong><span className="text-xs text-[#959bad]">{count}</span></div><b>{total} <small className="font-normal text-[#959bad]">USD</small></b></div>)}</div></section></div>;
+  return (
+    <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-[calc(100vh-5rem)] overflow-y-auto rounded-2xl border border-white/10 bg-[#202024] p-4 text-[#E0F3FF] shadow-2xl sm:p-5">
+      <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+        <span className="text-2xl text-[#959bad]">⌕</span>
+        <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find your next trade" className="min-w-0 flex-1 bg-transparent text-lg outline-none placeholder:text-[#959bad]" />
+        <button type="button" onClick={onClose} className="rounded-xl bg-[#151518] px-3 py-2 text-xs font-bold text-[#E0F3FF]">Esc</button>
+      </div>
+      <div className="mt-5 flex items-center justify-between text-sm text-[#959bad]">
+        <span>Most popular global markets</span>
+        <strong className="text-[#6CF9D8]">LIVE</strong>
+      </div>
+      <div className="mt-2">
+        {markets.map((market) => (
+          <button
+            type="button"
+            key={market.id}
+            onClick={() => onSelectMarket(market)}
+            className="flex w-full items-center gap-4 rounded-xl px-2 py-3 text-left transition-colors hover:bg-[#26272B] focus-visible:bg-[#26272B] focus-visible:outline-none"
+          >
+            <Icon market={market} />
+            <span className="min-w-0 flex-1">
+              <strong className="block truncate">{market.name}</strong>
+              <span className="block truncate text-sm text-[#959bad]">{market.detail}</span>
+            </span>
+            <strong className="text-right">{market.price} <small className="font-normal text-[#959bad]">USD</small></strong>
+          </button>
+        ))}
+      </div>
+      <section className="mt-5 border-t border-white/10 pt-5">
+        <h2 className="text-sm text-[#959bad]">Newly listed crypto</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {["CHEEMS", "COQ", "DEGEN"].map((name, index) => (
+            <div key={name} className="rounded-xl border border-white/10 p-4">
+              <Icon market={{ id: ["bitcoin", "ripple", "solana"][index] }} />
+              <strong className="mt-4 block">{name}</strong>
+              <span className="mt-1 block text-sm text-[#959bad]">{name === "COQ" ? "Coq Inu" : name[0] + name.slice(1).toLowerCase()}</span>
+              <b className="mt-4 block">0.00011</b>
+              <span className="text-sm text-[#6CF9D8]">+0.000011</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="mt-5 border-t border-white/10 pt-5">
+        <h2 className="text-sm text-[#959bad]">Categories</h2>
+        <div className="mt-2">
+          {categories.map(([name, count, total], index) => (
+            <div key={name} className="flex items-center gap-3 py-2">
+              <div className="flex -space-x-2">
+                <Icon market={{ id: ["ethereum", "solana", "bitcoin", "ripple", "tether"][index] }} size="h-7 w-7" />
+                <Icon market={{ id: ["ripple", "ethereum", "tether", "solana", "bitcoin"][index] }} size="h-6 w-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <strong className="block truncate">{name}</strong>
+                <span className="text-xs text-[#959bad]">{count}</span>
+              </div>
+              <b>{total} <small className="font-normal text-[#959bad]">USD</small></b>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function LanguageMenu({ selected, onSelect }) { const [open, setOpen] = useState(false); return <div className="relative z-30 w-full lg:w-auto"><button type="button" onClick={() => setOpen((value) => !value)} className="flex w-full items-center justify-between gap-1 rounded-xl border border-white/15 bg-[#202024] px-3 py-3 text-xs font-bold text-[#E0F3FF] lg:w-auto lg:py-2"><span><span className="mr-1 text-[#6CF9D8]">◐</span>{selected.toUpperCase()}</span><span>⌄</span></button>{open && <div className="absolute left-0 right-0 top-12 rounded-xl bg-[#202024] p-1 shadow-xl lg:left-auto lg:right-0 lg:min-w-20">{languages.map((language) => <button type="button" key={language} onClick={() => { onSelect(language); setOpen(false); }} className="block w-full rounded-lg px-4 py-2 text-left text-xs text-[#E0F3FF]">{language.toUpperCase()}</button>)}</div>}</div>; }
@@ -173,6 +234,27 @@ export function SiteHeader({ onDashboard, onLogin, onSignup, data = { coins: [] 
   const { language, setLanguage } = useLanguage();
   const [swap, setSwap] = useState(swaps[0]);
   const [swapBridgeMode, setSwapBridgeMode] = useState("");
+  const navigateHome = () => {
+    if (onDashboard) {
+      onDashboard();
+      return;
+    }
+    router.push("/");
+  };
+  const navigateToLogin = () => {
+    if (onLogin) {
+      onLogin();
+      return;
+    }
+    router.push("/auth");
+  };
+  const navigateToSignup = () => {
+    if (onSignup) {
+      onSignup();
+      return;
+    }
+    router.push("/auth?mode=register");
+  };
   const closeMobileNavigation = () => {
     setMobileOpen(false);
     setMarketsOpen(false);
@@ -200,43 +282,57 @@ export function SiteHeader({ onDashboard, onLogin, onSignup, data = { coins: [] 
   };
 
   return (
-    <header className="sticky top-0 z-20 w-full bg-[#151518] px-3 py-3 text-white sm:px-5">
-      <div className="flex min-h-[48px] items-center justify-between gap-3">
-        <button type="button" onClick={onDashboard} className="shrink-0" aria-label="RiverTrade home">
+    <header className="site-header sticky top-0 z-20 w-full bg-[#151518] px-3 py-3 text-white sm:px-5">
+      <div className="site-header-inner flex min-h-[48px] items-center justify-between gap-3">
+        <button type="button" onClick={navigateHome} className="shrink-0" aria-label="RiverTrade home">
           <Image src="/icoinred/logo-88256519050c5e84fcbd2120a81b2097.svg" alt="RiverTrade" width={1800} height={700} className="h-14 w-auto" />
         </button>
-        <nav className="hidden items-center gap-2 text-sm font-black lg:flex">
-          <ChartMenu onNavigate={closeMobileNavigation} />
-          <button type="button" onClick={() => setMarketsOpen((value) => !value)} className="px-3 py-2">Markets⌄</button>
-          <SwapMenu selected={swap} onSelect={setSwap} onChoose={openSwap} />
-          <LanguageMenu selected={language} onSelect={setLanguage} />
-          <button type="button" onClick={openSearch} className="rounded-xl bg-[#202024] px-3 py-2">⌕ Search /</button>
-          <button type="button" onClick={onLogin} className="rounded-xl bg-[#E0F3FF] px-3 py-2 text-[#151518]">Log in</button>
-          <button type="button" onClick={onSignup} className="rounded-xl bg-[#6CF9D8] px-3 py-2 text-[#151518]">Sign up</button>
+        <nav aria-label="Primary navigation" className="site-header-desktop-nav hidden items-center gap-2 text-sm font-black lg:flex">
+          <div className="site-header-navigation-links">
+            <ChartMenu onNavigate={closeMobileNavigation} />
+            <button
+              type="button"
+              onClick={() => setMarketsOpen((value) => !value)}
+              aria-haspopup="menu"
+              aria-expanded={marketsOpen}
+              className="site-header-nav-button flex items-center gap-1 rounded-xl bg-[#202024] px-3 py-2 font-bold text-[#E0F3FF]"
+            >
+              Markets<span className="text-[#6CF9D8]" aria-hidden="true">{marketsOpen ? "⌃" : "⌄"}</span>
+            </button>
+            <SwapMenu selected={swap} onSelect={setSwap} onChoose={openSwap} />
+          </div>
+          <div className="site-header-actions">
+            <LanguageMenu selected={language} onSelect={setLanguage} />
+            <button type="button" onClick={openSearch} className="site-header-search-button rounded-xl bg-[#202024] px-3 py-2">⌕ Search</button>
+            <button type="button" onClick={navigateToLogin} className="site-header-auth-button rounded-xl bg-[#E0F3FF] px-3 py-2 text-[#151518]">Log in</button>
+            <button type="button" onClick={navigateToSignup} className="site-header-auth-button site-header-signup rounded-xl bg-[#6CF9D8] px-3 py-2 text-[#151518]">Sign up</button>
+          </div>
         </nav>
         <button
           type="button"
           onClick={() => setMobileOpen((value) => !value)}
-          className="grid h-10 w-10 place-items-center rounded-xl bg-[#202024] text-xl lg:hidden"
+          className="site-header-menu-toggle grid h-10 w-10 place-items-center rounded-xl bg-[#202024] text-xl lg:hidden"
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
           aria-expanded={mobileOpen}
+          aria-controls={mobileOpen ? "site-header-mobile-menu" : undefined}
         >
-          {mobileOpen ? "×" : "☰"}
+          <span aria-hidden="true">{mobileOpen ? "×" : "☰"}</span>
         </button>
       </div>
 
       {marketsOpen && !mobileOpen && <MarketsMenu data={data} onViewAll={goToMarkets} />}
 
       {mobileOpen && (
-        <div className="relative z-40 mt-3 max-h-[calc(100dvh-5rem)] space-y-3 overflow-y-auto rounded-2xl bg-[#202024] p-3 lg:hidden">
+        <nav id="site-header-mobile-menu" aria-label="Mobile navigation" className="site-header-mobile-menu relative z-40 overflow-y-auto rounded-2xl bg-[#202024] p-3 lg:hidden">
           <ChartMenu onNavigate={closeMobileNavigation} />
           <button
             type="button"
             onClick={() => setMarketsOpen((value) => !value)}
-            className="w-full rounded-xl px-3 py-3 text-left font-bold"
+            className="flex w-full items-center justify-between rounded-xl bg-[#202024] px-3 py-3 text-left font-bold text-[#E0F3FF]"
+            aria-haspopup="menu"
             aria-expanded={marketsOpen}
           >
-            Markets⌄
+            Markets<span className="text-[#6CF9D8]" aria-hidden="true">{marketsOpen ? "⌃" : "⌄"}</span>
           </button>
           {marketsOpen && (
             <MarketsMenu
@@ -258,10 +354,10 @@ export function SiteHeader({ onDashboard, onLogin, onSignup, data = { coins: [] 
             ⌕ Search markets
           </button>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" onClick={() => { closeMobileNavigation(); onLogin(); }} className="rounded-xl bg-[#E0F3FF] py-3 font-bold text-[#151518]">Log in</button>
-            <button type="button" onClick={() => { closeMobileNavigation(); onSignup(); }} className="rounded-xl bg-[#6CF9D8] py-3 font-bold text-[#151518]">Sign up</button>
+            <button type="button" onClick={() => { closeMobileNavigation(); navigateToLogin(); }} className="rounded-xl bg-[#E0F3FF] py-3 font-bold text-[#151518]">Log in</button>
+            <button type="button" onClick={() => { closeMobileNavigation(); navigateToSignup(); }} className="rounded-xl bg-[#6CF9D8] py-3 font-bold text-[#151518]">Sign up</button>
           </div>
-        </div>
+        </nav>
       )}
 
       {searchOpen && (
