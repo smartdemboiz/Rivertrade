@@ -46,6 +46,7 @@ export default function DashboardTransactions() {
   return (
     <section className="dashboard-transactions" aria-labelledby="transactions-title">
       <h2 id="transactions-title">Transaction History</h2>
+      <p className="dashboard-section-lede">Search and review activity across your account.</p>
       <div className="dashboard-transaction-filters">
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search transactions..." aria-label="Search transactions" />
         <select value={type} onChange={(event) => setType(event.target.value)} aria-label="Filter transaction type">
@@ -64,15 +65,15 @@ export default function DashboardTransactions() {
           <tbody>
             {filteredTransactions.map((transaction) => (
               <tr key={transaction.id}>
-                <td>{transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : "—"}</td>
-                <td>{transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</td>
-                <td>{transaction.amount}</td>
-                <td>{transaction.currency}</td>
-                <td>{transaction.type === "deposit"
+                <td data-label="Date">{transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : "—"}</td>
+                <td data-label="Type">{transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}</td>
+                <td data-label="Amount">{transaction.amount}</td>
+                <td data-label="Currency">{transaction.currency}</td>
+                <td data-label="Balance credited">{transaction.type === "deposit"
                   ? transaction.creditedAmount !== null ? formatAmount(transaction.creditedAmount, transaction.creditedCurrency) : transaction.status === "confirmed" ? "Awaiting credit" : "—"
                   : transaction.type === "withdrawal" && transaction.status === "approved" ? "Payout sent"
                     : transaction.status === "completed" ? formatAmount(transaction.amount, transaction.currency) : "—"}</td>
-                <td>{transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</td>
+                <td data-label="Status">{transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</td>
               </tr>
             ))}
             {!loading && !error && filteredTransactions.length === 0 && (

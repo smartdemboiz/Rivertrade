@@ -12,6 +12,7 @@ export default function DashboardActivePositions({ investments = [], error = "" 
   return (
     <section className="dashboard-active-positions" aria-labelledby="active-positions-title">
       <h2 id="active-positions-title">Active Positions</h2>
+      <p className="dashboard-section-lede">Track your current investments and reserved funds.</p>
       {error && <p className="dashboard-empty-state" role="alert">{error}</p>}
       <div className="dashboard-position-summary">
         <span>Active investments</span>
@@ -19,9 +20,9 @@ export default function DashboardActivePositions({ investments = [], error = "" 
         <small>{error || `${formatUsd(lockedBalance)} reserved in pending or active positions.`}</small>
       </div>
       <div className="dashboard-position-table">
-        <div><span>Plan</span><span>Amount</span><span>ROI</span><span>Status</span></div>
+        <div className="dashboard-position-table-head"><span>Plan</span><span>Amount</span><span>ROI</span><span>Status</span></div>
         {positions.length ? positions.map(investment => (
-          <div key={investment.id}>
+          <div className="dashboard-position-table-row" key={investment.id}>
             <span>{investment.plan}</span>
             <span>{formatUsd(investment.amount)}</span>
             <span>{investment.roi}%</span>

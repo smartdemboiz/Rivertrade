@@ -5309,6 +5309,392 @@ body:has(.admin-shell) .health-line i {
   }
 }
 
+.dashboard-section-lede {
+  max-width: 42rem;
+  margin: -1.25rem 0 1.5rem;
+  color: var(--dashboard-muted);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.dashboard .dashboard-deposit > h2,
+.dashboard .dashboard-withdraw > h2,
+.dashboard .dashboard-transactions > h2,
+.dashboard .dashboard-active-positions > h2,
+.dashboard .dashboard-section-view-head h2 {
+  color: var(--dashboard-ink);
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+.dashboard .dashboard-deposit-form,
+.dashboard .dashboard-withdraw-form {
+  gap: 0.875rem;
+  padding: clamp(1.25rem, 3.5vw, 2rem);
+  border-color: var(--dashboard-border);
+  border-radius: 1.5rem;
+  background: var(--dashboard-panel);
+  box-shadow: 0 1.25rem 3.5rem rgba(29, 29, 31, 0.07), 0 1px 2px rgba(29, 29, 31, 0.04);
+}
+
+.dashboard .dashboard-deposit-form label,
+.dashboard .dashboard-withdraw-form label,
+.dashboard .dashboard-kyc-form label {
+  margin-top: 0.375rem;
+  color: var(--dashboard-ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dashboard .dashboard-deposit-form input,
+.dashboard .dashboard-deposit-form select,
+.dashboard .dashboard-withdraw-form input,
+.dashboard .dashboard-withdraw-form select,
+.dashboard .dashboard-kyc-form input:not([type="checkbox"]),
+.dashboard .dashboard-kyc-form select {
+  min-height: 3.25rem;
+  padding: 0 1rem;
+  border: 1px solid var(--dashboard-border);
+  border-radius: 0.875rem;
+  background: var(--dashboard-panel-strong);
+  color: var(--dashboard-ink);
+  box-shadow: inset 0 1px 2px rgba(29, 29, 31, 0.025);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.dashboard .dashboard-deposit-form input:focus-visible,
+.dashboard .dashboard-deposit-form select:focus-visible,
+.dashboard .dashboard-withdraw-form input:focus-visible,
+.dashboard .dashboard-withdraw-form select:focus-visible,
+.dashboard .dashboard-kyc-form input:focus-visible,
+.dashboard .dashboard-kyc-form select:focus-visible {
+  border-color: #34b99b;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(52, 185, 155, 0.16);
+}
+
+.dashboard .dashboard-deposit-form button[type="submit"],
+.dashboard .dashboard-withdraw-form button[type="submit"],
+.dashboard .dashboard-kyc-form button[type="submit"] {
+  min-height: 3.25rem;
+  margin-top: 1rem;
+  border: 0;
+  border-radius: 0.9375rem;
+  background: #45c9aa;
+  color: #10251f;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  box-shadow: 0 6px 16px rgba(52, 185, 155, 0.18);
+  transition: transform 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.dashboard .dashboard-deposit-form button[type="submit"]:hover,
+.dashboard .dashboard-withdraw-form button[type="submit"]:hover,
+.dashboard .dashboard-kyc-form button[type="submit"]:hover {
+  background: #55d5b5;
+  box-shadow: 0 9px 22px rgba(52, 185, 155, 0.24);
+  transform: translateY(-1px);
+}
+
+.dashboard .dashboard-deposit-conversion-note {
+  margin: 0.125rem 0 0.75rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid rgba(52, 185, 155, 0.16);
+  border-radius: 0.875rem;
+  background: rgba(52, 185, 155, 0.07);
+  color: var(--dashboard-muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.dashboard .dashboard-deposit-details {
+  border-color: var(--dashboard-border);
+  border-radius: 1rem;
+  background: var(--dashboard-panel-strong);
+}
+
+.dashboard .dashboard-transaction-filters {
+  grid-template-columns: minmax(0, 1.5fr) minmax(12rem, 0.7fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard .dashboard-transaction-filters input,
+.dashboard .dashboard-transaction-filters select {
+  min-height: 3.125rem;
+  border-color: var(--dashboard-border);
+  border-radius: 0.875rem;
+  background: var(--dashboard-panel);
+  box-shadow: 0 4px 14px rgba(29, 29, 31, 0.035);
+}
+
+.dashboard .dashboard-transaction-table-wrap,
+.dashboard .dashboard-position-table {
+  border: 1px solid var(--dashboard-border);
+  border-radius: 1.25rem;
+  background: var(--dashboard-panel);
+  box-shadow: 0 1rem 2.5rem rgba(29, 29, 31, 0.055);
+}
+
+.dashboard .dashboard-transaction-table th,
+.dashboard .dashboard-position-table-head {
+  background: var(--dashboard-panel-strong);
+  color: var(--dashboard-muted);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.dashboard .dashboard-transaction-table td,
+.dashboard .dashboard-position-table-row {
+  border-color: var(--dashboard-border);
+}
+
+.dashboard .dashboard-position-summary {
+  width: min(100%, 48rem);
+  gap: 0.75rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(ellipse at 100% 0, rgba(52, 185, 155, 0.12), transparent 46%),
+    var(--dashboard-panel);
+  box-shadow: 0 1.25rem 3.5rem rgba(29, 29, 31, 0.07);
+}
+
+.dashboard .dashboard-position-summary strong {
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-weight: 650;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.dashboard .dashboard-position-table {
+  margin-top: 1.25rem;
+  padding: 0.75rem;
+}
+
+.dashboard .dashboard-position-table > div {
+  min-width: 34rem;
+  padding: 1rem 1.125rem;
+  background: transparent;
+  font-size: 0.875rem;
+}
+
+.dashboard .dashboard-position-table > .dashboard-position-table-head {
+  min-width: 34rem;
+  border-radius: 0.875rem;
+  background: var(--dashboard-panel-strong);
+}
+
+.dashboard .dashboard-position-table-row {
+  border-bottom: 1px solid var(--dashboard-border);
+}
+
+.dashboard .dashboard-position-table > p {
+  min-width: 0;
+  padding: 2rem 1rem;
+  color: var(--dashboard-muted);
+}
+
+.dashboard .dashboard-kyc .dashboard-section-view-head {
+  border-bottom: 1px solid var(--dashboard-border);
+}
+
+.dashboard .dashboard-kyc .dashboard-section-view-head .eyebrow {
+  color: #159b7d;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.dashboard .dashboard-kyc-status-card {
+  width: min(100%, 48rem);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--dashboard-border);
+  border-radius: 1.25rem;
+  background: var(--dashboard-panel);
+  box-shadow: 0 0.75rem 2rem rgba(29, 29, 31, 0.05);
+}
+
+.dashboard .dashboard-kyc-status-card strong {
+  letter-spacing: -0.035em;
+}
+
+.dashboard .dashboard-kyc-form {
+  width: min(100%, 48rem);
+  gap: 1rem;
+  padding: clamp(1.25rem, 3.5vw, 2rem);
+  border-radius: 1.5rem;
+}
+
+.dashboard .dashboard-kyc-form input[type="file"] {
+  height: auto;
+  padding: 0.625rem;
+}
+
+.dashboard .dashboard-kyc-form input[type="file"]::file-selector-button {
+  min-height: 2.25rem;
+  margin-right: 0.75rem;
+  padding: 0 0.875rem;
+  border: 0;
+  border-radius: 0.625rem;
+  background: rgba(52, 185, 155, 0.12);
+  color: var(--dashboard-ink);
+  font: inherit;
+  font-weight: 600;
+}
+
+.dashboard.theme-dark .dashboard-deposit-form,
+.dashboard.theme-dark .dashboard-withdraw-form,
+.dashboard.theme-dark .dashboard-transaction-table-wrap,
+.dashboard.theme-dark .dashboard-position-table,
+.dashboard.theme-dark .dashboard-kyc-status-card {
+  box-shadow: 0 1.25rem 3.5rem rgba(0, 0, 0, 0.22);
+}
+
+.dashboard.theme-dark .dashboard-deposit-form button[type="submit"],
+.dashboard.theme-dark .dashboard-withdraw-form button[type="submit"],
+.dashboard.theme-dark .dashboard-kyc-form button[type="submit"] {
+  background: #62d9b5;
+}
+
+@media (max-width: 640px) {
+  .dashboard-section-lede {
+    margin-top: -1.125rem;
+    margin-bottom: 1.125rem;
+    font-size: 0.875rem;
+  }
+
+  .dashboard .dashboard-deposit > h2,
+  .dashboard .dashboard-withdraw > h2,
+  .dashboard .dashboard-transactions > h2,
+  .dashboard .dashboard-active-positions > h2,
+  .dashboard .dashboard-section-view-head h2 {
+    font-size: clamp(1.625rem, 7vw, 2rem);
+  }
+
+  .dashboard .dashboard-deposit-form,
+  .dashboard .dashboard-withdraw-form,
+  .dashboard .dashboard-kyc-form {
+    width: 100%;
+    padding: 1.125rem;
+    border-radius: 1.25rem;
+  }
+
+  .dashboard .dashboard-transaction-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard .dashboard-transaction-table-wrap {
+    padding: 0.625rem;
+    overflow: visible;
+  }
+
+  .dashboard .dashboard-transaction-table {
+    min-width: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .dashboard .dashboard-transaction-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .dashboard .dashboard-transaction-table tbody {
+    display: grid;
+    gap: 0.625rem;
+  }
+
+  .dashboard .dashboard-transaction-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem 0.5rem;
+    padding: 0.875rem;
+    border: 1px solid var(--dashboard-border);
+    border-radius: 1rem;
+    background: var(--dashboard-panel);
+  }
+
+  .dashboard .dashboard-transaction-table td {
+    display: grid;
+    min-width: 0;
+    gap: 0.25rem;
+    padding: 0;
+    border: 0;
+    color: var(--dashboard-ink);
+    font-size: 0.8125rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard .dashboard-transaction-table td::before {
+    content: attr(data-label);
+    color: var(--dashboard-muted);
+    font-size: 0.625rem;
+    font-weight: 650;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  .dashboard .dashboard-transaction-table .dashboard-transactions-empty {
+    display: block;
+    grid-column: 1 / -1;
+    padding: 1.25rem 0.25rem !important;
+    text-align: center !important;
+  }
+
+  .dashboard .dashboard-transaction-table .dashboard-transactions-empty::before {
+    content: none;
+  }
+
+  .dashboard .dashboard-position-table {
+    padding: 0.625rem;
+    overflow-x: auto;
+  }
+
+  .dashboard .dashboard-position-table > div,
+  .dashboard .dashboard-position-table > .dashboard-position-table-head {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 0.8fr));
+    gap: 0.35rem;
+    padding: 0.875rem 0.5rem;
+    font-size: 0.6875rem;
+  }
+
+  .dashboard .dashboard-position-table > p {
+    min-width: 0;
+    padding: 1.5rem 0.5rem;
+    font-size: 0.875rem;
+  }
+
+  .dashboard .dashboard-kyc-status-card {
+    width: 100%;
+    padding: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard .dashboard-deposit-form input,
+  .dashboard .dashboard-deposit-form select,
+  .dashboard .dashboard-withdraw-form input,
+  .dashboard .dashboard-withdraw-form select,
+  .dashboard .dashboard-deposit-form button[type="submit"],
+  .dashboard .dashboard-withdraw-form button[type="submit"],
+  .dashboard .dashboard-kyc-form button[type="submit"] {
+    transition: none;
+  }
+}
+
 /* Dashboard and admin layouts across phones, tablets, and desktop browsers. */
 @media (max-width: 1100px) {
   .admin-side {

@@ -50,6 +50,29 @@ function getSeenReceiptStages(storageKey) {
   }
 }
 
+function trackedWithdrawalStorageKey(userId) {
+  return `rivertrade-tracked-withdrawal-receipts:${userId}`;
+}
+
+function getTrackedWithdrawalIds(userId) {
+  try {
+    const ids = JSON.parse(localStorage.getItem(trackedWithdrawalStorageKey(userId)) || "[]");
+    return Array.isArray(ids) ? ids.filter(id => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function updateTrackedWithdrawalIds(userId, update) {
+  try {
+    const ids = new Set(getTrackedWithdrawalIds(userId));
+    update(ids);
+    localStorage.setItem(trackedWithdrawalStorageKey(userId), JSON.stringify([...ids]));
+  } catch (storageError) {
+    console.error("Unable to update tracked withdrawal receipt state:", storageError);
+  }
+}
+
 export default function DashboardWithdraw() {
   const { authenticated, ready, user } = useAuthSession();
   const [amount, setAmount] = useState("");
@@ -100,8 +123,10 @@ export default function DashboardWithdraw() {
         if (!response.ok) throw new Error(body.error || "Unable to check withdrawal status.");
 
         const seenStages = new Set(getSeenReceiptStages(receiptStorageKey));
+        const trackedIds = new Set(getTrackedWithdrawalIds(user.id));
         const unacknowledgedWithdrawal = (body.data || []).find(item =>
           item.type === "withdrawal"
+          && trackedIds.has(item.requestId)
           && ["pending", "processing", "approved", "rejected"].includes(item.status)
           && !seenStages.has(`${item.requestId}:${item.status}`),
         );
@@ -194,7 +219,7 @@ export default function DashboardWithdraw() {
       if (!response.ok) throw new Error(body.error || "Unable to submit your withdrawal request.");
 
       const request = body.data;
-      setWithdrawalReceipt({
+      const receipt = {
         id: `withdrawal-${request.id}`,
         requestId: request.id,
         amount: request.amount,
@@ -204,7 +229,11 @@ export default function DashboardWithdraw() {
         network: request.network,
         status: request.status,
         createdAt: request.created_at,
-      });
+      };
+      if (user?.id && typeof request.id === "string") {
+        updateTrackedWithdrawalIds(user.id, (ids) => ids.add(request.id));
+      }
+      setWithdrawalReceipt(receipt);
       setAmount("");
       setError("");
     } catch (submitError) {
@@ -227,6 +256,7 @@ export default function DashboardWithdraw() {
     } catch (storageError) {
       console.error("Unable to save seen withdrawal receipt state:", storageError);
     }
+    updateTrackedWithdrawalIds(user?.id, (ids) => ids.delete(withdrawalReceipt.requestId));
     setWithdrawalReceipt(null);
   };
 
@@ -234,6 +264,7 @@ export default function DashboardWithdraw() {
     return (
       <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
         <h2 id="withdraw-title">Withdraw Funds</h2>
+        <p className="dashboard-section-lede">Choose a destination and review your details before submitting.</p>
         <p role="status">{methodsLoaded ? "No withdrawal methods are currently available." : "Loading available withdrawal methods…"}</p>
         <WithdrawalReceipt withdrawal={withdrawalReceipt} onClose={dismissWithdrawalReceipt} />
       </section>
@@ -243,6 +274,7 @@ export default function DashboardWithdraw() {
   return (
     <section className="dashboard-withdraw" aria-labelledby="withdraw-title">
       <h2 id="withdraw-title">Withdraw Funds</h2>
+      <p className="dashboard-section-lede">Choose a destination and review your details before submitting.</p>
       <form className="dashboard-withdraw-form" onSubmit={submitWithdrawal} aria-busy={submitting}>
         <label htmlFor="withdraw-amount">Amount (account currency)</label>
         <input id="withdraw-amount" type="number" min="0" step="any" value={amount} onChange={(event) => setAmount(event.target.value)} required />

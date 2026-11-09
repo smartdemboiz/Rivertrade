@@ -97,7 +97,7 @@ export default function DashboardKyc() {
       </div>
 
       {loading ? <p role="status">Loading your verification status…</p> : (
-        <div className="dashboard-section-view-card">
+        <div className="dashboard-section-view-card dashboard-kyc-status-card">
           <span>Verification status</span>
           <strong>{submission ? (status === "approved" ? "Verified" : status === "review" ? "In review" : status === "rejected" ? "Action required" : "Pending review") : "Not submitted"}</strong>
           <small>{status === "approved"

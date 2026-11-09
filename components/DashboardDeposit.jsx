@@ -20,6 +20,29 @@ function getSeenDepositIds(userId) {
   }
 }
 
+function trackedDepositStorageKey(userId) {
+  return `rivertrade-tracked-deposit-receipts:${userId}`;
+}
+
+function getTrackedDepositIds(userId) {
+  try {
+    const ids = JSON.parse(localStorage.getItem(trackedDepositStorageKey(userId)) || "[]");
+    return Array.isArray(ids) ? ids.filter(id => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function updateTrackedDepositIds(userId, update) {
+  try {
+    const ids = new Set(getTrackedDepositIds(userId));
+    update(ids);
+    localStorage.setItem(trackedDepositStorageKey(userId), JSON.stringify([...ids]));
+  } catch (storageError) {
+    console.error("Unable to update tracked deposit receipt state:", storageError);
+  }
+}
+
 export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashboard, purpose = "standard" }) {
   const { authenticated, ready, user } = useAuthSession();
   const [amount, setAmount] = useState("");
@@ -79,7 +102,10 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
         onAccountDataUpdate?.(body);
 
         const seenIds = getSeenDepositIds(user.id);
-        const latestCompleted = completedDeposits[0];
+        const trackedIds = new Set(getTrackedDepositIds(user.id));
+        const latestCompleted = completedDeposits.find(transaction =>
+          trackedIds.has(transaction.id) && !seenIds.includes(transaction.id),
+        );
         if (latestCompleted && !seenIds.includes(latestCompleted.id)) {
           setDepositReceipt(latestCompleted);
         }
@@ -112,6 +138,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
     } catch (storageError) {
       console.error("Unable to save seen deposit receipt state:", storageError);
     }
+    updateTrackedDepositIds(user.id, (ids) => ids.delete(depositReceipt.id));
     setDepositReceipt(null);
   };
 
@@ -185,6 +212,9 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Unable to submit your deposit request.");
 
+      if (user?.id && typeof body.data?.id === "string") {
+        updateTrackedDepositIds(user?.id, (ids) => ids.add(`deposit-${body.data.id}`));
+      }
       setAmount("");
       setPaymentMethod("");
       setCryptocurrency("");
@@ -224,6 +254,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
     return (
       <section className="dashboard-deposit" aria-labelledby="deposit-title">
         <h2 id="deposit-title">{purpose === "managed_account" ? "Add Funds to Managed Account" : "Deposit Funds"}</h2>
+        <p className="dashboard-section-lede">Add funds securely using one of your available payment methods.</p>
         <p role={settingsError ? "alert" : "status"}>{settingsError || (settingsLoaded ? "No deposit methods are currently available." : "Loading available deposit methods…")}</p>
       </section>
     );
@@ -232,6 +263,7 @@ export default function DashboardDeposit({ onAccountDataUpdate, onReturnToDashbo
   return (
     <section className="dashboard-deposit" aria-labelledby="deposit-title">
       <h2 id="deposit-title">{purpose === "managed_account" ? "Add Funds to Managed Account" : "Deposit Funds"}</h2>
+      <p className="dashboard-section-lede">Add funds securely using one of your available payment methods.</p>
       {purpose === "managed_account" && <p>After you send the payment, the investment team must verify and approve it before it is added to your managed account.</p>}
       {submittedRequest && <p className="managed-account-success" role="status">
         {purpose === "managed_account"
